@@ -38,15 +38,6 @@ data "aws_cloudfront_cache_policy" "policy_cachingoptimized" {
 
 
 
-### EXTERNAL REFERENCES ###
-
-data "aws_cloudfront_distribution" "MainCloudManV2Svlt" {
-  name                              = "MainCloudManV2Svlt"
-}
-
-
-
-
 ### CATEGORY: IAM ###
 
 resource "aws_acm_certificate" "CloudManV2" {
@@ -85,28 +76,6 @@ resource "aws_route53_record" "Route53_Record_CloudManV2" {
   records                           = ["${each.value.record}"]
   ttl                               = 300
   type                              = "${each.value.type}"
-}
-
-resource "aws_route53_record" "alias_a_v2_to_MainCloudManV2Svlt" {
-  name                              = "v2.cloudman.pro"
-  zone_id                           = data.aws_route53_zone.Cloudman.zone_id
-  type                              = "A"
-  alias {
-    name                            = data.aws_cloudfront_distribution.MainCloudManV2Svlt.domain_name
-    zone_id                         = data.aws_cloudfront_distribution.MainCloudManV2Svlt.hosted_zone_id
-    evaluate_target_health          = false
-  }
-}
-
-resource "aws_route53_record" "alias_aaaa_v2_to_MainCloudManV2Svlt" {
-  name                              = "v2.cloudman.pro"
-  zone_id                           = data.aws_route53_zone.Cloudman.zone_id
-  type                              = "AAAA"
-  alias {
-    name                            = data.aws_cloudfront_distribution.MainCloudManV2Svlt.domain_name
-    zone_id                         = data.aws_cloudfront_distribution.MainCloudManV2Svlt.hosted_zone_id
-    evaluate_target_health          = false
-  }
 }
 
 
