@@ -161,6 +161,7 @@ resource "aws_cognito_user_pool_domain" "Cog1" {
   user_pool_id                      = aws_cognito_user_pool.Cog1.id
   certificate_arn                   = data.aws_acm_certificate.Certificate.arn
   domain                            = "auth.v2.cloudman.pro"
+  depends_on                        = [aws_route53_record.alias_a_auth_to_Cog1, aws_route53_record.alias_aaaa_auth_to_Cog1]
 }
 
 resource "aws_ssm_parameter" "Parameter1" {
