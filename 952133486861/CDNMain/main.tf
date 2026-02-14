@@ -428,7 +428,7 @@ resource "aws_lambda_function" "GetStageV2" {
   function_name                     = "GetStageV2"
   architectures                     = ["arm64"]
   filename                          = "${data.archive_file.archive_CloudManMainV2_GetStageV2.output_path}"
-  handler                           = "index.lambda_handler"
+  handler                           = "GetStageV2.lambda_handler"
   memory_size                       = 1024
   publish                           = false
   reserved_concurrent_executions    = -1
