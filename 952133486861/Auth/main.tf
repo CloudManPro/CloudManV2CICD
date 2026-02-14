@@ -36,7 +36,7 @@ data "aws_route53_zone" "Cloudman" {
 ### EXTERNAL REFERENCES ###
 
 data "aws_acm_certificate" "Certificate" {
-  domain                            = "cloudman.pro"
+  domain                            = "cog-auth.cloudman.pro"
   most_recent                       = true
   statuses                          = ["ISSUED"]
 }
@@ -47,7 +47,7 @@ data "aws_acm_certificate" "Certificate" {
 ### CATEGORY: NETWORK ###
 
 resource "aws_route53_record" "alias_a_cog-auth_to_CloudManV2" {
-  name                              = "cloudman.pro"
+  name                              = "cog-auth.cloudman.pro"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "A"
   alias {
@@ -58,7 +58,7 @@ resource "aws_route53_record" "alias_a_cog-auth_to_CloudManV2" {
 }
 
 resource "aws_route53_record" "alias_aaaa_cog-auth_to_CloudManV2" {
-  name                              = "cloudman.pro"
+  name                              = "cog-auth.cloudman.pro"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "AAAA"
   alias {
@@ -156,7 +156,7 @@ resource "aws_cognito_user_pool_client" "CloudManV2" {
 resource "aws_cognito_user_pool_domain" "CloudManV2" {
   user_pool_id                      = aws_cognito_user_pool.CloudManV2.id
   certificate_arn                   = data.aws_acm_certificate.Certificate.arn
-  domain                            = "cloudman.pro"
+  domain                            = "cog-auth.cloudman.pro"
 }
 
 resource "aws_ssm_parameter" "Parameter1" {
