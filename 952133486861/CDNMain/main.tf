@@ -61,8 +61,8 @@ data "aws_acm_certificate" "CloudManV2" {
   statuses                          = ["ISSUED"]
 }
 
-data "aws_ssm_parameter" "Parameter1" {
-  name                              = "Parameter1"
+data "aws_ssm_parameter" "CloudManCognito" {
+  name                              = "CloudManCognito"
 }
 
 
@@ -81,7 +81,7 @@ data "aws_iam_policy_document" "lambda_function_GetStageV2_st_CDNMain_doc" {
     sid                             = "AllowReadParam"
     effect                          = "Allow"
     actions                         = ["ssm:GetParameter", "ssm:GetParameters"]
-    resources                       = ["${data.aws_ssm_parameter.Parameter1.arn}"]
+    resources                       = ["${data.aws_ssm_parameter.CloudManCognito.arn}"]
   }
 }
 
@@ -438,11 +438,11 @@ resource "aws_lambda_function" "GetStageV2" {
   timeout                           = 2
   environment {
     variables                       = {
-    "AWS_SSM_PARAMETER_TARGET_NAME_0" = "Parameter1"
-    "REGION" = "${data.aws_region.current.name}"
-    "ACCOUNT" = "${data.aws_caller_identity.current.account_id}"
+    "AWS_SSM_PARAMETER_TARGET_NAME_0" = "CloudManCognito"
+    "REGION" = data.aws_region.current.name
+    "ACCOUNT" = data.aws_caller_identity.current.account_id
     "NAME" = "GetStageV2"
-    "AWS_SSM_PARAMETER_TARGET_ARN_0" = "${data.aws_ssm_parameter.Parameter1.arn}"
+    "AWS_SSM_PARAMETER_TARGET_ARN_0" = data.aws_ssm_parameter.CloudManCognito.arn
   }
   }
   tags                              = {
