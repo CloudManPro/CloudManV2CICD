@@ -159,13 +159,13 @@ resource "aws_cognito_user_pool_domain" "CloudManV2" {
   domain                            = "cog-auth.cloudman.pro"
 }
 
-resource "aws_ssm_parameter" "Parameter1" {
-  name                              = "Parameter1"
+resource "aws_ssm_parameter" "CloudManCognito" {
+  name                              = "CloudManCognito"
   data_type                         = "text"
   description                       = "Auto-generated grouped map for: aws_cognito_user_pool.CloudManV2, aws_cognito_user_pool_client.CloudManV2, aws_cognito_user_pool_domain.CloudManV2"
   overwrite                         = false
   tier                              = "Standard"
-  type                              = "String"
+  type                              = "SecureString"
   value                             = jsonencode({
     "aws_cognito_user_pool" = {
       "CloudManV2" = {
@@ -196,7 +196,7 @@ resource "aws_ssm_parameter" "Parameter1" {
     }
   })
   tags                              = {
-    "Name" = "Parameter1"
+    "Name" = "CloudManCognito"
     "State" = "Auth"
     "CloudmanUser" = "GlobalUserName"
   }
