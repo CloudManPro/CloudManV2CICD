@@ -56,7 +56,7 @@ data "aws_cloudfront_response_headers_policy" "policy_simplecors" {
 ### EXTERNAL REFERENCES ###
 
 data "aws_acm_certificate" "CloudManV2" {
-  domain                            = "v2.cloudman.pro"
+  domain                            = "cloudman.pro"
   most_recent                       = true
   statuses                          = ["ISSUED"]
 }
@@ -123,7 +123,7 @@ resource "aws_iam_role_policy_attachment" "lambda_function_GetStageV2_st_CDNMain
 ### CATEGORY: NETWORK ###
 
 resource "aws_route53_record" "alias_a_v2_to_MainCloudManV2" {
-  name                              = "v2.cloudman.pro"
+  name                              = "cloudman.pro"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "A"
   alias {
@@ -134,7 +134,7 @@ resource "aws_route53_record" "alias_a_v2_to_MainCloudManV2" {
 }
 
 resource "aws_route53_record" "alias_aaaa_v2_to_MainCloudManV2" {
-  name                              = "v2.cloudman.pro"
+  name                              = "cloudman.pro"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "AAAA"
   alias {
@@ -278,7 +278,7 @@ resource "aws_api_gateway_stage" "st" {
 }
 
 resource "aws_cloudfront_distribution" "MainCloudManV2" {
-  aliases                           = ["v2.cloudman.pro"]
+  aliases                           = ["cloudman.pro"]
   comment                           = "CloudMan Main V2"
   default_root_object               = "index.html"
   enabled                           = true
@@ -420,7 +420,7 @@ resource "aws_s3_bucket_versioning" "s3-cloudmanv2-main-bucket_versioning" {
 
 data "archive_file" "archive_CloudManMainV2_GetStageV2" {
   output_path                       = "${path.module}/CloudManMainV2_GetStageV2.zip"
-  source_dir                        = "${path.module}/.external_modules/CloudManMainV2"
+  source_dir                        = "${path.module}/.external_modules/CloudManMainV2/LambdaFiles/GetStageV2"
   type                              = "zip"
 }
 
