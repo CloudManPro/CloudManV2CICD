@@ -172,12 +172,9 @@ resource "aws_ssm_parameter" "CloudManCognito" {
     "aws_cognito_user_pool" = {
       "CloudManV2" = {
         "arn" = "${aws_cognito_user_pool.CloudManV2.arn}"
-        "creation_date" = "${aws_cognito_user_pool.CloudManV2.creation_date}"
         "custom_domain" = "${aws_cognito_user_pool.CloudManV2.custom_domain}"
         "domain" = "${aws_cognito_user_pool.CloudManV2.domain}"
         "endpoint" = "${aws_cognito_user_pool.CloudManV2.endpoint}"
-        "estimated_number_of_users" = "${aws_cognito_user_pool.CloudManV2.estimated_number_of_users}"
-        "last_modified_date" = "${aws_cognito_user_pool.CloudManV2.last_modified_date}"
       }
     }
     "aws_cognito_user_pool_client" = {
