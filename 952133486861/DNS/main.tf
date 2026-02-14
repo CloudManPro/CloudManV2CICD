@@ -30,13 +30,17 @@ data "aws_route53_zone" "Cloudman" {
   name                              = "cloudman.pro"
 }
 
+data "aws_cloudfront_cache_policy" "policy_cachingoptimized" {
+  name                              = "Managed-CachingOptimized"
+}
+
 
 
 
 ### CATEGORY: IAM ###
 
 resource "aws_acm_certificate" "Certificate" {
-  domain_name                       = "auth.v2.cloudman.pro"
+  domain_name                       = "cog-auth.cloudman.pro"
   key_algorithm                     = "RSA_2048"
   validation_method                 = "DNS"
   options {
