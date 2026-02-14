@@ -162,7 +162,7 @@ resource "aws_cognito_user_pool_domain" "CloudManV2" {
 resource "aws_ssm_parameter" "CloudManCognito" {
   name                              = "CloudManCognito"
   data_type                         = "text"
-  description                       = "Auto-generated grouped map for: aws_cognito_user_pool.CloudManV2, aws_cognito_user_pool_client.CloudManV2, aws_cognito_user_pool_domain.CloudManV2"
+  description                       = "Auto-generated grouped map for: aws_cognito_user_pool.CloudManV2, aws_cognito_user_pool_client.CloudManV2, aws_cognito_user_pool_domain.CloudManV2, data.aws_route53_zone.Cloudman"
   overwrite                         = false
   tier                              = "Standard"
   type                              = "SecureString"
@@ -192,6 +192,16 @@ resource "aws_ssm_parameter" "CloudManCognito" {
         "cloudfront_distribution_zone_id" = "${aws_cognito_user_pool_domain.CloudManV2.cloudfront_distribution_zone_id}"
         "s3_bucket" = "${aws_cognito_user_pool_domain.CloudManV2.s3_bucket}"
         "version" = "${aws_cognito_user_pool_domain.CloudManV2.version}"
+      }
+    }
+    "aws_route53_zone" = {
+      "Cloudman" = {
+        "arn" = "${data.aws_route53_zone.Cloudman.arn}"
+        "id" = "${data.aws_route53_zone.Cloudman.id}"
+        "name_servers" = "${data.aws_route53_zone.Cloudman.name_servers}"
+        "primary_name_server" = "${data.aws_route53_zone.Cloudman.primary_name_server}"
+        "tags_all" = "${data.aws_route53_zone.Cloudman.tags_all}"
+        "zone_id" = "${data.aws_route53_zone.Cloudman.zone_id}"
       }
     }
   })
