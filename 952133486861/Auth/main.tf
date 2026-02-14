@@ -36,7 +36,7 @@ data "aws_route53_zone" "Cloudman" {
 ### EXTERNAL REFERENCES ###
 
 data "aws_acm_certificate" "Certificate" {
-  domain                            = "cog-auth.cloudman.pro"
+  domain                            = "cloudman.pro"
   most_recent                       = true
   statuses                          = ["ISSUED"]
 }
@@ -46,24 +46,24 @@ data "aws_acm_certificate" "Certificate" {
 
 ### CATEGORY: NETWORK ###
 
-resource "aws_route53_record" "alias_a_cog-auth_to_Cog1" {
-  name                              = "cog-auth.cloudman.pro"
+resource "aws_route53_record" "alias_a_cog-auth_to_CloudManV2" {
+  name                              = "cloudman.pro"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "A"
   alias {
-    name                            = aws_cognito_user_pool_domain.Cog1.cloudfront_distribution
-    zone_id                         = aws_cognito_user_pool_domain.Cog1.cloudfront_distribution_zone_id
+    name                            = aws_cognito_user_pool_domain.CloudManV2.cloudfront_distribution
+    zone_id                         = aws_cognito_user_pool_domain.CloudManV2.cloudfront_distribution_zone_id
     evaluate_target_health          = false
   }
 }
 
-resource "aws_route53_record" "alias_aaaa_cog-auth_to_Cog1" {
-  name                              = "cog-auth.cloudman.pro"
+resource "aws_route53_record" "alias_aaaa_cog-auth_to_CloudManV2" {
+  name                              = "cloudman.pro"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "AAAA"
   alias {
-    name                            = aws_cognito_user_pool_domain.Cog1.cloudfront_distribution
-    zone_id                         = aws_cognito_user_pool_domain.Cog1.cloudfront_distribution_zone_id
+    name                            = aws_cognito_user_pool_domain.CloudManV2.cloudfront_distribution
+    zone_id                         = aws_cognito_user_pool_domain.CloudManV2.cloudfront_distribution_zone_id
     evaluate_target_health          = false
   }
 }
@@ -73,10 +73,10 @@ resource "aws_route53_record" "alias_aaaa_cog-auth_to_Cog1" {
 
 ### CATEGORY: MISC ###
 
-resource "aws_cognito_user_pool" "Cog1" {
-  name                              = "Cog1"
+resource "aws_cognito_user_pool" "CloudManV2" {
+  name                              = "CloudManV2"
   auto_verified_attributes          = ["email"]
-  deletion_protection               = "ACTIVE"
+  deletion_protection               = "INACTIVE"
   mfa_configuration                 = "OFF"
   password_policy {
     minimum_length                  = 8
@@ -119,7 +119,7 @@ resource "aws_cognito_user_pool" "Cog1" {
     allowed_first_auth_factors      = ["PASSWORD"]
   }
   tags                              = {
-    "Name" = "Cog1"
+    "Name" = "CloudManV2"
     "State" = "Auth"
     "CloudmanUser" = "GlobalUserName"
   }
@@ -128,9 +128,9 @@ resource "aws_cognito_user_pool" "Cog1" {
   }
 }
 
-resource "aws_cognito_user_pool_client" "Cog1" {
-  name                              = "Cog1"
-  user_pool_id                      = aws_cognito_user_pool.Cog1.id
+resource "aws_cognito_user_pool_client" "CloudManV2" {
+  name                              = "CloudManV2"
+  user_pool_id                      = aws_cognito_user_pool.CloudManV2.id
   access_token_validity             = 12
   allowed_oauth_flows               = ["code"]
   allowed_oauth_flows_user_pool_client = true
@@ -153,45 +153,45 @@ resource "aws_cognito_user_pool_client" "Cog1" {
   }
 }
 
-resource "aws_cognito_user_pool_domain" "Cog1" {
-  user_pool_id                      = aws_cognito_user_pool.Cog1.id
+resource "aws_cognito_user_pool_domain" "CloudManV2" {
+  user_pool_id                      = aws_cognito_user_pool.CloudManV2.id
   certificate_arn                   = data.aws_acm_certificate.Certificate.arn
-  domain                            = "cog-auth.cloudman.pro"
+  domain                            = "cloudman.pro"
 }
 
 resource "aws_ssm_parameter" "Parameter1" {
   name                              = "Parameter1"
   data_type                         = "text"
-  description                       = "Auto-generated grouped map for: aws_cognito_user_pool.Cog1, aws_cognito_user_pool_client.Cog1, aws_cognito_user_pool_domain.Cog1"
+  description                       = "Auto-generated grouped map for: aws_cognito_user_pool.CloudManV2, aws_cognito_user_pool_client.CloudManV2, aws_cognito_user_pool_domain.CloudManV2"
   overwrite                         = false
   tier                              = "Standard"
   type                              = "String"
   value                             = jsonencode({
     "aws_cognito_user_pool" = {
-      "Cog1" = {
-        "arn" = "${aws_cognito_user_pool.Cog1.arn}"
-        "creation_date" = "${aws_cognito_user_pool.Cog1.creation_date}"
-        "custom_domain" = "${aws_cognito_user_pool.Cog1.custom_domain}"
-        "domain" = "${aws_cognito_user_pool.Cog1.domain}"
-        "endpoint" = "${aws_cognito_user_pool.Cog1.endpoint}"
-        "estimated_number_of_users" = "${aws_cognito_user_pool.Cog1.estimated_number_of_users}"
-        "last_modified_date" = "${aws_cognito_user_pool.Cog1.last_modified_date}"
+      "CloudManV2" = {
+        "arn" = "${aws_cognito_user_pool.CloudManV2.arn}"
+        "creation_date" = "${aws_cognito_user_pool.CloudManV2.creation_date}"
+        "custom_domain" = "${aws_cognito_user_pool.CloudManV2.custom_domain}"
+        "domain" = "${aws_cognito_user_pool.CloudManV2.domain}"
+        "endpoint" = "${aws_cognito_user_pool.CloudManV2.endpoint}"
+        "estimated_number_of_users" = "${aws_cognito_user_pool.CloudManV2.estimated_number_of_users}"
+        "last_modified_date" = "${aws_cognito_user_pool.CloudManV2.last_modified_date}"
       }
     }
     "aws_cognito_user_pool_client" = {
-      "Cog1" = {
-        "client_secret" = "${aws_cognito_user_pool_client.Cog1.client_secret}"
-        "id" = "${aws_cognito_user_pool_client.Cog1.id}"
+      "CloudManV2" = {
+        "client_secret" = "${aws_cognito_user_pool_client.CloudManV2.client_secret}"
+        "id" = "${aws_cognito_user_pool_client.CloudManV2.id}"
       }
     }
     "aws_cognito_user_pool_domain" = {
-      "Cog1" = {
-        "aws_account_id" = "${aws_cognito_user_pool_domain.Cog1.aws_account_id}"
-        "cloudfront_distribution" = "${aws_cognito_user_pool_domain.Cog1.cloudfront_distribution}"
-        "cloudfront_distribution_arn" = "${aws_cognito_user_pool_domain.Cog1.cloudfront_distribution_arn}"
-        "cloudfront_distribution_zone_id" = "${aws_cognito_user_pool_domain.Cog1.cloudfront_distribution_zone_id}"
-        "s3_bucket" = "${aws_cognito_user_pool_domain.Cog1.s3_bucket}"
-        "version" = "${aws_cognito_user_pool_domain.Cog1.version}"
+      "CloudManV2" = {
+        "aws_account_id" = "${aws_cognito_user_pool_domain.CloudManV2.aws_account_id}"
+        "cloudfront_distribution" = "${aws_cognito_user_pool_domain.CloudManV2.cloudfront_distribution}"
+        "cloudfront_distribution_arn" = "${aws_cognito_user_pool_domain.CloudManV2.cloudfront_distribution_arn}"
+        "cloudfront_distribution_zone_id" = "${aws_cognito_user_pool_domain.CloudManV2.cloudfront_distribution_zone_id}"
+        "s3_bucket" = "${aws_cognito_user_pool_domain.CloudManV2.s3_bucket}"
+        "version" = "${aws_cognito_user_pool_domain.CloudManV2.version}"
       }
     }
   })
