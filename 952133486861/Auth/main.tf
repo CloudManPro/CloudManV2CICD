@@ -30,17 +30,13 @@ data "aws_route53_zone" "Cloudman" {
   name                              = "cloudman.pro"
 }
 
-data "aws_cloudfront_cache_policy" "policy_cachingoptimized" {
-  name                              = "Managed-CachingOptimized"
-}
-
 
 
 
 ### EXTERNAL REFERENCES ###
 
 data "aws_acm_certificate" "Certificate" {
-  domain                            = "auth.v2.cloudman.pro"
+  domain                            = "cog-auth.cloudman.pro"
   most_recent                       = true
   statuses                          = ["ISSUED"]
 }
@@ -50,8 +46,8 @@ data "aws_acm_certificate" "Certificate" {
 
 ### CATEGORY: NETWORK ###
 
-resource "aws_route53_record" "alias_a_auth_to_Cog1" {
-  name                              = "auth.v2.cloudman.pro"
+resource "aws_route53_record" "alias_a_cog-auth_to_Cog1" {
+  name                              = "cog-auth.cloudman.pro"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "A"
   alias {
@@ -61,8 +57,8 @@ resource "aws_route53_record" "alias_a_auth_to_Cog1" {
   }
 }
 
-resource "aws_route53_record" "alias_aaaa_auth_to_Cog1" {
-  name                              = "auth.v2.cloudman.pro"
+resource "aws_route53_record" "alias_aaaa_cog-auth_to_Cog1" {
+  name                              = "cog-auth.cloudman.pro"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "AAAA"
   alias {
@@ -160,7 +156,7 @@ resource "aws_cognito_user_pool_client" "Cog1" {
 resource "aws_cognito_user_pool_domain" "Cog1" {
   user_pool_id                      = aws_cognito_user_pool.Cog1.id
   certificate_arn                   = data.aws_acm_certificate.Certificate.arn
-  domain                            = "auth.v2.cloudman.pro"
+  domain                            = "cog-auth.cloudman.pro"
 }
 
 resource "aws_ssm_parameter" "Parameter1" {
