@@ -36,7 +36,7 @@ data  "aws_cognito_user_pools" "Cog1" {
 
 resource "aws_cognito_user_pool_client" "Cog" {
   name                              = "Cog"
-  user_pool_id                      = data.aws_cognito_user_pool.Cog1.ids[0]
+  user_pool_id                      = data.aws_cognito_user_pools.Cog1.ids[0]
   access_token_validity             = 60
   allowed_oauth_flows_user_pool_client = false
   auth_session_validity             = 3
