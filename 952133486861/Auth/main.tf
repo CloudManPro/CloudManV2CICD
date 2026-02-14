@@ -196,6 +196,7 @@ resource "aws_ssm_parameter" "CloudManCognito" {
     }
     "aws_route53_zone" = {
       "Cloudman" = {
+        "name" = "${data.aws_route53_zone.Cloudman.name}"
         "arn" = "${data.aws_route53_zone.Cloudman.arn}"
         "id" = "${data.aws_route53_zone.Cloudman.id}"
         "name_servers" = "${data.aws_route53_zone.Cloudman.name_servers}"
