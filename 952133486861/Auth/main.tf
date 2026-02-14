@@ -124,7 +124,9 @@ resource "aws_cognito_user_pool" "CloudManV2" {
     "CloudmanUser" = "GlobalUserName"
   }
   verification_message_template {
-    default_email_option            = "CONFIRM_WITH_CODE"
+    default_email_option            = "CONFIRM_WITH_LINK"
+    email_message_by_link           = "Click the link below to verify your email. {##Click Here##}"
+    email_subject_by_link           = "CloudMan sign up confirmation"
   }
 }
 
