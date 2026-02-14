@@ -200,7 +200,6 @@ resource "aws_ssm_parameter" "CloudManCognito" {
         "id" = "${data.aws_route53_zone.Cloudman.id}"
         "name_servers" = "${data.aws_route53_zone.Cloudman.name_servers}"
         "primary_name_server" = "${data.aws_route53_zone.Cloudman.primary_name_server}"
-        "tags_all" = "${data.aws_route53_zone.Cloudman.tags_all}"
         "zone_id" = "${data.aws_route53_zone.Cloudman.zone_id}"
       }
     }
