@@ -163,7 +163,7 @@ resource "aws_ssm_parameter" "CloudManCognito" {
   name                              = "CloudManCognito"
   data_type                         = "text"
   description                       = "Auto-generated grouped map for: aws_cognito_user_pool.CloudManV2, aws_cognito_user_pool_client.CloudManV2, aws_cognito_user_pool_domain.CloudManV2, data.aws_route53_zone.Cloudman"
-  overwrite                         = false
+  overwrite                         = true
   tier                              = "Standard"
   type                              = "SecureString"
   value                             = jsonencode({
