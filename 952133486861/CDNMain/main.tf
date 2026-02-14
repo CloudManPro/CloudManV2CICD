@@ -56,7 +56,7 @@ data "aws_cloudfront_response_headers_policy" "policy_simplecors" {
 ### EXTERNAL REFERENCES ###
 
 data "aws_acm_certificate" "CloudManV2" {
-  domain                            = "cloudman.pro"
+  domain                            = "v2.cloudman.pro"
   most_recent                       = true
   statuses                          = ["ISSUED"]
 }
@@ -123,7 +123,7 @@ resource "aws_iam_role_policy_attachment" "lambda_function_GetStageV2_st_CDNMain
 ### CATEGORY: NETWORK ###
 
 resource "aws_route53_record" "alias_a_v2_to_MainCloudManV2" {
-  name                              = "cloudman.pro"
+  name                              = "v2.cloudman.pro"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "A"
   alias {
@@ -134,7 +134,7 @@ resource "aws_route53_record" "alias_a_v2_to_MainCloudManV2" {
 }
 
 resource "aws_route53_record" "alias_aaaa_v2_to_MainCloudManV2" {
-  name                              = "cloudman.pro"
+  name                              = "v2.cloudman.pro"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "AAAA"
   alias {
@@ -144,18 +144,18 @@ resource "aws_route53_record" "alias_aaaa_v2_to_MainCloudManV2" {
   }
 }
 
-resource "aws_api_gateway_deployment" "MainAPICloudManV2" {
-  rest_api_id                       = aws_api_gateway_rest_api.MainAPICloudManV2.id
+resource "aws_api_gateway_deployment" "MainCloudManV2" {
+  rest_api_id                       = aws_api_gateway_rest_api.MainCloudManV2.id
   lifecycle {
     create_before_destroy           = true
   }
   triggers                          = {
-    "redeployment" = sha1(join(",", [jsonencode(aws_api_gateway_rest_api.MainAPICloudManV2.body)]))
+    "redeployment" = sha1(join(",", [jsonencode(aws_api_gateway_rest_api.MainCloudManV2.body)]))
   }
 }
 
 locals {
-  api_config_MainAPICloudManV2 = [
+  api_config_MainCloudManV2 = [
     {
       path             = "/getstagev2"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:GetStageV2/invocations"
@@ -169,16 +169,16 @@ locals {
       integ_req_params = null
     },
   ]
-  openapi_spec_MainAPICloudManV2 = {
+  openapi_spec_MainCloudManV2 = {
     openapi = "3.0.1"
     info = {
-      title   = "MainAPICloudManV2"
+      title   = "MainCloudManV2"
       version = "1.0"
     }
     paths = {
-      for path in distinct([for i in local.api_config_MainAPICloudManV2 : i.path]) :
+      for path in distinct([for i in local.api_config_MainCloudManV2 : i.path]) :
       path => merge([
-        for item in local.api_config_MainAPICloudManV2 :
+        for item in local.api_config_MainCloudManV2 :
         merge(
           {
             for method in item.methods :
@@ -256,19 +256,19 @@ locals {
   }
 }
 
-resource "aws_api_gateway_rest_api" "MainAPICloudManV2" {
-  name                              = "MainAPICloudManV2"
-  body                              = jsonencode(local.openapi_spec_MainAPICloudManV2)
+resource "aws_api_gateway_rest_api" "MainCloudManV2" {
+  name                              = "MainCloudManV2"
+  body                              = jsonencode(local.openapi_spec_MainCloudManV2)
   tags                              = {
-    "Name" = "MainAPICloudManV2"
+    "Name" = "MainCloudManV2"
     "State" = "CDNMain"
     "CloudmanUser" = "GlobalUserName"
   }
 }
 
 resource "aws_api_gateway_stage" "st" {
-  deployment_id                     = aws_api_gateway_deployment.MainAPICloudManV2.id
-  rest_api_id                       = aws_api_gateway_rest_api.MainAPICloudManV2.id
+  deployment_id                     = aws_api_gateway_deployment.MainCloudManV2.id
+  rest_api_id                       = aws_api_gateway_rest_api.MainCloudManV2.id
   stage_name                        = "st"
   tags                              = {
     "Name" = "st"
@@ -278,7 +278,7 @@ resource "aws_api_gateway_stage" "st" {
 }
 
 resource "aws_cloudfront_distribution" "MainCloudManV2" {
-  aliases                           = ["cloudman.pro"]
+  aliases                           = ["v2.cloudman.pro"]
   comment                           = "CloudMan Main V2"
   default_root_object               = "index.html"
   enabled                           = true
@@ -308,7 +308,7 @@ resource "aws_cloudfront_distribution" "MainCloudManV2" {
     origin_id                       = "default_MainCloudManV2"
   }
   origin {
-    domain_name                     = "${aws_api_gateway_rest_api.MainAPICloudManV2.id}.execute-api.${data.aws_region.current.name}.amazonaws.com"
+    domain_name                     = "${aws_api_gateway_rest_api.MainCloudManV2.id}.execute-api.${data.aws_region.current.name}.amazonaws.com"
     origin_id                       = "ordered_MainAPICloudManV2"
     custom_origin_config {
       http_port                     = 80
@@ -350,7 +350,7 @@ resource "aws_cloudfront_origin_access_control" "oac_s3-cloudmanv2-main-bucket" 
 
 resource "aws_s3_bucket" "s3-cloudmanv2-main-bucket" {
   bucket                            = "s3-cloudmanv2-main-bucket"
-  force_destroy                     = false
+  force_destroy                     = true
   object_lock_enabled               = false
   tags                              = {
     "Name" = "s3-cloudmanv2-main-bucket"
@@ -453,12 +453,12 @@ resource "aws_lambda_function" "GetStageV2" {
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_GetStageV2_st_CDNMain_attach]
 }
 
-resource "aws_lambda_permission" "perm_MainAPICloudManV2_to_GetStageV2_openapi" {
+resource "aws_lambda_permission" "perm_MainCloudManV2_to_GetStageV2_openapi" {
   function_name                     = aws_lambda_function.GetStageV2.function_name
-  statement_id                      = "perm_MainAPICloudManV2_to_GetStageV2_openapi"
+  statement_id                      = "perm_MainCloudManV2_to_GetStageV2_openapi"
   principal                         = "apigateway.amazonaws.com"
   action                            = "lambda:InvokeFunction"
-  source_arn                        = "${aws_api_gateway_rest_api.MainAPICloudManV2.execution_arn}/*/POST/getstagev2"
+  source_arn                        = "${aws_api_gateway_rest_api.MainCloudManV2.execution_arn}/*/POST/getstagev2"
 }
 
 
