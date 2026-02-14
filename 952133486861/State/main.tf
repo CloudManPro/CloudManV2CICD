@@ -26,9 +26,10 @@ data "aws_region" "current" {}
 
 ### EXTERNAL REFERENCES ###
 
-data  "aws_cognito_user_pools" "Cog1" {
-  name = "Cog1"
+data "aws_cognito_user_pools" "Cog1" {
+  name                              = "Cog1"
 }
+
 
 
 
