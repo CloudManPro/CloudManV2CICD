@@ -40,7 +40,7 @@ data "aws_cloudfront_cache_policy" "policy_cachingoptimized" {
 ### CATEGORY: IAM ###
 
 resource "aws_acm_certificate" "Certificate" {
-  domain_name                       = "cloudman.pro"
+  domain_name                       = "cog-auth.cloudman.pro"
   key_algorithm                     = "RSA_2048"
   validation_method                 = "DNS"
   options {
@@ -54,7 +54,7 @@ resource "aws_acm_certificate" "Certificate" {
 }
 
 resource "aws_acm_certificate" "CloudManV2" {
-  domain_name                       = "cloudman.pro"
+  domain_name                       = "v2.cloudman.pro"
   key_algorithm                     = "RSA_2048"
   validation_method                 = "DNS"
   options {
