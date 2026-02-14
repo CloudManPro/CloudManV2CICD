@@ -24,6 +24,19 @@ provider "aws" {
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
+### SYSTEM DATA SOURCES ###
+
+data "aws_route53_zone" "Cloudman" {
+  name                              = "cloudman.pro"
+}
+
+data "aws_cloudfront_cache_policy" "policy_cachingoptimized" {
+  name                              = "Managed-CachingOptimized"
+}
+
+
+
+
 ### EXTERNAL REFERENCES ###
 
 data "aws_acm_certificate" "Certificate" {
@@ -39,7 +52,7 @@ data "aws_acm_certificate" "Certificate" {
 
 resource "aws_route53_record" "alias_a_auth_to_Cog1" {
   name                              = "auth.v2.cloudman.pro"
-  zone_id                           = aws_route53_zone.Cloudman.zone_id
+  zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "A"
   alias {
     name                            = aws_cognito_user_pool_domain.Cog1.cloudfront_distribution
@@ -50,7 +63,7 @@ resource "aws_route53_record" "alias_a_auth_to_Cog1" {
 
 resource "aws_route53_record" "alias_aaaa_auth_to_Cog1" {
   name                              = "auth.v2.cloudman.pro"
-  zone_id                           = aws_route53_zone.Cloudman.zone_id
+  zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "AAAA"
   alias {
     name                            = aws_cognito_user_pool_domain.Cog1.cloudfront_distribution
