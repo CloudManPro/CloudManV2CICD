@@ -61,14 +61,6 @@ data "aws_acm_certificate" "CloudManV2" {
   statuses                          = ["ISSUED"]
 }
 
-data "aws_cognito_user_pools" "CloudManV2" {
-  name = "CloudManV2"
-}
-
-data "aws_cognito_user_pool" "CloudManV2" {
-  user_pool_id                      = data.aws_cognito_user_pools.CloudManV2.ids[0]
-}
-
 
 
 
@@ -162,24 +154,7 @@ locals {
       version = "1.0"
     }
     
-    components = {
-      securitySchemes = {
-        "AuthCloudManV2_CognitoAuth" = {
-          type = "apiKey"
-          name = "Authorization"
-          in   = "header"
-          "x-amazon-apigateway-authtype" = "cognito_user_pools"
-          "x-amazon-apigateway-authorizer" = {
-            type = "cognito_user_pools"
-            providerARNs = [data.aws_cognito_user_pool.CloudManV2.arn]
-          }
-        }
-      }
-    }
     
-    security = [
-      { "AuthCloudManV2_CognitoAuth" = [] }
-    ]
     paths = {
       for path in distinct([for i in local.api_config_AuthCloudManV2 : i.path]) :
       path => merge([
