@@ -61,10 +61,6 @@ data "aws_acm_certificate" "CloudManV2" {
   statuses                          = ["ISSUED"]
 }
 
-data "aws_ssm_parameter" "CloudManCognito" {
-  name                              = "CloudManCognito"
-}
-
 
 
 
@@ -76,12 +72,6 @@ data "aws_iam_policy_document" "lambda_function_GetStageV2_st_CDNMain_doc" {
     effect                          = "Allow"
     actions                         = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
     resources                       = ["${aws_cloudwatch_log_group.GetStageV2.arn}:*"]
-  }
-  statement {
-    sid                             = "AllowReadParam"
-    effect                          = "Allow"
-    actions                         = ["ssm:GetParameter", "ssm:GetParameters"]
-    resources                       = ["${data.aws_ssm_parameter.CloudManCognito.arn}"]
   }
 }
 
@@ -122,40 +112,40 @@ resource "aws_iam_role_policy_attachment" "lambda_function_GetStageV2_st_CDNMain
 
 ### CATEGORY: NETWORK ###
 
-resource "aws_route53_record" "alias_a_v2_to_MainCloudManV2" {
+resource "aws_route53_record" "alias_a_v2_to_AuthCloudManV2" {
   name                              = "v2.cloudman.pro"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "A"
   alias {
-    name                            = aws_cloudfront_distribution.MainCloudManV2.domain_name
-    zone_id                         = aws_cloudfront_distribution.MainCloudManV2.hosted_zone_id
+    name                            = aws_cloudfront_distribution.AuthCloudManV2.domain_name
+    zone_id                         = aws_cloudfront_distribution.AuthCloudManV2.hosted_zone_id
     evaluate_target_health          = false
   }
 }
 
-resource "aws_route53_record" "alias_aaaa_v2_to_MainCloudManV2" {
+resource "aws_route53_record" "alias_aaaa_v2_to_AuthCloudManV2" {
   name                              = "v2.cloudman.pro"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "AAAA"
   alias {
-    name                            = aws_cloudfront_distribution.MainCloudManV2.domain_name
-    zone_id                         = aws_cloudfront_distribution.MainCloudManV2.hosted_zone_id
+    name                            = aws_cloudfront_distribution.AuthCloudManV2.domain_name
+    zone_id                         = aws_cloudfront_distribution.AuthCloudManV2.hosted_zone_id
     evaluate_target_health          = false
   }
 }
 
-resource "aws_api_gateway_deployment" "MainCloudManV2" {
-  rest_api_id                       = aws_api_gateway_rest_api.MainCloudManV2.id
+resource "aws_api_gateway_deployment" "AuthCloudManV2" {
+  rest_api_id                       = aws_api_gateway_rest_api.AuthCloudManV2.id
   lifecycle {
     create_before_destroy           = true
   }
   triggers                          = {
-    "redeployment" = sha1(join(",", [jsonencode(aws_api_gateway_rest_api.MainCloudManV2.body)]))
+    "redeployment" = sha1(join(",", [jsonencode(aws_api_gateway_rest_api.AuthCloudManV2.body)]))
   }
 }
 
 locals {
-  api_config_MainCloudManV2 = [
+  api_config_AuthCloudManV2 = [
     {
       path             = "/getstagev2"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:GetStageV2/invocations"
@@ -169,16 +159,16 @@ locals {
       integ_req_params = null
     },
   ]
-  openapi_spec_MainCloudManV2 = {
+  openapi_spec_AuthCloudManV2 = {
     openapi = "3.0.1"
     info = {
-      title   = "MainCloudManV2"
+      title   = "AuthCloudManV2"
       version = "1.0"
     }
     paths = {
-      for path in distinct([for i in local.api_config_MainCloudManV2 : i.path]) :
+      for path in distinct([for i in local.api_config_AuthCloudManV2 : i.path]) :
       path => merge([
-        for item in local.api_config_MainCloudManV2 :
+        for item in local.api_config_AuthCloudManV2 :
         merge(
           {
             for method in item.methods :
@@ -256,19 +246,19 @@ locals {
   }
 }
 
-resource "aws_api_gateway_rest_api" "MainCloudManV2" {
-  name                              = "MainCloudManV2"
-  body                              = jsonencode(local.openapi_spec_MainCloudManV2)
+resource "aws_api_gateway_rest_api" "AuthCloudManV2" {
+  name                              = "AuthCloudManV2"
+  body                              = jsonencode(local.openapi_spec_AuthCloudManV2)
   tags                              = {
-    "Name" = "MainCloudManV2"
+    "Name" = "AuthCloudManV2"
     "State" = "CDNMain"
     "CloudmanUser" = "GlobalUserName"
   }
 }
 
 resource "aws_api_gateway_stage" "st" {
-  deployment_id                     = aws_api_gateway_deployment.MainCloudManV2.id
-  rest_api_id                       = aws_api_gateway_rest_api.MainCloudManV2.id
+  deployment_id                     = aws_api_gateway_deployment.AuthCloudManV2.id
+  rest_api_id                       = aws_api_gateway_rest_api.AuthCloudManV2.id
   stage_name                        = "st"
   tags                              = {
     "Name" = "st"
@@ -277,7 +267,7 @@ resource "aws_api_gateway_stage" "st" {
   }
 }
 
-resource "aws_cloudfront_distribution" "MainCloudManV2" {
+resource "aws_cloudfront_distribution" "AuthCloudManV2" {
   aliases                           = ["v2.cloudman.pro"]
   comment                           = "CloudMan Main V2"
   default_root_object               = "index.html"
@@ -287,7 +277,7 @@ resource "aws_cloudfront_distribution" "MainCloudManV2" {
   price_class                       = "PriceClass_All"
   default_cache_behavior {
     cache_policy_id                 = data.aws_cloudfront_cache_policy.policy_cachingoptimized.id
-    target_origin_id                = "default_MainCloudManV2"
+    target_origin_id                = "default_AuthCloudManV2"
     allowed_methods                 = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods                  = ["GET", "HEAD", "OPTIONS"]
     viewer_protocol_policy          = "redirect-to-https"
@@ -296,7 +286,7 @@ resource "aws_cloudfront_distribution" "MainCloudManV2" {
     cache_policy_id                 = data.aws_cloudfront_cache_policy.policy_cachingdisabled.id
     origin_request_policy_id        = data.aws_cloudfront_origin_request_policy.policy_cors_s3origin.id
     response_headers_policy_id      = data.aws_cloudfront_response_headers_policy.policy_simplecors.id
-    target_origin_id                = "ordered_MainAPICloudManV2"
+    target_origin_id                = "ordered_AuthAPICloudManV2"
     allowed_methods                 = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods                  = ["GET", "HEAD", "OPTIONS"]
     path_pattern                    = "/st/*"
@@ -305,11 +295,11 @@ resource "aws_cloudfront_distribution" "MainCloudManV2" {
   origin {
     domain_name                     = aws_s3_bucket.s3-cloudmanv2-main-bucket.bucket_regional_domain_name
     origin_access_control_id        = aws_cloudfront_origin_access_control.oac_s3-cloudmanv2-main-bucket.id
-    origin_id                       = "default_MainCloudManV2"
+    origin_id                       = "default_AuthCloudManV2"
   }
   origin {
-    domain_name                     = "${aws_api_gateway_rest_api.MainCloudManV2.id}.execute-api.${data.aws_region.current.name}.amazonaws.com"
-    origin_id                       = "ordered_MainAPICloudManV2"
+    domain_name                     = "${aws_api_gateway_rest_api.AuthCloudManV2.id}.execute-api.${data.aws_region.current.name}.amazonaws.com"
+    origin_id                       = "ordered_AuthAPICloudManV2"
     custom_origin_config {
       http_port                     = 80
       https_port                    = 443
@@ -323,7 +313,7 @@ resource "aws_cloudfront_distribution" "MainCloudManV2" {
     }
   }
   tags                              = {
-    "Name" = "MainCloudManV2"
+    "Name" = "AuthCloudManV2"
     "State" = "CDNMain"
     "CloudmanUser" = "GlobalUserName"
   }
@@ -379,7 +369,7 @@ data "aws_iam_policy_document" "aws_s3_bucket_policy_s3-cloudmanv2-main-bucket_s
     condition {
       test     = "StringEquals"
       variable = "AWS:SourceArn"
-      values   = ["arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:distribution/${aws_cloudfront_distribution.MainCloudManV2.id}"]
+      values   = ["arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:distribution/${aws_cloudfront_distribution.AuthCloudManV2.id}"]
     }
   }
 }
@@ -438,11 +428,10 @@ resource "aws_lambda_function" "GetStageV2" {
   timeout                           = 2
   environment {
     variables                       = {
-    "AWS_SSM_PARAMETER_TARGET_NAME_0" = "CloudManCognito"
+    "DOMAIN" = "${data.aws_route53_zone.Cloudman.name}"
     "REGION" = data.aws_region.current.name
     "ACCOUNT" = data.aws_caller_identity.current.account_id
     "NAME" = "GetStageV2"
-    "AWS_SSM_PARAMETER_TARGET_ARN_0" = data.aws_ssm_parameter.CloudManCognito.arn
   }
   }
   tags                              = {
@@ -453,12 +442,12 @@ resource "aws_lambda_function" "GetStageV2" {
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_GetStageV2_st_CDNMain_attach]
 }
 
-resource "aws_lambda_permission" "perm_MainCloudManV2_to_GetStageV2_openapi" {
+resource "aws_lambda_permission" "perm_AuthCloudManV2_to_GetStageV2_openapi" {
   function_name                     = aws_lambda_function.GetStageV2.function_name
-  statement_id                      = "perm_MainCloudManV2_to_GetStageV2_openapi"
+  statement_id                      = "perm_AuthCloudManV2_to_GetStageV2_openapi"
   principal                         = "apigateway.amazonaws.com"
   action                            = "lambda:InvokeFunction"
-  source_arn                        = "${aws_api_gateway_rest_api.MainCloudManV2.execution_arn}/*/POST/getstagev2"
+  source_arn                        = "${aws_api_gateway_rest_api.AuthCloudManV2.execution_arn}/*/POST/getstagev2"
 }
 
 
