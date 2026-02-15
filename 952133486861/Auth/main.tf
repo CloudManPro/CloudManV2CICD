@@ -123,6 +123,9 @@ resource "aws_cognito_user_pool" "CloudManV2" {
     "State" = "Auth"
     "CloudmanUser" = "GlobalUserName"
   }
+  username_configuration {
+    case_sensitive                  = true
+  }
   verification_message_template {
     default_email_option            = "CONFIRM_WITH_LINK"
     email_message_by_link           = "Click the link below to verify your email. {##Click Here##}"
@@ -141,8 +144,8 @@ resource "aws_cognito_user_pool_client" "CloudManV2" {
   callback_urls                     = ["https://v2.cloudman.pro"]
   enable_propagate_additional_user_context_data = false
   enable_token_revocation           = true
-  explicit_auth_flows               = ["ALLOW_REFRESH_TOKEN_AUTH", "ALLOW_USER_PASSWORD_AUTH", "ALLOW_USER_SRP_AUTH"]
-  generate_secret                   = true
+  explicit_auth_flows               = ["ALLOW_CUSTOM_AUTH", "ALLOW_REFRESH_TOKEN_AUTH", "ALLOW_USER_SRP_AUTH"]
+  generate_secret                   = false
   id_token_validity                 = 12
   logout_urls                       = ["https://v2.cloudman.pro"]
   prevent_user_existence_errors     = "ENABLED"
@@ -159,56 +162,6 @@ resource "aws_cognito_user_pool_domain" "CloudManV2" {
   user_pool_id                      = aws_cognito_user_pool.CloudManV2.id
   certificate_arn                   = data.aws_acm_certificate.Certificate.arn
   domain                            = "cog-auth.cloudman.pro"
-}
-
-resource "aws_ssm_parameter" "CloudManCognito" {
-  name                              = "CloudManCognito"
-  data_type                         = "text"
-  description                       = "Auto-generated grouped map for: aws_cognito_user_pool.CloudManV2, aws_cognito_user_pool_client.CloudManV2, aws_cognito_user_pool_domain.CloudManV2, data.aws_route53_zone.Cloudman"
-  overwrite                         = true
-  tier                              = "Standard"
-  type                              = "SecureString"
-  value                             = jsonencode({
-    "aws_cognito_user_pool" = {
-      "CloudManV2" = {
-        "arn" = "${aws_cognito_user_pool.CloudManV2.arn}"
-        "custom_domain" = "${aws_cognito_user_pool.CloudManV2.custom_domain}"
-        "domain" = "${aws_cognito_user_pool.CloudManV2.domain}"
-        "endpoint" = "${aws_cognito_user_pool.CloudManV2.endpoint}"
-      }
-    }
-    "aws_cognito_user_pool_client" = {
-      "CloudManV2" = {
-        "client_secret" = "${aws_cognito_user_pool_client.CloudManV2.client_secret}"
-        "id" = "${aws_cognito_user_pool_client.CloudManV2.id}"
-      }
-    }
-    "aws_cognito_user_pool_domain" = {
-      "CloudManV2" = {
-        "aws_account_id" = "${aws_cognito_user_pool_domain.CloudManV2.aws_account_id}"
-        "cloudfront_distribution" = "${aws_cognito_user_pool_domain.CloudManV2.cloudfront_distribution}"
-        "cloudfront_distribution_arn" = "${aws_cognito_user_pool_domain.CloudManV2.cloudfront_distribution_arn}"
-        "cloudfront_distribution_zone_id" = "${aws_cognito_user_pool_domain.CloudManV2.cloudfront_distribution_zone_id}"
-        "s3_bucket" = "${aws_cognito_user_pool_domain.CloudManV2.s3_bucket}"
-        "version" = "${aws_cognito_user_pool_domain.CloudManV2.version}"
-      }
-    }
-    "aws_route53_zone" = {
-      "Cloudman" = {
-        "name" = "${data.aws_route53_zone.Cloudman.name}"
-        "arn" = "${data.aws_route53_zone.Cloudman.arn}"
-        "id" = "${data.aws_route53_zone.Cloudman.id}"
-        "name_servers" = "${data.aws_route53_zone.Cloudman.name_servers}"
-        "primary_name_server" = "${data.aws_route53_zone.Cloudman.primary_name_server}"
-        "zone_id" = "${data.aws_route53_zone.Cloudman.zone_id}"
-      }
-    }
-  })
-  tags                              = {
-    "Name" = "CloudManCognito"
-    "State" = "Auth"
-    "CloudmanUser" = "GlobalUserName"
-  }
 }
 
 
