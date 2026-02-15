@@ -62,7 +62,11 @@ data "aws_acm_certificate" "CloudManV2" {
 }
 
 data "aws_cognito_user_pools" "CloudManV2" {
-  name                              = "CloudManV2"
+  name = "CloudManV2"
+}
+
+data "aws_cognito_user_pool" "CloudManV2" {
+  user_pool_id                      = data.aws_cognito_user_pools.CloudManV2.ids[0]
 }
 
 
@@ -167,7 +171,7 @@ locals {
           "x-amazon-apigateway-authtype" = "cognito_user_pools"
           "x-amazon-apigateway-authorizer" = {
             type = "cognito_user_pools"
-            providerARNs = [data.aws_cognito_user_pools.CloudManV2.ids[0].arn]
+            providerARNs = [data.aws_cognito_user_pool.CloudManV2.arn]
           }
         }
       }
@@ -329,7 +333,7 @@ resource "aws_cloudfront_distribution" "AuthCloudManV2" {
     "CloudmanUser" = "GlobalUserName"
   }
   viewer_certificate {
-    acm_certificate_arn             = data.aws_acm_certificate.CloudManV2.arn
+    acm_certificate_arn             = data.data.aws_acm_certificate.CloudManV2.arn
     cloudfront_default_certificate  = false
     minimum_protocol_version        = "TLSv1.2_2021"
     ssl_support_method              = "sni-only"
