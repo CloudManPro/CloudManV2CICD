@@ -333,7 +333,7 @@ resource "aws_cloudfront_distribution" "AuthCloudManV2" {
     "CloudmanUser" = "GlobalUserName"
   }
   viewer_certificate {
-    acm_certificate_arn             = data.data.aws_acm_certificate.CloudManV2.arn
+    acm_certificate_arn             = data.aws_acm_certificate.CloudManV2.arn
     cloudfront_default_certificate  = false
     minimum_protocol_version        = "TLSv1.2_2021"
     ssl_support_method              = "sni-only"
