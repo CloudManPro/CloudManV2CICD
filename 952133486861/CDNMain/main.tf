@@ -61,6 +61,10 @@ data "aws_acm_certificate" "CloudManV2" {
   statuses                          = ["ISSUED"]
 }
 
+data "aws_cognito_user_pools" "CloudManV2" {
+  name                              = "CloudManV2"
+}
+
 
 
 
@@ -146,18 +150,6 @@ resource "aws_api_gateway_deployment" "AuthCloudManV2" {
 
 locals {
   api_config_AuthCloudManV2 = [
-    {
-      path             = "/getstagev2"
-      uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:GetStageV2/invocations"
-      type             = "aws_proxy"
-      methods          = ["post"]
-      enable_mock      = true
-      credentials      = null
-      requestTemplates = null
-      integ_method     = "POST"
-      parameters       = null
-      integ_req_params = null
-    },
   ]
   openapi_spec_AuthCloudManV2 = {
     openapi = "3.0.1"
@@ -165,6 +157,25 @@ locals {
       title   = "AuthCloudManV2"
       version = "1.0"
     }
+    
+    components = {
+      securitySchemes = {
+        "AuthCloudManV2_CognitoAuth" = {
+          type = "apiKey"
+          name = "Authorization"
+          in   = "header"
+          "x-amazon-apigateway-authtype" = "cognito_user_pools"
+          "x-amazon-apigateway-authorizer" = {
+            type = "cognito_user_pools"
+            providerARNs = [data.aws_cognito_user_pools.CloudManV2.ids[0].arn]
+          }
+        }
+      }
+    }
+    
+    security = [
+      { "AuthCloudManV2_CognitoAuth" = [] }
+    ]
     paths = {
       for path in distinct([for i in local.api_config_AuthCloudManV2 : i.path]) :
       path => merge([
