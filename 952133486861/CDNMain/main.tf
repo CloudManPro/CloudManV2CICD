@@ -81,6 +81,12 @@ data "aws_iam_policy_document" "lambda_function_GetStageV2_st_CDNMain_doc" {
     actions                         = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
     resources                       = ["${aws_cloudwatch_log_group.GetStageV2.arn}:*"]
   }
+  statement {
+    sid                             = "AllowBucketLevelActions"
+    effect                          = "Allow"
+    actions                         = ["s3:DeleteObject", "s3:GetBucketLocation", "s3:GetObject", "s3:ListBucket", "s3:PutObject"]
+    resources                       = ["*"]
+  }
 }
 
 resource "aws_iam_policy" "lambda_function_GetStageV2_st_CDNMain" {
@@ -105,6 +111,27 @@ resource "aws_iam_role" "role_lambda_GetStageV2" {
 })
   tags                              = {
     "Name" = "role_lambda_GetStageV2"
+    "State" = "CDNMain"
+    "CloudmanUser" = "GlobalUserName"
+  }
+}
+
+resource "aws_iam_role" "role_lambda_RedirectorV2" {
+  name                              = "role_lambda_RedirectorV2"
+  assume_role_policy                = jsonencode({
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      }
+    }
+  ]
+})
+  tags                              = {
+    "Name" = "role_lambda_RedirectorV2"
     "State" = "CDNMain"
     "CloudmanUser" = "GlobalUserName"
   }
@@ -308,6 +335,11 @@ resource "aws_cloudfront_distribution" "AuthCloudManV2" {
     allowed_methods                 = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods                  = ["GET", "HEAD", "OPTIONS"]
     viewer_protocol_policy          = "redirect-to-https"
+    lambda_function_association {
+      event_type                    = "origin-request"
+      include_body                  = false
+      lambda_arn                    = aws_lambda_function.RedirectorV2.arn
+    }
   }
   ordered_cache_behavior {
     cache_policy_id                 = data.aws_cloudfront_cache_policy.policy_cachingdisabled.id
@@ -456,9 +488,11 @@ resource "aws_lambda_function" "GetStageV2" {
   environment {
     variables                       = {
     "DOMAIN" = "${data.aws_route53_zone.Cloudman.name}"
+    "AWS_S3_BUCKET_TARGET_NAME_0" = "s3-cloudmanv2-main-bucket"
     "REGION" = data.aws_region.current.name
     "ACCOUNT" = data.aws_caller_identity.current.account_id
     "NAME" = "GetStageV2"
+    "AWS_S3_BUCKET_TARGET_ARN_0" = aws_s3_bucket.s3-cloudmanv2-main-bucket.arn
   }
   }
   tags                              = {
@@ -467,6 +501,38 @@ resource "aws_lambda_function" "GetStageV2" {
     "CloudmanUser" = "GlobalUserName"
   }
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_GetStageV2_st_CDNMain_attach]
+}
+
+data "archive_file" "archive_CloudManMainV2_RedirectorV2" {
+  output_path                       = "${path.module}/CloudManMainV2_RedirectorV2.zip"
+  source_dir                        = "${path.module}/.external_modules/CloudManMainV2/LambdaFiles/Redirector"
+  type                              = "zip"
+}
+
+resource "aws_lambda_function" "RedirectorV2" {
+  function_name                     = "RedirectorV2"
+  architectures                     = ["arm64"]
+  filename                          = "${data.archive_file.archive_CloudManMainV2_RedirectorV2.output_path}"
+  handler                           = "Redirector.lambda_handler"
+  memory_size                       = 3008
+  publish                           = true
+  reserved_concurrent_executions    = -1
+  role                              = aws_iam_role.role_lambda_RedirectorV2.arn
+  runtime                           = "python3.13"
+  source_code_hash                  = "${data.archive_file.archive_CloudManMainV2_RedirectorV2.output_base64sha256}"
+  timeout                           = 30
+  environment {
+    variables                       = {
+    "REGION" = data.aws_region.current.name
+    "ACCOUNT" = data.aws_caller_identity.current.account_id
+    "NAME" = "RedirectorV2"
+  }
+  }
+  tags                              = {
+    "Name" = "RedirectorV2"
+    "State" = "CDNMain"
+    "CloudmanUser" = "GlobalUserName"
+  }
 }
 
 resource "aws_lambda_permission" "perm_AuthCloudManV2_to_GetStageV2_openapi" {
