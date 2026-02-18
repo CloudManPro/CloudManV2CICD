@@ -39,24 +39,24 @@ data "aws_cloudfront_cache_policy" "policy_cachingoptimized" {
 
 ### CATEGORY: IAM ###
 
-resource "aws_acm_certificate" "Certificate1-dev" {
-  domain_name                       = "v2.cloudman.pro"
+resource "aws_acm_certificate" "CloudManV2-dev" {
+  domain_name                       = "dev.v2.cloudman.pro"
   key_algorithm                     = "RSA_2048"
   validation_method                 = "DNS"
   options {
     certificate_transparency_logging_preference = "ENABLED"
   }
   tags                              = {
-    "Name" = "Certificate1-dev"
+    "Name" = "CloudManV2-dev"
     "State" = "Main-dev"
     "CloudmanUser" = "GlobalUserName"
     "Stage" = "dev"
   }
 }
 
-resource "aws_acm_certificate_validation" "Validation_Certificate1-dev" {
-  certificate_arn                   = aws_acm_certificate.Certificate1-dev.arn
-  validation_record_fqdns           = [for record in aws_route53_record.Route53_Record_Certificate1-dev : record.fqdn]
+resource "aws_acm_certificate_validation" "Validation_CloudManV2-dev" {
+  certificate_arn                   = aws_acm_certificate.CloudManV2-dev.arn
+  validation_record_fqdns           = [for record in aws_route53_record.Route53_Record_CloudManV2-dev : record.fqdn]
 }
 
 
@@ -64,8 +64,8 @@ resource "aws_acm_certificate_validation" "Validation_Certificate1-dev" {
 
 ### CATEGORY: NETWORK ###
 
-resource "aws_route53_record" "Route53_Record_Certificate1-dev" {
-  for_each                          = {for dvo in aws_acm_certificate.Certificate1-dev.domain_validation_options : dvo.domain_name => {
+resource "aws_route53_record" "Route53_Record_CloudManV2-dev" {
+  for_each                          = {for dvo in aws_acm_certificate.CloudManV2-dev.domain_validation_options : dvo.domain_name => {
       name   = dvo.resource_record_name,
       record = dvo.resource_record_value,
       type   = dvo.resource_record_type
@@ -78,8 +78,8 @@ resource "aws_route53_record" "Route53_Record_Certificate1-dev" {
   type                              = "${each.value.type}"
 }
 
-resource "aws_route53_record" "alias_a__to_MainCloudManV2-dev" {
-  name                              = "v2.cloudman.pro"
+resource "aws_route53_record" "alias_a_dev-dev_to_MainCloudManV2-dev" {
+  name                              = "dev.v2.cloudman.pro"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "A"
   alias {
@@ -89,8 +89,8 @@ resource "aws_route53_record" "alias_a__to_MainCloudManV2-dev" {
   }
 }
 
-resource "aws_route53_record" "alias_aaaa__to_MainCloudManV2-dev" {
-  name                              = "v2.cloudman.pro"
+resource "aws_route53_record" "alias_aaaa_dev-dev_to_MainCloudManV2-dev" {
+  name                              = "dev.v2.cloudman.pro"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "AAAA"
   alias {
@@ -101,7 +101,7 @@ resource "aws_route53_record" "alias_aaaa__to_MainCloudManV2-dev" {
 }
 
 resource "aws_cloudfront_distribution" "MainCloudManV2-dev" {
-  aliases                           = ["v2.cloudman.pro"]
+  aliases                           = ["dev.v2.cloudman.pro"]
   default_root_object               = "index.html"
   enabled                           = true
   http_version                      = "http2and3"
@@ -131,7 +131,7 @@ resource "aws_cloudfront_distribution" "MainCloudManV2-dev" {
     "Stage" = "dev"
   }
   viewer_certificate {
-    acm_certificate_arn             = aws_acm_certificate.Certificate1-dev.arn
+    acm_certificate_arn             = aws_acm_certificate.CloudManV2-dev.arn
     cloudfront_default_certificate  = false
     minimum_protocol_version        = "TLSv1.2_2021"
     ssl_support_method              = "sni-only"
