@@ -95,6 +95,21 @@ resource "aws_iam_policy" "lambda_function_GetStageV2_st_CDNMain" {
   policy                            = data.aws_iam_policy_document.lambda_function_GetStageV2_st_CDNMain_doc.json
 }
 
+data "aws_iam_policy_document" "lambda_function_RedirectorV2_st_CDNMain_doc" {
+  statement {
+    sid                             = "AllowWriteLogs"
+    effect                          = "Allow"
+    actions                         = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
+    resources                       = ["${aws_cloudwatch_log_group.RedirectorV2.arn}:*"]
+  }
+}
+
+resource "aws_iam_policy" "lambda_function_RedirectorV2_st_CDNMain" {
+  name                              = "lambda_function_RedirectorV2_st_CDNMain"
+  description                       = "Access Policy for RedirectorV2"
+  policy                            = data.aws_iam_policy_document.lambda_function_RedirectorV2_st_CDNMain_doc.json
+}
+
 resource "aws_iam_role" "role_lambda_GetStageV2" {
   name                              = "role_lambda_GetStageV2"
   assume_role_policy                = jsonencode({
@@ -125,7 +140,7 @@ resource "aws_iam_role" "role_lambda_RedirectorV2" {
       "Action": "sts:AssumeRole",
       "Effect": "Allow",
       "Principal": {
-        "Service": "lambda.amazonaws.com"
+        "Service": ["lambda.amazonaws.com", "edgelambda.amazonaws.com"]
       }
     }
   ]
@@ -140,6 +155,11 @@ resource "aws_iam_role" "role_lambda_RedirectorV2" {
 resource "aws_iam_role_policy_attachment" "lambda_function_GetStageV2_st_CDNMain_attach" {
   policy_arn                        = aws_iam_policy.lambda_function_GetStageV2_st_CDNMain.arn
   role                              = aws_iam_role.role_lambda_GetStageV2.name
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_function_RedirectorV2_st_CDNMain_attach" {
+  policy_arn                        = aws_iam_policy.lambda_function_RedirectorV2_st_CDNMain.arn
+  role                              = aws_iam_role.role_lambda_RedirectorV2.name
 }
 
 
@@ -338,7 +358,7 @@ resource "aws_cloudfront_distribution" "AuthCloudManV2" {
     lambda_function_association {
       event_type                    = "origin-request"
       include_body                  = false
-      lambda_arn                    = aws_lambda_function.RedirectorV2.arn
+      lambda_arn                    = aws_lambda_function.RedirectorV2.qualified_arn
     }
   }
   ordered_cache_behavior {
@@ -533,6 +553,7 @@ resource "aws_lambda_function" "RedirectorV2" {
     "State" = "CDNMain"
     "CloudmanUser" = "GlobalUserName"
   }
+  depends_on                        = [aws_iam_role_policy_attachment.lambda_function_RedirectorV2_st_CDNMain_attach]
 }
 
 resource "aws_lambda_permission" "perm_AuthCloudManV2_to_GetStageV2_openapi" {
@@ -555,6 +576,18 @@ resource "aws_cloudwatch_log_group" "GetStageV2" {
   skip_destroy                      = false
   tags                              = {
     "Name" = "GetStageV2"
+    "State" = "CDNMain"
+    "CloudmanUser" = "GlobalUserName"
+  }
+}
+
+resource "aws_cloudwatch_log_group" "RedirectorV2" {
+  name                              = "/aws/lambda/RedirectorV2"
+  log_group_class                   = "STANDARD"
+  retention_in_days                 = 1
+  skip_destroy                      = false
+  tags                              = {
+    "Name" = "RedirectorV2"
     "State" = "CDNMain"
     "CloudmanUser" = "GlobalUserName"
   }
