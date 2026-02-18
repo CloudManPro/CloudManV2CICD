@@ -2,6 +2,10 @@ terraform {
   required_version = ">= 1.0.0"
 
   required_providers {
+    archive = {
+      source  = "hashicorp/archive"
+      version = "~> 2.4.2"
+    }
     aws = {
       source  = "hashicorp/aws"
       version = "~> 5.0"
@@ -34,10 +38,121 @@ data "aws_cloudfront_cache_policy" "policy_cachingoptimized" {
   name                              = "Managed-CachingOptimized"
 }
 
+data "aws_cloudfront_response_headers_policy" "policy_securityheaderspolicy" {
+  name                              = "Managed-SecurityHeadersPolicy"
+}
+
+
+
+
+### EXTERNAL REFERENCES ###
+
+data "aws_s3_bucket" "s3-cloudmanv2-files" {
+  bucket                            = "s3-cloudmanv2-files"
+}
+
+data "aws_dynamodb_table" "CloudManV2" {
+  name                              = "CloudManV2"
+}
+
 
 
 
 ### CATEGORY: IAM ###
+
+data "aws_iam_policy_document" "lambda_function_DBAccessV2_st_Main_doc" {
+  statement {
+    sid                             = "AllowWriteLogs"
+    effect                          = "Allow"
+    actions                         = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
+    resources                       = ["${aws_cloudwatch_log_group.DBAccessV2.arn}:*"]
+  }
+  statement {
+    sid                             = "AllowDynamoDBCRUD"
+    effect                          = "Allow"
+    actions                         = ["dynamodb:DeleteItem", "dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:Query", "dynamodb:UpdateItem"]
+    resources                       = ["${data.aws_dynamodb_table.CloudManV2.arn}", "${data.aws_dynamodb_table.CloudManV2.arn}/*"]
+  }
+  statement {
+    sid                             = "AllowBucketLevelActions"
+    effect                          = "Allow"
+    actions                         = ["s3:DeleteObject", "s3:GetBucketLocation", "s3:GetObject", "s3:ListBucket", "s3:PutObject"]
+    resources                       = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "lambda_function_DBAccessV2_st_Main" {
+  name                              = "lambda_function_DBAccessV2_st_Main"
+  description                       = "Access Policy for DBAccessV2"
+  policy                            = data.aws_iam_policy_document.lambda_function_DBAccessV2_st_Main_doc.json
+}
+
+data "aws_iam_policy_document" "lambda_function_HCLAWSV2_st_Main_doc" {
+  statement {
+    sid                             = "AllowWriteLogs"
+    effect                          = "Allow"
+    actions                         = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
+    resources                       = ["${aws_cloudwatch_log_group.HCLAWSV2.arn}:*"]
+  }
+}
+
+resource "aws_iam_policy" "lambda_function_HCLAWSV2_st_Main" {
+  name                              = "lambda_function_HCLAWSV2_st_Main"
+  description                       = "Access Policy for HCLAWSV2"
+  policy                            = data.aws_iam_policy_document.lambda_function_HCLAWSV2_st_Main_doc.json
+}
+
+resource "aws_iam_role" "role_lambda_DBAccessV2" {
+  name                              = "role_lambda_DBAccessV2"
+  assume_role_policy                = jsonencode({
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      }
+    }
+  ]
+})
+  tags                              = {
+    "Name" = "role_lambda_DBAccessV2"
+    "State" = "Main"
+    "CloudmanUser" = "GlobalUserName"
+  }
+}
+
+resource "aws_iam_role" "role_lambda_HCLAWSV2" {
+  name                              = "role_lambda_HCLAWSV2"
+  assume_role_policy                = jsonencode({
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      }
+    }
+  ]
+})
+  tags                              = {
+    "Name" = "role_lambda_HCLAWSV2"
+    "State" = "Main"
+    "CloudmanUser" = "GlobalUserName"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_function_DBAccessV2_st_Main_attach" {
+  policy_arn                        = aws_iam_policy.lambda_function_DBAccessV2_st_Main.arn
+  role                              = aws_iam_role.role_lambda_DBAccessV2.name
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_function_HCLAWSV2_st_Main_attach" {
+  policy_arn                        = aws_iam_policy.lambda_function_HCLAWSV2_st_Main.arn
+  role                              = aws_iam_role.role_lambda_HCLAWSV2.name
+}
 
 resource "aws_acm_certificate" "CloudManV2Dev" {
   domain_name                       = "dev.v2.cloudman.pro"
@@ -99,6 +214,157 @@ resource "aws_route53_record" "alias_aaaa_dev_to_MainCloudManV2" {
   }
 }
 
+resource "aws_api_gateway_deployment" "Deploy" {
+  rest_api_id                       = aws_api_gateway_rest_api.RestAPI.id
+  lifecycle {
+    create_before_destroy           = true
+  }
+  triggers                          = {
+    "redeployment" = sha1(join(",", [jsonencode(aws_api_gateway_rest_api.RestAPI.body)]))
+  }
+}
+
+locals {
+  api_config_RestAPI = [
+    {
+      path             = "/dbaccessv2"
+      uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:DBAccessV2/invocations"
+      type             = "aws_proxy"
+      methods          = ["post"]
+      enable_mock      = true
+      credentials      = null
+      requestTemplates = null
+      integ_method     = "POST"
+      parameters       = null
+      integ_req_params = null
+    },
+    {
+      path             = "/hclawsv2"
+      uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:HCLAWSV2/invocations"
+      type             = "aws_proxy"
+      methods          = ["post"]
+      enable_mock      = true
+      credentials      = null
+      requestTemplates = null
+      integ_method     = "POST"
+      parameters       = null
+      integ_req_params = null
+    },
+  ]
+  openapi_spec_RestAPI = {
+        openapi = "3.0.1"
+        info = {
+        title   = "RestAPI"
+        version = "1.0"
+        }
+        
+        
+        paths = {
+        for path in distinct([for i in local.api_config_RestAPI : i.path]) :
+        path => merge([
+            for item in local.api_config_RestAPI :
+            merge(
+            {
+                for method in item.methods :
+                method => merge(
+                {
+                    "responses" = {
+                    "200" = {
+                        description = "Successful operation"
+                        # Definimos que o header pode existir, mas não forçamos valor aqui
+                        headers = {
+                        "Access-Control-Allow-Origin" = { type = "string" }
+                        "Set-Cookie" = { type = "string" }
+                        }
+                    }
+                    }
+                    "x-amazon-apigateway-integration" = merge(
+                    {
+                        uri        = item.uri
+                        httpMethod = item.integ_method == "MATCH" ? upper(method) : item.integ_method
+                        type       = item.type
+                    },
+                    # ALTERAÇÃO AQUI: Só adicionamos o bloco 'responses' se NÃO for aws_proxy.
+                    # No modo aws_proxy, a Lambda é responsável por retornar todos os headers.
+                    item.type == "aws_proxy" ? {} : {
+                        responses  = {
+                        "default" = {
+                            statusCode = "200"
+                            responseParameters = {
+                            "method.response.header.Access-Control-Allow-Origin" = "'*'"
+                            }
+                            responseTemplates = {
+                            "application/json" = "$input.body"
+                            }
+                        }
+                        }
+                    },
+                    item.credentials != null ? { credentials = item.credentials } : {},
+                    item.requestTemplates != null ? { requestTemplates = item.requestTemplates } : {},
+                    item.integ_req_params != null ? { requestParameters = item.integ_req_params } : {}
+                    )
+                },
+                item.parameters != null ? { parameters = item.parameters } : {}
+                )
+                if method != "options"
+            },
+            item.enable_mock ? { "options" = {
+          summary  = "CORS support"
+          consumes = ["application/json"]
+          produces = ["application/json"]
+          responses = {
+            "200" = {
+              description = "200 response"
+              headers = {
+                "Access-Control-Allow-Origin"  = { type = "string" }
+                "Access-Control-Allow-Methods" = { type = "string" }
+                "Access-Control-Allow-Headers" = { type = "string" }
+              }
+            }
+          }
+          "x-amazon-apigateway-integration" = {
+            type = "mock"
+            requestTemplates = { "application/json" = "{\"statusCode\": 200}" }
+            responses = {
+              default = {
+                statusCode = "200"
+                responseParameters = {
+                  "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
+                  "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+                  "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+                }
+              }
+            }
+          }
+        } } : {}
+            )
+            if item.path == path
+        ]...)
+        }
+    }
+}
+
+resource "aws_api_gateway_rest_api" "RestAPI" {
+  name                              = "RestAPI"
+  body                              = jsonencode(local.openapi_spec_RestAPI)
+  tags                              = {
+    "Name" = "RestAPI"
+    "State" = "Main"
+    "CloudmanUser" = "GlobalUserName"
+  }
+}
+
+resource "aws_api_gateway_stage" "Stage" {
+  deployment_id                     = aws_api_gateway_deployment.Deploy.id
+  rest_api_id                       = aws_api_gateway_rest_api.RestAPI.id
+  stage_name                        = "prod"
+  tags                              = {
+    "Name" = "Stage"
+    "State" = "Main"
+    "CloudmanUser" = "GlobalUserName"
+  }
+}
+
 resource "aws_cloudfront_distribution" "MainCloudManV2" {
   aliases                           = ["dev.v2.cloudman.pro"]
   default_root_object               = "index.html"
@@ -113,10 +379,28 @@ resource "aws_cloudfront_distribution" "MainCloudManV2" {
     cached_methods                  = ["GET", "HEAD", "OPTIONS"]
     viewer_protocol_policy          = "redirect-to-https"
   }
+  ordered_cache_behavior {
+    cache_policy_id                 = data.aws_cloudfront_cache_policy.policy_cachingoptimized.id
+    response_headers_policy_id      = data.aws_cloudfront_response_headers_policy.policy_securityheaderspolicy.id
+    target_origin_id                = "ordered_Origin"
+    allowed_methods                 = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods                  = ["GET", "HEAD", "OPTIONS"]
+    path_pattern                    = "/origin/*"
+    viewer_protocol_policy          = "redirect-to-https"
+  }
   origin {
     domain_name                     = aws_s3_bucket.s3-cloudmanv2-main-bucket.bucket_regional_domain_name
     origin_access_control_id        = aws_cloudfront_origin_access_control.oac_s3-cloudmanv2-main-bucket.id
     origin_id                       = "default_MainCloudManV2"
+  }
+  origin {
+    domain_name                     = "${aws_api_gateway_rest_api.RestAPI.id}.execute-api.${data.aws_region.current.name}.amazonaws.com"
+    origin_id                       = "ordered_Origin"
+    custom_origin_config {
+      http_port                     = 80
+      https_port                    = 443
+      origin_ssl_protocols          = ["TLSv1.2"]
+    }
   }
   restrictions {
     geo_restriction {
@@ -211,6 +495,125 @@ resource "aws_s3_bucket_versioning" "s3-cloudmanv2-main-bucket_versioning" {
   versioning_configuration {
     mfa_delete                      = "Disabled"
     status                          = "Suspended"
+  }
+}
+
+
+
+
+### CATEGORY: COMPUTE ###
+
+data "archive_file" "archive_CloudManMainV2_DBAccessV2" {
+  output_path                       = "${path.module}/CloudManMainV2_DBAccessV2.zip"
+  source_dir                        = "${path.module}/.external_modules/CloudManMainV2/LambdaFiles/DBAccessV2"
+  type                              = "zip"
+}
+
+resource "aws_lambda_function" "DBAccessV2" {
+  function_name                     = "DBAccessV2"
+  architectures                     = ["arm64"]
+  filename                          = "${data.archive_file.archive_CloudManMainV2_DBAccessV2.output_path}"
+  handler                           = "DBAccessV2.lambda_handler"
+  memory_size                       = 1024
+  publish                           = false
+  reserved_concurrent_executions    = -1
+  role                              = aws_iam_role.role_lambda_DBAccessV2.arn
+  runtime                           = "python3.13"
+  source_code_hash                  = "${data.archive_file.archive_CloudManMainV2_DBAccessV2.output_base64sha256}"
+  timeout                           = 3
+  environment {
+    variables                       = {
+    "AWS_DYNAMODB_TABLE_TARGET_NAME_0" = "CloudManV2"
+    "AWS_S3_BUCKET_TARGET_NAME_0" = "s3-cloudmanv2-files"
+    "REGION" = data.aws_region.current.name
+    "ACCOUNT" = data.aws_caller_identity.current.account_id
+    "NAME" = "DBAccessV2"
+    "AWS_S3_BUCKET_TARGET_ARN_0" = data.aws_s3_bucket.s3-cloudmanv2-files.arn
+  }
+  }
+  tags                              = {
+    "Name" = "DBAccessV2"
+    "State" = "Main"
+    "CloudmanUser" = "GlobalUserName"
+  }
+  depends_on                        = [aws_iam_role_policy_attachment.lambda_function_DBAccessV2_st_Main_attach]
+}
+
+data "archive_file" "archive_CloudManMainV2_HCLAWSV2" {
+  output_path                       = "${path.module}/CloudManMainV2_HCLAWSV2.zip"
+  source_dir                        = "${path.module}/.external_modules/CloudManMainV2/LambdaFiles/HCLTOAWSV2"
+  type                              = "zip"
+}
+
+resource "aws_lambda_function" "HCLAWSV2" {
+  function_name                     = "HCLAWSV2"
+  architectures                     = ["arm64"]
+  filename                          = "${data.archive_file.archive_CloudManMainV2_HCLAWSV2.output_path}"
+  handler                           = "HCLTOAWSV2.lambda_handler"
+  memory_size                       = 1024
+  publish                           = false
+  reserved_concurrent_executions    = -1
+  role                              = aws_iam_role.role_lambda_HCLAWSV2.arn
+  runtime                           = "python3.13"
+  source_code_hash                  = "${data.archive_file.archive_CloudManMainV2_HCLAWSV2.output_base64sha256}"
+  timeout                           = 5
+  environment {
+    variables                       = {
+    "REGION" = data.aws_region.current.name
+    "ACCOUNT" = data.aws_caller_identity.current.account_id
+    "NAME" = "HCLAWSV2"
+  }
+  }
+  tags                              = {
+    "Name" = "HCLAWSV2"
+    "State" = "Main"
+    "CloudmanUser" = "GlobalUserName"
+  }
+  depends_on                        = [aws_iam_role_policy_attachment.lambda_function_HCLAWSV2_st_Main_attach]
+}
+
+resource "aws_lambda_permission" "perm_RestAPI_to_DBAccessV2_openapi" {
+  function_name                     = aws_lambda_function.DBAccessV2.function_name
+  statement_id                      = "perm_RestAPI_to_DBAccessV2_openapi"
+  principal                         = "apigateway.amazonaws.com"
+  action                            = "lambda:InvokeFunction"
+  source_arn                        = "${aws_api_gateway_rest_api.RestAPI.execution_arn}/*/POST/dbaccessv2"
+}
+
+resource "aws_lambda_permission" "perm_RestAPI_to_HCLAWSV2_openapi" {
+  function_name                     = aws_lambda_function.HCLAWSV2.function_name
+  statement_id                      = "perm_RestAPI_to_HCLAWSV2_openapi"
+  principal                         = "apigateway.amazonaws.com"
+  action                            = "lambda:InvokeFunction"
+  source_arn                        = "${aws_api_gateway_rest_api.RestAPI.execution_arn}/*/POST/hclawsv2"
+}
+
+
+
+
+### CATEGORY: MONITORING ###
+
+resource "aws_cloudwatch_log_group" "DBAccessV2" {
+  name                              = "/aws/lambda/DBAccessV2"
+  log_group_class                   = "STANDARD"
+  retention_in_days                 = 1
+  skip_destroy                      = false
+  tags                              = {
+    "Name" = "DBAccessV2"
+    "State" = "Main"
+    "CloudmanUser" = "GlobalUserName"
+  }
+}
+
+resource "aws_cloudwatch_log_group" "HCLAWSV2" {
+  name                              = "/aws/lambda/HCLAWSV2"
+  log_group_class                   = "STANDARD"
+  retention_in_days                 = 1
+  skip_destroy                      = false
+  tags                              = {
+    "Name" = "HCLAWSV2"
+    "State" = "Main"
+    "CloudmanUser" = "GlobalUserName"
   }
 }
 
