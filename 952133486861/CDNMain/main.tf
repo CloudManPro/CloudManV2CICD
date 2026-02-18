@@ -34,10 +34,6 @@ data "aws_route53_zone" "Cloudman" {
   name                              = "cloudman.pro"
 }
 
-data "aws_cloudfront_cache_policy" "policy_cachingoptimized" {
-  name                              = "Managed-CachingOptimized"
-}
-
 data "aws_cloudfront_origin_request_policy" "policy_cors_s3origin" {
   name                              = "Managed-CORS-S3Origin"
 }
@@ -48,6 +44,10 @@ data "aws_cloudfront_cache_policy" "policy_cachingdisabled" {
 
 data "aws_cloudfront_response_headers_policy" "policy_simplecors" {
   name                              = "Managed-SimpleCORS"
+}
+
+data "aws_cloudfront_cache_policy" "policy_cachingoptimized" {
+  name                              = "Managed-CachingOptimized"
 }
 
 
@@ -100,7 +100,7 @@ data "aws_iam_policy_document" "lambda_function_RedirectorV2_st_CDNMain_doc" {
     sid                             = "AllowWriteLogs"
     effect                          = "Allow"
     actions                         = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
-    resources = ["arn:aws:logs:*:*:log-group:/aws/lambda/us-east-1.RedirectorV2:*"]
+    resources                       = ["${aws_cloudwatch_log_group.RedirectorV2.arn}:*"]
   }
 }
 
@@ -350,11 +350,21 @@ resource "aws_cloudfront_distribution" "AuthCloudManV2" {
   is_ipv6_enabled                   = true
   price_class                       = "PriceClass_All"
   default_cache_behavior {
-    cache_policy_id                 = data.aws_cloudfront_cache_policy.policy_cachingoptimized.id
     target_origin_id                = "default_AuthCloudManV2"
     allowed_methods                 = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods                  = ["GET", "HEAD", "OPTIONS"]
+    compress                        = true
+    default_ttl                     = 86400
+    max_ttl                         = 31536000
+    min_ttl                         = 0
     viewer_protocol_policy          = "redirect-to-https"
+    forwarded_values {
+      query_string                  = false
+      cookies {
+        forward                     = "whitelist"
+        whitelisted_names           = ["stage"]
+      }
+    }
     lambda_function_association {
       event_type                    = "origin-request"
       include_body                  = false
@@ -539,6 +549,7 @@ resource "aws_lambda_function" "RedirectorV2" {
   reserved_concurrent_executions    = -1
   role                              = aws_iam_role.role_lambda_RedirectorV2.arn
   runtime                           = "python3.13"
+  skip_destroy                      = true
   source_code_hash                  = "${data.archive_file.archive_CloudManMainV2_RedirectorV2.output_base64sha256}"
   timeout                           = 30
   tags                              = {
