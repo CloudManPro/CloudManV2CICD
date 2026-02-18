@@ -541,13 +541,6 @@ resource "aws_lambda_function" "RedirectorV2" {
   runtime                           = "python3.13"
   source_code_hash                  = "${data.archive_file.archive_CloudManMainV2_RedirectorV2.output_base64sha256}"
   timeout                           = 30
-  environment {
-    variables                       = {
-    "REGION" = data.aws_region.current.name
-    "ACCOUNT" = data.aws_caller_identity.current.account_id
-    "NAME" = "RedirectorV2"
-  }
-  }
   tags                              = {
     "Name" = "RedirectorV2"
     "State" = "CDNMain"
