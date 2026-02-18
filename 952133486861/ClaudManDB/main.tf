@@ -28,7 +28,7 @@ data "aws_region" "current" {}
 
 resource "aws_s3_bucket" "s3-cloudmanv2-files" {
   bucket                            = "s3-cloudmanv2-files"
-  force_destroy                     = false
+  force_destroy                     = true
   object_lock_enabled               = false
   tags                              = {
     "Name" = "s3-cloudmanv2-files"
@@ -72,11 +72,20 @@ resource "aws_dynamodb_table" "CloudManV2" {
   name                              = "CloudManV2"
   billing_mode                      = "PROVISIONED"
   deletion_protection_enabled       = false
-  hash_key                          = "ID"
+  hash_key                          = "Partition"
+  range_key                         = "Sort"
   read_capacity                     = 1
   stream_enabled                    = false
   table_class                       = "STANDARD"
   write_capacity                    = 1
+  attribute {
+    name                            = "Partition"
+    type                            = "S"
+  }
+  attribute {
+    name                            = "Sort"
+    type                            = "S"
+  }
   tags                              = {
     "Name" = "CloudManV2"
     "State" = "ClaudManDB"
