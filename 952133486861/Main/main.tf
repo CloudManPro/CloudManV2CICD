@@ -214,23 +214,23 @@ resource "aws_route53_record" "alias_aaaa_dev_to_MainCloudManV2" {
   }
 }
 
-resource "aws_api_gateway_deployment" "Deploy" {
-  rest_api_id                       = aws_api_gateway_rest_api.RestAPI.id
+resource "aws_api_gateway_deployment" "APICloudManV2" {
+  rest_api_id                       = aws_api_gateway_rest_api.APICloudManV2.id
   lifecycle {
     create_before_destroy           = true
   }
   triggers                          = {
-    "redeployment" = sha1(join(",", [jsonencode(aws_api_gateway_rest_api.RestAPI.body)]))
+    "redeployment" = sha1(join(",", [jsonencode(aws_api_gateway_rest_api.APICloudManV2.body)]))
   }
 }
 
 locals {
-  api_config_RestAPI = [
+  api_config_APICloudManV2 = [
     {
       path             = "/dbaccessv2"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:DBAccessV2/invocations"
       type             = "aws_proxy"
-      methods          = ["post"]
+      methods          = ["options", "post"]
       enable_mock      = true
       credentials      = null
       requestTemplates = null
@@ -242,7 +242,7 @@ locals {
       path             = "/hclawsv2"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:HCLAWSV2/invocations"
       type             = "aws_proxy"
-      methods          = ["post"]
+      methods          = ["options", "post"]
       enable_mock      = true
       credentials      = null
       requestTemplates = null
@@ -251,18 +251,18 @@ locals {
       integ_req_params = null
     },
   ]
-  openapi_spec_RestAPI = {
+  openapi_spec_APICloudManV2 = {
         openapi = "3.0.1"
         info = {
-        title   = "RestAPI"
+        title   = "APICloudManV2"
         version = "1.0"
         }
         
         
         paths = {
-        for path in distinct([for i in local.api_config_RestAPI : i.path]) :
+        for path in distinct([for i in local.api_config_APICloudManV2 : i.path]) :
         path => merge([
-            for item in local.api_config_RestAPI :
+            for item in local.api_config_APICloudManV2 :
             merge(
             {
                 for method in item.methods :
@@ -329,7 +329,7 @@ locals {
               default = {
                 statusCode = "200"
                 responseParameters = {
-                  "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
+                  "method.response.header.Access-Control-Allow-Methods" = "'OPTIONS,POST,OPTIONS'"
                   "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
                   "method.response.header.Access-Control-Allow-Origin"  = "'*'"
                 }
@@ -344,22 +344,26 @@ locals {
     }
 }
 
-resource "aws_api_gateway_rest_api" "RestAPI" {
-  name                              = "RestAPI"
-  body                              = jsonencode(local.openapi_spec_RestAPI)
+resource "aws_api_gateway_rest_api" "APICloudManV2" {
+  name                              = "APICloudManV2"
+  body                              = jsonencode(local.openapi_spec_APICloudManV2)
+  endpoint_configuration {
+    ip_address_type                 = "dualstack"
+    types                           = ["REGIONAL"]
+  }
   tags                              = {
-    "Name" = "RestAPI"
+    "Name" = "APICloudManV2"
     "State" = "Main"
     "CloudmanUser" = "GlobalUserName"
   }
 }
 
-resource "aws_api_gateway_stage" "Stage" {
-  deployment_id                     = aws_api_gateway_deployment.Deploy.id
-  rest_api_id                       = aws_api_gateway_rest_api.RestAPI.id
-  stage_name                        = "prod"
+resource "aws_api_gateway_stage" "st" {
+  deployment_id                     = aws_api_gateway_deployment.APICloudManV2.id
+  rest_api_id                       = aws_api_gateway_rest_api.APICloudManV2.id
+  stage_name                        = "st"
   tags                              = {
-    "Name" = "Stage"
+    "Name" = "st"
     "State" = "Main"
     "CloudmanUser" = "GlobalUserName"
   }
@@ -382,10 +386,10 @@ resource "aws_cloudfront_distribution" "MainCloudManV2" {
   ordered_cache_behavior {
     cache_policy_id                 = data.aws_cloudfront_cache_policy.policy_cachingoptimized.id
     response_headers_policy_id      = data.aws_cloudfront_response_headers_policy.policy_securityheaderspolicy.id
-    target_origin_id                = "ordered_Origin"
+    target_origin_id                = "ordered_APICloudManV2"
     allowed_methods                 = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods                  = ["GET", "HEAD", "OPTIONS"]
-    path_pattern                    = "/origin/*"
+    path_pattern                    = "/api-cloud-man-v2/*"
     viewer_protocol_policy          = "redirect-to-https"
   }
   origin {
@@ -394,11 +398,12 @@ resource "aws_cloudfront_distribution" "MainCloudManV2" {
     origin_id                       = "default_MainCloudManV2"
   }
   origin {
-    domain_name                     = "${aws_api_gateway_rest_api.RestAPI.id}.execute-api.${data.aws_region.current.name}.amazonaws.com"
-    origin_id                       = "ordered_Origin"
+    domain_name                     = "${aws_api_gateway_rest_api.APICloudManV2.id}.execute-api.${data.aws_region.current.name}.amazonaws.com"
+    origin_id                       = "ordered_APICloudManV2"
     custom_origin_config {
       http_port                     = 80
       https_port                    = 443
+      origin_protocol_policy        = "https-only"
       origin_ssl_protocols          = ["TLSv1.2"]
     }
   }
@@ -572,20 +577,20 @@ resource "aws_lambda_function" "HCLAWSV2" {
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_HCLAWSV2_st_Main_attach]
 }
 
-resource "aws_lambda_permission" "perm_RestAPI_to_DBAccessV2_openapi" {
+resource "aws_lambda_permission" "perm_APICloudManV2_to_DBAccessV2_openapi" {
   function_name                     = aws_lambda_function.DBAccessV2.function_name
-  statement_id                      = "perm_RestAPI_to_DBAccessV2_openapi"
+  statement_id                      = "perm_APICloudManV2_to_DBAccessV2_openapi"
   principal                         = "apigateway.amazonaws.com"
   action                            = "lambda:InvokeFunction"
-  source_arn                        = "${aws_api_gateway_rest_api.RestAPI.execution_arn}/*/POST/dbaccessv2"
+  source_arn                        = "${aws_api_gateway_rest_api.APICloudManV2.execution_arn}/*/*/dbaccessv2"
 }
 
-resource "aws_lambda_permission" "perm_RestAPI_to_HCLAWSV2_openapi" {
+resource "aws_lambda_permission" "perm_APICloudManV2_to_HCLAWSV2_openapi" {
   function_name                     = aws_lambda_function.HCLAWSV2.function_name
-  statement_id                      = "perm_RestAPI_to_HCLAWSV2_openapi"
+  statement_id                      = "perm_APICloudManV2_to_HCLAWSV2_openapi"
   principal                         = "apigateway.amazonaws.com"
   action                            = "lambda:InvokeFunction"
-  source_arn                        = "${aws_api_gateway_rest_api.RestAPI.execution_arn}/*/POST/hclawsv2"
+  source_arn                        = "${aws_api_gateway_rest_api.APICloudManV2.execution_arn}/*/*/hclawsv2"
 }
 
 
