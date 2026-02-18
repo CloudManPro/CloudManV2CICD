@@ -531,7 +531,7 @@ data "archive_file" "archive_CloudManMainV2_RedirectorV2" {
 
 resource "aws_lambda_function" "RedirectorV2" {
   function_name                     = "RedirectorV2"
-  architectures                     = ["arm64"]
+  architectures                     = ["x86_64"]
   filename                          = "${data.archive_file.archive_CloudManMainV2_RedirectorV2.output_path}"
   handler                           = "Redirector.lambda_handler"
   memory_size                       = 3008
