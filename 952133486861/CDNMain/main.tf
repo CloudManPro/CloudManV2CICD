@@ -430,17 +430,6 @@ resource "aws_cloudfront_origin_access_control" "oac_s3-cloudmanv2-auth-bucket" 
 
 ### CATEGORY: STORAGE ###
 
-resource "aws_s3_bucket" "my-bucket" {
-  bucket                            = "my-bucket"
-  force_destroy                     = false
-  object_lock_enabled               = false
-  tags                              = {
-    "Name" = "my-bucket"
-    "State" = "CDNMain"
-    "CloudmanUser" = "GlobalUserName"
-  }
-}
-
 resource "aws_s3_bucket" "s3-cloudmanv2-auth-bucket" {
   bucket                            = "s3-cloudmanv2-auth-bucket"
   force_destroy                     = true
@@ -449,13 +438,6 @@ resource "aws_s3_bucket" "s3-cloudmanv2-auth-bucket" {
     "Name" = "s3-cloudmanv2-auth-bucket"
     "State" = "CDNMain"
     "CloudmanUser" = "GlobalUserName"
-  }
-}
-
-resource "aws_s3_bucket_ownership_controls" "my-bucket_controls" {
-  bucket                            = aws_s3_bucket.my-bucket.id
-  rule {
-    object_ownership                = "BucketOwnerEnforced"
   }
 }
 
@@ -489,14 +471,6 @@ resource "aws_s3_bucket_policy" "aws_s3_bucket_policy_s3-cloudmanv2-auth-bucket_
   policy                            = data.aws_iam_policy_document.aws_s3_bucket_policy_s3-cloudmanv2-auth-bucket_st_CDNMain_doc.json
 }
 
-resource "aws_s3_bucket_public_access_block" "my-bucket_block" {
-  block_public_acls                 = true
-  block_public_policy               = true
-  bucket                            = aws_s3_bucket.my-bucket.id
-  ignore_public_acls                = true
-  restrict_public_buckets           = true
-}
-
 resource "aws_s3_bucket_public_access_block" "s3-cloudmanv2-auth-bucket_block" {
   block_public_acls                 = true
   block_public_policy               = true
@@ -505,27 +479,11 @@ resource "aws_s3_bucket_public_access_block" "s3-cloudmanv2-auth-bucket_block" {
   restrict_public_buckets           = true
 }
 
-resource "aws_s3_bucket_server_side_encryption_configuration" "my-bucket_configuration" {
-  bucket                            = aws_s3_bucket.my-bucket.id
-  expected_bucket_owner             = data.aws_caller_identity.current.account_id
-  rule {
-    bucket_key_enabled              = true
-  }
-}
-
 resource "aws_s3_bucket_server_side_encryption_configuration" "s3-cloudmanv2-auth-bucket_configuration" {
   bucket                            = aws_s3_bucket.s3-cloudmanv2-auth-bucket.id
   expected_bucket_owner             = data.aws_caller_identity.current.account_id
   rule {
     bucket_key_enabled              = true
-  }
-}
-
-resource "aws_s3_bucket_versioning" "my-bucket_versioning" {
-  bucket                            = aws_s3_bucket.my-bucket.id
-  versioning_configuration {
-    mfa_delete                      = "Disabled"
-    status                          = "Suspended"
   }
 }
 
