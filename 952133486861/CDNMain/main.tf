@@ -34,18 +34,6 @@ data "aws_route53_zone" "Cloudman" {
   name                              = "cloudman.pro"
 }
 
-data "aws_cloudfront_origin_request_policy" "policy_cors_s3origin" {
-  name                              = "Managed-CORS-S3Origin"
-}
-
-data "aws_cloudfront_cache_policy" "policy_cachingdisabled" {
-  name                              = "Managed-CachingDisabled"
-}
-
-data "aws_cloudfront_response_headers_policy" "policy_simplecors" {
-  name                              = "Managed-SimpleCORS"
-}
-
 data "aws_cloudfront_cache_policy" "policy_cachingoptimized" {
   name                              = "Managed-CachingOptimized"
 }
@@ -215,76 +203,80 @@ locals {
     },
   ]
   openapi_spec_AuthCloudManV2 = {
-    openapi = "3.0.1"
-    info = {
-      title   = "AuthCloudManV2"
-      version = "1.0"
-    }
-    
-    components = {
-      securitySchemes = {
-        "AuthCloudManV2_CognitoAuth" = {
-          type = "apiKey"
-          name = "Authorization"
-          in   = "header"
-          "x-amazon-apigateway-authtype" = "cognito_user_pools"
-          "x-amazon-apigateway-authorizer" = {
-            type = "cognito_user_pools"
-            providerARNs = [data.aws_cognito_user_pool.CloudManV2.arn]
-          }
+        openapi = "3.0.1"
+        info = {
+        title   = "AuthCloudManV2"
+        version = "1.0"
         }
-      }
-    }
-    
-    security = [
-      { "AuthCloudManV2_CognitoAuth" = [] }
-    ]
-    paths = {
-      for path in distinct([for i in local.api_config_AuthCloudManV2 : i.path]) :
-      path => merge([
-        for item in local.api_config_AuthCloudManV2 :
-        merge(
-          {
-            for method in item.methods :
-            method => merge(
-              {
-                "responses" = {
-                  "200" = {
-                    description = "Successful operation"
-                    headers = {
-                      "Access-Control-Allow-Origin" = { type = "string" }
-                    }
-                  }
-                }
-                "x-amazon-apigateway-integration" = merge(
-                  {
-                    uri        = item.uri
-                    httpMethod = item.integ_method == "MATCH" ? upper(method) : item.integ_method
-                    type       = item.type
-                    responses  = {
-                      "default" = {
-                        statusCode = "200"
-                        responseParameters = {
-                          "method.response.header.Access-Control-Allow-Origin" = "'*'"
+        
+        components = {
+        securitySchemes = {
+            "AuthCloudManV2_CognitoAuth" = {
+            type = "apiKey"
+            name = "Authorization"
+            in   = "header"
+            "x-amazon-apigateway-authtype" = "cognito_user_pools"
+            "x-amazon-apigateway-authorizer" = {
+                type = "cognito_user_pools"
+                providerARNs = [data.aws_cognito_user_pool.CloudManV2.arn]
+            }
+            }
+        }
+        }
+        
+        security = [
+        { "AuthCloudManV2_CognitoAuth" = [] }
+        ]
+        paths = {
+        for path in distinct([for i in local.api_config_AuthCloudManV2 : i.path]) :
+        path => merge([
+            for item in local.api_config_AuthCloudManV2 :
+            merge(
+            {
+                for method in item.methods :
+                method => merge(
+                {
+                    "responses" = {
+                    "200" = {
+                        description = "Successful operation"
+                        # Definimos que o header pode existir, mas não forçamos valor aqui
+                        headers = {
+                        "Access-Control-Allow-Origin" = { type = "string" }
+                        "Set-Cookie" = { type = "string" }
                         }
-                        responseTemplates = {
-                          "application/json" = "$input.body"
-                          "application/xml"  = "$input.body"
-                          "text/plain"       = "$input.body"
-                        }
-                      }
                     }
-                  },
-                  item.credentials != null ? { credentials = item.credentials } : {},
-                  item.requestTemplates != null ? { requestTemplates = item.requestTemplates } : {},
-                  item.integ_req_params != null ? { requestParameters = item.integ_req_params } : {}
+                    }
+                    "x-amazon-apigateway-integration" = merge(
+                    {
+                        uri        = item.uri
+                        httpMethod = item.integ_method == "MATCH" ? upper(method) : item.integ_method
+                        type       = item.type
+                    },
+                    # ALTERAÇÃO AQUI: Só adicionamos o bloco 'responses' se NÃO for aws_proxy.
+                    # No modo aws_proxy, a Lambda é responsável por retornar todos os headers.
+                    item.type == "aws_proxy" ? {} : {
+                        responses  = {
+                        "default" = {
+                            statusCode = "200"
+                            responseParameters = {
+                            "method.response.header.Access-Control-Allow-Origin" = "'*'"
+                            }
+                            responseTemplates = {
+                            "application/json" = "$input.body"
+                            }
+                        }
+                        }
+                    },
+                    item.credentials != null ? { credentials = item.credentials } : {},
+                    item.requestTemplates != null ? { requestTemplates = item.requestTemplates } : {},
+                    item.integ_req_params != null ? { requestParameters = item.integ_req_params } : {}
+                    )
+                },
+                item.parameters != null ? { parameters = item.parameters } : {}
                 )
-              },
-              item.parameters != null ? { parameters = item.parameters } : {}
-            )
-            if method != "options"
-          },
-          item.enable_mock ? { "options" = {
+                if method != "options"
+            },
+            item.enable_mock ? { "options" = {
           summary  = "CORS support"
           consumes = ["application/json"]
           produces = ["application/json"]
@@ -313,16 +305,20 @@ locals {
             }
           }
         } } : {}
-        )
-        if item.path == path
-      ]...)
+            )
+            if item.path == path
+        ]...)
+        }
     }
-  }
 }
 
 resource "aws_api_gateway_rest_api" "AuthCloudManV2" {
   name                              = "AuthCloudManV2"
   body                              = jsonencode(local.openapi_spec_AuthCloudManV2)
+  endpoint_configuration {
+    ip_address_type                 = "dualstack"
+    types                           = ["REGIONAL"]
+  }
   tags                              = {
     "Name" = "AuthCloudManV2"
     "State" = "CDNMain"
@@ -372,14 +368,21 @@ resource "aws_cloudfront_distribution" "AuthCloudManV2" {
     }
   }
   ordered_cache_behavior {
-    cache_policy_id                 = data.aws_cloudfront_cache_policy.policy_cachingdisabled.id
-    origin_request_policy_id        = data.aws_cloudfront_origin_request_policy.policy_cors_s3origin.id
-    response_headers_policy_id      = data.aws_cloudfront_response_headers_policy.policy_simplecors.id
     target_origin_id                = "ordered_AuthAPICloudManV2"
     allowed_methods                 = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods                  = ["GET", "HEAD", "OPTIONS"]
+    compress                        = false
+    default_ttl                     = 0
+    max_ttl                         = 0
+    min_ttl                         = 0
     path_pattern                    = "/st/*"
     viewer_protocol_policy          = "redirect-to-https"
+    forwarded_values {
+      query_string                  = false
+      cookies {
+        forward                     = "all"
+      }
+    }
   }
   origin {
     domain_name                     = aws_s3_bucket.s3-cloudmanv2-auth-bucket.bucket_regional_domain_name
@@ -427,6 +430,17 @@ resource "aws_cloudfront_origin_access_control" "oac_s3-cloudmanv2-auth-bucket" 
 
 ### CATEGORY: STORAGE ###
 
+resource "aws_s3_bucket" "my-bucket" {
+  bucket                            = "my-bucket"
+  force_destroy                     = false
+  object_lock_enabled               = false
+  tags                              = {
+    "Name" = "my-bucket"
+    "State" = "CDNMain"
+    "CloudmanUser" = "GlobalUserName"
+  }
+}
+
 resource "aws_s3_bucket" "s3-cloudmanv2-auth-bucket" {
   bucket                            = "s3-cloudmanv2-auth-bucket"
   force_destroy                     = true
@@ -435,6 +449,13 @@ resource "aws_s3_bucket" "s3-cloudmanv2-auth-bucket" {
     "Name" = "s3-cloudmanv2-auth-bucket"
     "State" = "CDNMain"
     "CloudmanUser" = "GlobalUserName"
+  }
+}
+
+resource "aws_s3_bucket_ownership_controls" "my-bucket_controls" {
+  bucket                            = aws_s3_bucket.my-bucket.id
+  rule {
+    object_ownership                = "BucketOwnerEnforced"
   }
 }
 
@@ -468,6 +489,14 @@ resource "aws_s3_bucket_policy" "aws_s3_bucket_policy_s3-cloudmanv2-auth-bucket_
   policy                            = data.aws_iam_policy_document.aws_s3_bucket_policy_s3-cloudmanv2-auth-bucket_st_CDNMain_doc.json
 }
 
+resource "aws_s3_bucket_public_access_block" "my-bucket_block" {
+  block_public_acls                 = true
+  block_public_policy               = true
+  bucket                            = aws_s3_bucket.my-bucket.id
+  ignore_public_acls                = true
+  restrict_public_buckets           = true
+}
+
 resource "aws_s3_bucket_public_access_block" "s3-cloudmanv2-auth-bucket_block" {
   block_public_acls                 = true
   block_public_policy               = true
@@ -476,11 +505,27 @@ resource "aws_s3_bucket_public_access_block" "s3-cloudmanv2-auth-bucket_block" {
   restrict_public_buckets           = true
 }
 
+resource "aws_s3_bucket_server_side_encryption_configuration" "my-bucket_configuration" {
+  bucket                            = aws_s3_bucket.my-bucket.id
+  expected_bucket_owner             = data.aws_caller_identity.current.account_id
+  rule {
+    bucket_key_enabled              = true
+  }
+}
+
 resource "aws_s3_bucket_server_side_encryption_configuration" "s3-cloudmanv2-auth-bucket_configuration" {
   bucket                            = aws_s3_bucket.s3-cloudmanv2-auth-bucket.id
   expected_bucket_owner             = data.aws_caller_identity.current.account_id
   rule {
     bucket_key_enabled              = true
+  }
+}
+
+resource "aws_s3_bucket_versioning" "my-bucket_versioning" {
+  bucket                            = aws_s3_bucket.my-bucket.id
+  versioning_configuration {
+    mfa_delete                      = "Disabled"
+    status                          = "Suspended"
   }
 }
 
