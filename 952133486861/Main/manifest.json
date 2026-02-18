@@ -1,7 +1,18 @@
 {
-  "external_repositories": [],
+  "external_repositories": [
+    {
+      "repo_name": "CloudManMainV2",
+      "org": "CloudManPro",
+      "branch": "main",
+      "target_dir": ".external_modules/CloudManMainV2",
+      "folders": [
+        "LambdaFiles/DBAccessV2",
+        "LambdaFiles/HCLTOAWSV2"
+      ]
+    }
+  ],
   "action": "apply",
-  "trigger_id": "1771419524899",
+  "trigger_id": "1771458525363",
   "backend_global_config": {
     "provider": "aws",
     "role_arn": "arn:aws:iam::952133486861:role/CloudMan-Gitops-CloudManPro-CloudManV2CICD",
