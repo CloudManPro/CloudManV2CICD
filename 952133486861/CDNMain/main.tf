@@ -354,8 +354,8 @@ resource "aws_cloudfront_distribution" "AuthCloudManV2" {
     allowed_methods                 = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods                  = ["GET", "HEAD", "OPTIONS"]
     compress                        = true
-    default_ttl                     = 86400
-    max_ttl                         = 31536000
+    default_ttl                     = 0
+    max_ttl                         = 0
     min_ttl                         = 0
     viewer_protocol_policy          = "redirect-to-https"
     forwarded_values {
@@ -382,8 +382,8 @@ resource "aws_cloudfront_distribution" "AuthCloudManV2" {
     viewer_protocol_policy          = "redirect-to-https"
   }
   origin {
-    domain_name                     = aws_s3_bucket.s3-cloudmanv2-main-bucket.bucket_regional_domain_name
-    origin_access_control_id        = aws_cloudfront_origin_access_control.oac_s3-cloudmanv2-main-bucket.id
+    domain_name                     = aws_s3_bucket.s3-cloudmanv2-auth-bucket.bucket_regional_domain_name
+    origin_access_control_id        = aws_cloudfront_origin_access_control.oac_s3-cloudmanv2-auth-bucket.id
     origin_id                       = "default_AuthCloudManV2"
   }
   origin {
@@ -414,9 +414,9 @@ resource "aws_cloudfront_distribution" "AuthCloudManV2" {
   }
 }
 
-resource "aws_cloudfront_origin_access_control" "oac_s3-cloudmanv2-main-bucket" {
-  name                              = "oac-s3-cloudmanv2-main-bucket"
-  description                       = "OAC for s3-cloudmanv2-main-bucket"
+resource "aws_cloudfront_origin_access_control" "oac_s3-cloudmanv2-auth-bucket" {
+  name                              = "oac-s3-cloudmanv2-auth-bucket"
+  description                       = "OAC for s3-cloudmanv2-auth-bucket"
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
   signing_protocol                  = "sigv4"
@@ -427,25 +427,25 @@ resource "aws_cloudfront_origin_access_control" "oac_s3-cloudmanv2-main-bucket" 
 
 ### CATEGORY: STORAGE ###
 
-resource "aws_s3_bucket" "s3-cloudmanv2-main-bucket" {
-  bucket                            = "s3-cloudmanv2-main-bucket"
+resource "aws_s3_bucket" "s3-cloudmanv2-auth-bucket" {
+  bucket                            = "s3-cloudmanv2-auth-bucket"
   force_destroy                     = true
   object_lock_enabled               = false
   tags                              = {
-    "Name" = "s3-cloudmanv2-main-bucket"
+    "Name" = "s3-cloudmanv2-auth-bucket"
     "State" = "CDNMain"
     "CloudmanUser" = "GlobalUserName"
   }
 }
 
-resource "aws_s3_bucket_ownership_controls" "s3-cloudmanv2-main-bucket_controls" {
-  bucket                            = aws_s3_bucket.s3-cloudmanv2-main-bucket.id
+resource "aws_s3_bucket_ownership_controls" "s3-cloudmanv2-auth-bucket_controls" {
+  bucket                            = aws_s3_bucket.s3-cloudmanv2-auth-bucket.id
   rule {
     object_ownership                = "BucketOwnerEnforced"
   }
 }
 
-data "aws_iam_policy_document" "aws_s3_bucket_policy_s3-cloudmanv2-main-bucket_st_CDNMain_doc" {
+data "aws_iam_policy_document" "aws_s3_bucket_policy_s3-cloudmanv2-auth-bucket_st_CDNMain_doc" {
   statement {
     sid                             = "AllowCloudFrontServicePrincipalReadOnly"
     effect                          = "Allow"
@@ -454,7 +454,7 @@ data "aws_iam_policy_document" "aws_s3_bucket_policy_s3-cloudmanv2-main-bucket_s
       type                          = "Service"
     }
     actions                         = ["s3:GetObject"]
-    resources                       = ["${aws_s3_bucket.s3-cloudmanv2-main-bucket.arn}/*"]
+    resources                       = ["${aws_s3_bucket.s3-cloudmanv2-auth-bucket.arn}/*"]
     condition {
       test     = "StringEquals"
       variable = "AWS:SourceArn"
@@ -463,29 +463,29 @@ data "aws_iam_policy_document" "aws_s3_bucket_policy_s3-cloudmanv2-main-bucket_s
   }
 }
 
-resource "aws_s3_bucket_policy" "aws_s3_bucket_policy_s3-cloudmanv2-main-bucket_st_CDNMain" {
-  bucket                            = aws_s3_bucket.s3-cloudmanv2-main-bucket.id
-  policy                            = data.aws_iam_policy_document.aws_s3_bucket_policy_s3-cloudmanv2-main-bucket_st_CDNMain_doc.json
+resource "aws_s3_bucket_policy" "aws_s3_bucket_policy_s3-cloudmanv2-auth-bucket_st_CDNMain" {
+  bucket                            = aws_s3_bucket.s3-cloudmanv2-auth-bucket.id
+  policy                            = data.aws_iam_policy_document.aws_s3_bucket_policy_s3-cloudmanv2-auth-bucket_st_CDNMain_doc.json
 }
 
-resource "aws_s3_bucket_public_access_block" "s3-cloudmanv2-main-bucket_block" {
+resource "aws_s3_bucket_public_access_block" "s3-cloudmanv2-auth-bucket_block" {
   block_public_acls                 = true
   block_public_policy               = true
-  bucket                            = aws_s3_bucket.s3-cloudmanv2-main-bucket.id
+  bucket                            = aws_s3_bucket.s3-cloudmanv2-auth-bucket.id
   ignore_public_acls                = true
   restrict_public_buckets           = true
 }
 
-resource "aws_s3_bucket_server_side_encryption_configuration" "s3-cloudmanv2-main-bucket_configuration" {
-  bucket                            = aws_s3_bucket.s3-cloudmanv2-main-bucket.id
+resource "aws_s3_bucket_server_side_encryption_configuration" "s3-cloudmanv2-auth-bucket_configuration" {
+  bucket                            = aws_s3_bucket.s3-cloudmanv2-auth-bucket.id
   expected_bucket_owner             = data.aws_caller_identity.current.account_id
   rule {
     bucket_key_enabled              = true
   }
 }
 
-resource "aws_s3_bucket_versioning" "s3-cloudmanv2-main-bucket_versioning" {
-  bucket                            = aws_s3_bucket.s3-cloudmanv2-main-bucket.id
+resource "aws_s3_bucket_versioning" "s3-cloudmanv2-auth-bucket_versioning" {
+  bucket                            = aws_s3_bucket.s3-cloudmanv2-auth-bucket.id
   versioning_configuration {
     mfa_delete                      = "Disabled"
     status                          = "Suspended"
@@ -518,11 +518,11 @@ resource "aws_lambda_function" "GetStageV2" {
   environment {
     variables                       = {
     "DOMAIN" = "${data.aws_route53_zone.Cloudman.name}"
-    "AWS_S3_BUCKET_TARGET_NAME_0" = "s3-cloudmanv2-main-bucket"
+    "AWS_S3_BUCKET_TARGET_NAME_0" = "s3-cloudmanv2-auth-bucket"
     "REGION" = data.aws_region.current.name
     "ACCOUNT" = data.aws_caller_identity.current.account_id
     "NAME" = "GetStageV2"
-    "AWS_S3_BUCKET_TARGET_ARN_0" = aws_s3_bucket.s3-cloudmanv2-main-bucket.arn
+    "AWS_S3_BUCKET_TARGET_ARN_0" = aws_s3_bucket.s3-cloudmanv2-auth-bucket.arn
   }
   }
   tags                              = {
@@ -548,8 +548,7 @@ resource "aws_lambda_function" "RedirectorV2" {
   publish                           = true
   reserved_concurrent_executions    = -1
   role                              = aws_iam_role.role_lambda_RedirectorV2.arn
-  runtime                           = "python3.13"
-  skip_destroy                      = true
+  runtime                           = "python3.12"
   source_code_hash                  = "${data.archive_file.archive_CloudManMainV2_RedirectorV2.output_base64sha256}"
   timeout                           = 30
   tags                              = {
