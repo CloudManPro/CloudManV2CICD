@@ -60,76 +60,31 @@ data "aws_dynamodb_table" "CloudManV2" {
 
 ### CATEGORY: IAM ###
 
-
-resource "aws_iam_role" "role_cloudfront_cw_logging" {
-  name = "role_cloudfront_cw_logging"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
-      Principal = {
-        Service = "cloudfront.amazonaws.com"
-      }
-    }]
-  })
-}
-
-# Política separada para escrita no CloudWatch
-resource "aws_iam_policy" "policy_cloudfront_cw_logging" {
-  name        = "policy_cloudfront_cw_logging"
-  description = "Permite ao CloudFront escrever logs no CloudWatch Logs"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Action = [
-        "logs:CreateLogStream",
-        "logs:PutLogEvents",
-        "logs:DescribeLogStreams"
-      ]
-      Effect   = "Allow"
-      Resource = "${aws_cloudwatch_log_group.MainCloudManV2.arn}:*"
-    }]
-  })
-}
-
-# Attachment ligando a Role à Policy
-resource "aws_iam_role_policy_attachment" "attach_cloudfront_cw_logging" {
-  role       = aws_iam_role.role_cloudfront_cw_logging.name
-  policy_arn = aws_iam_policy.policy_cloudfront_cw_logging.arn
-}
-
-### CATEGORY: MONITORING - REAL-TIME CONFIG ###
-
-resource "aws_cloudfront_realtime_log_config" "MainCloudManV2_realtime_logs" {
-  name          = "MainCloudManV2-realtime-logs"
-  sampling_rate = 100 # 100% das requisições
-  
-  # Campos baseados na sua imagem (os mais comuns dos 33 disponíveis)
-  fields = [
-    "timestamp", "c-ip", "cs-method", "cs-uri-stem", "sc-status", 
-    "cs-host", "cs-uri-query", "cs-user-agent", "cs-referer", 
-    "x-edge-location", "x-edge-request-id", "x-host-header", 
-    "time-taken", "sc-bytes", "cs-bytes", "x-edge-response-result-type", 
-    "x-edge-result-type"
-  ]
-
-  endpoint {
-    stream_type = "CloudWatchLogs"
-
-    cloudwatch_logs_config {
-      log_group_arn = aws_cloudwatch_log_group.MainCloudManV2.arn
-      role_arn      = aws_iam_role.role_cloudfront_cw_logging.arn
+# Documento da política que permite o CloudFront gravar no bucket de logs
+data "aws_iam_policy_document" "cloudfront_logs_delivery_policy" {
+  statement {
+    sid    = "AllowCloudFrontLogDelivery"
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+    actions   = ["s3:PutObject"]
+    resources = ["${aws_s3_bucket.main-cloudman-v2-logs.arn}/*"]
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceArn"
+      # Garante que APENAS esta distribuição possa gravar logs aqui (Segurança!)
+      values   = ["arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:distribution/${aws_cloudfront_distribution.MainCloudManV2.id}"]
     }
   }
-  
-  # Garante que a permissão exista antes de tentar criar a config
-  depends_on = [aws_iam_role_policy_attachment.attach_cloudfront_cw_logging]
 }
 
-
+# Aplica a política ao bucket de logs
+resource "aws_s3_bucket_policy" "main-cloudman-v2-logs_policy" {
+  bucket = aws_s3_bucket.main-cloudman-v2-logs.id
+  policy = data.aws_iam_policy_document.cloudfront_logs_delivery_policy.json
+}
 
 data "aws_iam_policy_document" "lambda_function_DBAccessV2_st_Main_doc" {
   statement {
@@ -458,6 +413,12 @@ resource "aws_api_gateway_stage" "st" {
 }
 
 resource "aws_cloudfront_distribution" "MainCloudManV2" {
+  logging_config {
+    include_cookies = false
+    bucket          = aws_s3_bucket.main-cloudman-v2-logs.bucket_domain_name
+    prefix          = "cf-logs/" # Opcional: organiza os logs em uma pasta
+  }
+
   aliases                           = ["dev.v2.cloudman.pro"]
   default_root_object               = "index.html"
   enabled                           = true
@@ -473,7 +434,6 @@ resource "aws_cloudfront_distribution" "MainCloudManV2" {
     max_ttl                         = 31536000
     min_ttl                         = 86400
     viewer_protocol_policy          = "redirect-to-https"
-    realtime_log_config_arn = aws_cloudfront_realtime_log_config.MainCloudManV2_realtime_logs.arn
     forwarded_values {
       query_string                  = false
       cookies {
@@ -491,7 +451,6 @@ resource "aws_cloudfront_distribution" "MainCloudManV2" {
     min_ttl                         = 0
     path_pattern                    = "/api-cloud-man-v2/*"
     viewer_protocol_policy          = "redirect-to-https"
-    realtime_log_config_arn = aws_cloudfront_realtime_log_config.MainCloudManV2_realtime_logs.arn
     forwarded_values {
       headers                       = ["Origin", "Access-Control-Request-Headers", "Access-Control-Request-Method"]
       query_string                  = false
@@ -546,6 +505,17 @@ resource "aws_cloudfront_origin_access_control" "oac_s3-cloudmanv2-main-bucket" 
 
 ### CATEGORY: STORAGE ###
 
+resource "aws_s3_bucket" "main-cloudman-v2-logs" {
+  bucket                            = "main-cloudman-v2-logs"
+  force_destroy                     = true
+  object_lock_enabled               = false
+  tags                              = {
+    "Name" = "main-cloudman-v2-logs"
+    "State" = "Main"
+    "CloudmanUser" = "GlobalUserName"
+  }
+}
+
 resource "aws_s3_bucket" "s3-cloudmanv2-main-bucket" {
   bucket                            = "s3-cloudmanv2-main-bucket"
   force_destroy                     = true
@@ -554,6 +524,13 @@ resource "aws_s3_bucket" "s3-cloudmanv2-main-bucket" {
     "Name" = "s3-cloudmanv2-main-bucket"
     "State" = "Main"
     "CloudmanUser" = "GlobalUserName"
+  }
+}
+
+resource "aws_s3_bucket_ownership_controls" "main-cloudman-v2-logs_controls" {
+  bucket                            = aws_s3_bucket.main-cloudman-v2-logs.id
+  rule {
+    object_ownership                = "BucketOwnerEnforced"
   }
 }
 
@@ -587,12 +564,28 @@ resource "aws_s3_bucket_policy" "aws_s3_bucket_policy_s3-cloudmanv2-main-bucket_
   policy                            = data.aws_iam_policy_document.aws_s3_bucket_policy_s3-cloudmanv2-main-bucket_st_Main_doc.json
 }
 
+resource "aws_s3_bucket_public_access_block" "main-cloudman-v2-logs_block" {
+  block_public_acls                 = true
+  block_public_policy               = true
+  bucket                            = aws_s3_bucket.main-cloudman-v2-logs.id
+  ignore_public_acls                = true
+  restrict_public_buckets           = true
+}
+
 resource "aws_s3_bucket_public_access_block" "s3-cloudmanv2-main-bucket_block" {
   block_public_acls                 = true
   block_public_policy               = true
   bucket                            = aws_s3_bucket.s3-cloudmanv2-main-bucket.id
   ignore_public_acls                = true
   restrict_public_buckets           = true
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "main-cloudman-v2-logs_configuration" {
+  bucket                            = aws_s3_bucket.main-cloudman-v2-logs.id
+  expected_bucket_owner             = data.aws_caller_identity.current.account_id
+  rule {
+    bucket_key_enabled              = true
+  }
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "s3-cloudmanv2-main-bucket_configuration" {
@@ -603,6 +596,14 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "s3-cloudmanv2-mai
     apply_server_side_encryption_by_default {
       sse_algorithm                 = "AES256"
     }
+  }
+}
+
+resource "aws_s3_bucket_versioning" "main-cloudman-v2-logs_versioning" {
+  bucket                            = aws_s3_bucket.main-cloudman-v2-logs.id
+  versioning_configuration {
+    mfa_delete                      = "Disabled"
+    status                          = "Suspended"
   }
 }
 
@@ -728,18 +729,6 @@ resource "aws_cloudwatch_log_group" "HCLAWSV2" {
   skip_destroy                      = false
   tags                              = {
     "Name" = "HCLAWSV2"
-    "State" = "Main"
-    "CloudmanUser" = "GlobalUserName"
-  }
-}
-
-resource "aws_cloudwatch_log_group" "MainCloudManV2" {
-    name                              = "/aws/cloudfront/MainCloudManV2" # Adicione esta linha
-  log_group_class                   = "STANDARD"
-  retention_in_days                 = 1
-  skip_destroy                      = false
-  tags                              = {
-    "Name" = "MainCloudManV2"
     "State" = "Main"
     "CloudmanUser" = "GlobalUserName"
   }
