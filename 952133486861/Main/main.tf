@@ -402,11 +402,20 @@ resource "aws_cloudfront_distribution" "MainCloudManV2" {
   is_ipv6_enabled                   = true
   price_class                       = "PriceClass_All"
   default_cache_behavior {
-    cache_policy_id                 = data.aws_cloudfront_cache_policy.policy_cachingoptimized.id
     target_origin_id                = "default_MainCloudManV2"
     allowed_methods                 = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods                  = ["GET", "HEAD", "OPTIONS"]
+    compress                        = true
+    default_ttl                     = 86400
+    max_ttl                         = 31536000
+    min_ttl                         = 86400
     viewer_protocol_policy          = "redirect-to-https"
+    forwarded_values {
+      query_string                  = false
+      cookies {
+        forward                     = "all"
+      }
+    }
   }
   ordered_cache_behavior {
     cache_policy_id                 = data.aws_cloudfront_cache_policy.policy_cachingoptimized.id
@@ -417,28 +426,11 @@ resource "aws_cloudfront_distribution" "MainCloudManV2" {
     path_pattern                    = "/api-cloud-man-v2/*"
     viewer_protocol_policy          = "redirect-to-https"
   }
-  custom_error_response {
-    error_code            = 403
-    response_code         = 200
-    response_page_path    = "/index.html"
-    error_caching_min_ttl = 10
-  }
-
-  custom_error_response {
-    error_code            = 404
-    response_code         = 200
-    response_page_path    = "/index.html"
-    error_caching_min_ttl = 10
-  }
-
   origin {
-    # ALTERAÇÃO: Forçar endpoint regional para evitar erros 503 de assinatura em us-east-1
-    domain_name = "${aws_s3_bucket.s3-cloudmanv2-main-bucket.bucket}.s3.us-east-1.amazonaws.com"
-    
-    origin_access_control_id = aws_cloudfront_origin_access_control.oac_s3-cloudmanv2-main-bucket.id
-    origin_id                = "default_MainCloudManV2"
+    domain_name                     = aws_s3_bucket.s3-cloudmanv2-main-bucket.bucket_regional_domain_name
+    origin_access_control_id        = aws_cloudfront_origin_access_control.oac_s3-cloudmanv2-main-bucket.id
+    origin_id                       = "default_MainCloudManV2"
   }
-
   origin {
     domain_name                     = "${aws_api_gateway_rest_api.APICloudManV2.id}.execute-api.${data.aws_region.current.name}.amazonaws.com"
     origin_id                       = "ordered_APICloudManV2"
@@ -500,19 +492,14 @@ resource "aws_s3_bucket_ownership_controls" "s3-cloudmanv2-main-bucket_controls"
 
 data "aws_iam_policy_document" "aws_s3_bucket_policy_s3-cloudmanv2-main-bucket_st_Main_doc" {
   statement {
-    sid       = "AllowCloudFrontServicePrincipalReadOnly"
-    effect    = "Allow"
+    sid                             = "AllowCloudFrontServicePrincipalReadOnly"
+    effect                          = "Allow"
     principals {
-      identifiers = ["cloudfront.amazonaws.com"]
-      type        = "Service"
+      identifiers                   = ["cloudfront.amazonaws.com"]
+      type                          = "Service"
     }
-    # ADICIONADO: s3:ListBucket
-    actions   = ["s3:GetObject", "s3:ListBucket"]
-    # ADICIONADO: O ARN do bucket (sem /*) para permitir listagem
-    resources = [
-      aws_s3_bucket.s3-cloudmanv2-main-bucket.arn,
-      "${aws_s3_bucket.s3-cloudmanv2-main-bucket.arn}/*"
-    ]
+    actions                         = ["s3:GetObject"]
+    resources                       = ["${aws_s3_bucket.s3-cloudmanv2-main-bucket.arn}/*"]
     condition {
       test     = "StringEquals"
       variable = "AWS:SourceArn"
@@ -520,7 +507,6 @@ data "aws_iam_policy_document" "aws_s3_bucket_policy_s3-cloudmanv2-main-bucket_s
     }
   }
 }
-
 
 resource "aws_s3_bucket_policy" "aws_s3_bucket_policy_s3-cloudmanv2-main-bucket_st_Main" {
   bucket                            = aws_s3_bucket.s3-cloudmanv2-main-bucket.id
