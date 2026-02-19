@@ -420,8 +420,8 @@ resource "aws_cloudfront_distribution" "MainCloudManV2" {
     path_pattern                    = "/api-cloud-man-v2/*"
     viewer_protocol_policy          = "redirect-to-https"
     forwarded_values {
+      headers                       = ["Origin", "Access-Control-Request-Headers", "Access-Control-Request-Method"]
       query_string                  = false
-      query_string_cache_keys       = ["Origin", "Access-Control-Request-Headers", "Access-Control-Request-Method"]
       cookies {
         forward                     = "all"
       }
