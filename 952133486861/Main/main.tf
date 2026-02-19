@@ -242,7 +242,7 @@ locals {
       path             = "/HCLAWSV2"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:HCLAWSV2/invocations"
       type             = "aws_proxy"
-      methods          = ["options", "post"]
+      methods          = ["post"]
       enable_mock      = true
       credentials      = null
       requestTemplates = null
@@ -346,7 +346,7 @@ locals {
               default = {
                 statusCode = "200"
                 responseParameters = {
-                  "method.response.header.Access-Control-Allow-Methods" = "'OPTIONS,POST,OPTIONS'"
+                  "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
                   "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
                   "method.response.header.Access-Control-Allow-Origin"  = "'*'"
                 }
@@ -421,6 +421,7 @@ resource "aws_cloudfront_distribution" "MainCloudManV2" {
     viewer_protocol_policy          = "redirect-to-https"
     forwarded_values {
       query_string                  = false
+      query_string_cache_keys       = ["Origin", "Access-Control-Request-Headers", "Access-Control-Request-Method"]
       cookies {
         forward                     = "all"
       }
@@ -619,7 +620,7 @@ resource "aws_lambda_permission" "perm_APICloudManV2_to_DBAccessV2_openapi" {
   statement_id                      = "perm_APICloudManV2_to_DBAccessV2_openapi"
   principal                         = "apigateway.amazonaws.com"
   action                            = "lambda:InvokeFunction"
-  source_arn                        = "${aws_api_gateway_rest_api.APICloudManV2.execution_arn}/*/*/DBAccessV2"
+  source_arn                        = "${aws_api_gateway_rest_api.APICloudManV2.execution_arn}/*/POST/DBAccessV2"
 }
 
 resource "aws_lambda_permission" "perm_APICloudManV2_to_HCLAWSV2_openapi" {
@@ -627,7 +628,7 @@ resource "aws_lambda_permission" "perm_APICloudManV2_to_HCLAWSV2_openapi" {
   statement_id                      = "perm_APICloudManV2_to_HCLAWSV2_openapi"
   principal                         = "apigateway.amazonaws.com"
   action                            = "lambda:InvokeFunction"
-  source_arn                        = "${aws_api_gateway_rest_api.APICloudManV2.execution_arn}/*/*/HCLAWSV2"
+  source_arn                        = "${aws_api_gateway_rest_api.APICloudManV2.execution_arn}/*/POST/HCLAWSV2"
 }
 
 
