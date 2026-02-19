@@ -418,6 +418,7 @@ resource "aws_cloudfront_distribution" "MainCloudManV2" {
     bucket          = aws_s3_bucket.main-cloudman-v2-logs.bucket_domain_name
     prefix          = "cf-logs/" # Opcional: organiza os logs em uma pasta
   }
+depends_on = [aws_s3_bucket_policy.main-cloudman-v2-logs_policy]
 
   aliases                           = ["dev.v2.cloudman.pro"]
   default_root_object               = "index.html"
