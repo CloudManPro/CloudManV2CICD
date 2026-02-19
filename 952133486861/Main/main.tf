@@ -601,7 +601,10 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "main-cloudman-v2-
   bucket                            = aws_s3_bucket.main-cloudman-v2-logs.id
   expected_bucket_owner             = data.aws_caller_identity.current.account_id
   rule {
-    bucket_key_enabled              = true
+    bucket_key_enabled              = false
+    apply_server_side_encryption_by_default {
+      sse_algorithm                 = "AES256"
+    }
   }
 }
 
@@ -727,6 +730,18 @@ resource "aws_lambda_permission" "perm_APICloudManV2_to_HCLAWSV2_openapi" {
 
 ### CATEGORY: MONITORING ###
 
+resource "aws_cloudwatch_log_group" "APICloudManV2-ST" {
+  name                              = "/aws/apigateway/st"
+  log_group_class                   = "STANDARD"
+  retention_in_days                 = 1
+  skip_destroy                      = false
+  tags                              = {
+    "Name" = "APICloudManV2-ST"
+    "State" = "Main"
+    "CloudmanUser" = "GlobalUserName"
+  }
+}
+
 resource "aws_cloudwatch_log_group" "DBAccessV2" {
   name                              = "/aws/lambda/DBAccessV2"
   log_group_class                   = "STANDARD"
@@ -746,18 +761,6 @@ resource "aws_cloudwatch_log_group" "HCLAWSV2" {
   skip_destroy                      = false
   tags                              = {
     "Name" = "HCLAWSV2"
-    "State" = "Main"
-    "CloudmanUser" = "GlobalUserName"
-  }
-}
-
-resource "aws_cloudwatch_log_group" "LogGroup" {
-  name                              = "/aws/apigateway/st"
-  log_group_class                   = "STANDARD"
-  retention_in_days                 = 1
-  skip_destroy                      = false
-  tags                              = {
-    "Name" = "LogGroup"
     "State" = "Main"
     "CloudmanUser" = "GlobalUserName"
   }
