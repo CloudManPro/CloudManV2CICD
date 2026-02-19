@@ -516,7 +516,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "s3-cloudmanv2-mai
   bucket                            = aws_s3_bucket.s3-cloudmanv2-main-bucket.id
   expected_bucket_owner             = data.aws_caller_identity.current.account_id
   rule {
-    bucket_key_enabled              = true
+    bucket_key_enabled              = false
     apply_server_side_encryption_by_default {
       sse_algorithm                 = "AES256"
     }
