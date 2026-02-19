@@ -62,6 +62,7 @@ data "aws_dynamodb_table" "CloudManV2" {
 
 # Documento da política que permite o CloudFront gravar no bucket de logs
 data "aws_iam_policy_document" "cloudfront_logs_delivery_policy" {
+  # Declaração 1: Permissão para GRAVAR os logs (nos Objetos)
   statement {
     sid    = "AllowCloudFrontLogDelivery"
     effect = "Allow"
@@ -73,7 +74,25 @@ data "aws_iam_policy_document" "cloudfront_logs_delivery_policy" {
     resources = ["${aws_s3_bucket.main-cloudman-v2-logs.arn}/*"]
     condition {
       test     = "StringEquals"
-      variable = "aws:SourceAccount" # Usamos a Conta em vez do ARN da Distribuição
+      variable = "aws:SourceAccount"
+      values   = [data.aws_caller_identity.current.account_id]
+    }
+  }
+
+  # Declaração 2: Permissão para o CloudFront VALIDAR o bucket (no Bucket)
+  # ISSO É O QUE RESOLVE O ERRO DE ACL
+  statement {
+    sid    = "AllowCloudFrontGetBucketAcl"
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+    actions   = ["s3:GetBucketAcl"]
+    resources = [aws_s3_bucket.main-cloudman-v2-logs.arn]
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
       values   = [data.aws_caller_identity.current.account_id]
     }
   }
