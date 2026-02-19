@@ -73,12 +73,12 @@ data "aws_iam_policy_document" "cloudfront_logs_delivery_policy" {
     resources = ["${aws_s3_bucket.main-cloudman-v2-logs.arn}/*"]
     condition {
       test     = "StringEquals"
-      variable = "AWS:SourceArn"
-      # Garante que APENAS esta distribuição possa gravar logs aqui (Segurança!)
-      values   = ["arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:distribution/${aws_cloudfront_distribution.MainCloudManV2.id}"]
+      variable = "aws:SourceAccount" # Usamos a Conta em vez do ARN da Distribuição
+      values   = [data.aws_caller_identity.current.account_id]
     }
   }
 }
+
 
 # Aplica a política ao bucket de logs
 resource "aws_s3_bucket_policy" "main-cloudman-v2-logs_policy" {
