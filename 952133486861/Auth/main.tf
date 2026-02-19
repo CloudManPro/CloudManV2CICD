@@ -115,6 +115,13 @@ resource "aws_cognito_user_pool" "CloudManV2" {
     mutable                         = true
     required                        = false
   }
+  schema {
+    name                            = "isV2"
+    attribute_data_type             = "Boolean"
+    developer_only_attribute        = false
+    mutable                         = true
+    required                        = false
+  }
   sign_in_policy {
     allowed_first_auth_factors      = ["PASSWORD"]
   }
@@ -151,6 +158,10 @@ resource "aws_cognito_user_pool_client" "CloudManV2" {
   prevent_user_existence_errors     = "ENABLED"
   refresh_token_validity            = 12
   supported_identity_providers      = ["COGNITO"]
+  lifecycle {
+    create_before_destroy           = false
+    prevent_destroy                 = false
+  }
   token_validity_units {
     access_token                    = "hours"
     id_token                        = "hours"
