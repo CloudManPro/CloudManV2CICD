@@ -546,7 +546,7 @@ resource "aws_lambda_function" "DBAccessV2" {
 
 data "archive_file" "archive_CloudManMainV2_HCLAWSV2" {
   output_path                       = "${path.module}/CloudManMainV2_HCLAWSV2.zip"
-  source_dir                        = "${path.module}/.external_modules/CloudManMainV2/LambdaFiles/HCLTOAWSV2"
+  source_dir                        = "${path.module}/.external_modules/CloudManMainV2/LambdaFiles/HCLAWSV2"
   type                              = "zip"
 }
 
@@ -554,7 +554,7 @@ resource "aws_lambda_function" "HCLAWSV2" {
   function_name                     = "HCLAWSV2"
   architectures                     = ["arm64"]
   filename                          = "${data.archive_file.archive_CloudManMainV2_HCLAWSV2.output_path}"
-  handler                           = "HCLTOAWSV2.lambda_handler"
+  handler                           = "HCLAWSV2.lambda_handler"
   memory_size                       = 1024
   publish                           = false
   reserved_concurrent_executions    = -1
