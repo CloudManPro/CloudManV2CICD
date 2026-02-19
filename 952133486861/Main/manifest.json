@@ -7,12 +7,12 @@
       "target_dir": ".external_modules/CloudManMainV2",
       "folders": [
         "LambdaFiles/DBAccessV2",
-        "LambdaFiles/HCLTOAWSV2"
+        "LambdaFiles/HCLAWSV2"
       ]
     }
   ],
   "action": "apply",
-  "trigger_id": "1771459227843",
+  "trigger_id": "1771459301220",
   "backend_global_config": {
     "provider": "aws",
     "role_arn": "arn:aws:iam::952133486861:role/CloudMan-Gitops-CloudManPro-CloudManV2CICD",
