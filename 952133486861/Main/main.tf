@@ -227,7 +227,7 @@ resource "aws_api_gateway_deployment" "APICloudManV2" {
 locals {
   api_config_APICloudManV2 = [
     {
-      path             = "/dbaccessv2"
+      path             = "/DBAccessV2"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:DBAccessV2/invocations"
       type             = "aws_proxy"
       methods          = ["options", "post"]
@@ -239,7 +239,7 @@ locals {
       integ_req_params = null
     },
     {
-      path             = "/hclawsv2"
+      path             = "/HCLAWSV2"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:HCLAWSV2/invocations"
       type             = "aws_proxy"
       methods          = ["options", "post"]
