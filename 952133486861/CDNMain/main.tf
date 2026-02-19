@@ -88,7 +88,7 @@ data "aws_iam_policy_document" "lambda_function_RedirectorV2_st_CDNMain_doc" {
     sid                             = "AllowWriteLogs"
     effect                          = "Allow"
     actions                         = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
-    resources                       = ["*"]
+    resources                       = ["${aws_cloudwatch_log_group.RedirectorV2.arn}:*"]
   }
 }
 
@@ -350,9 +350,9 @@ resource "aws_cloudfront_distribution" "AuthCloudManV2" {
     allowed_methods                 = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods                  = ["GET", "HEAD", "OPTIONS"]
     compress                        = true
-    default_ttl                     = 0
-    max_ttl                         = 0
-    min_ttl                         = 0
+    default_ttl                     = 3153600
+    max_ttl                         = 3153600
+    min_ttl                         = 3153600
     viewer_protocol_policy          = "redirect-to-https"
     forwarded_values {
       query_string                  = false
@@ -484,6 +484,9 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "s3-cloudmanv2-aut
   expected_bucket_owner             = data.aws_caller_identity.current.account_id
   rule {
     bucket_key_enabled              = true
+    apply_server_side_encryption_by_default {
+      sse_algorithm                 = "AES256"
+    }
   }
 }
 
