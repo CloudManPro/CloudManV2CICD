@@ -384,19 +384,6 @@ resource "aws_cloudfront_distribution" "AuthCloudManV2" {
       }
     }
   }
-   ordered_cache_behavior {
-    path_pattern           = "/_app/*"
-    target_origin_id       = "default_AuthCloudManV2"
-    viewer_protocol_policy = "redirect-to-https"
-    allowed_methods        = ["GET", "HEAD"]
-    cached_methods         = ["GET", "HEAD"]
-    compress               = true
-
-    # Use a política otimizada que você já tem no código
-    cache_policy_id = data.aws_cloudfront_cache_policy.policy_cachingoptimized.id
-
-    # IMPORTANTE: Sem lambda_function_association aqui!
-  }
   origin {
     domain_name                     = aws_s3_bucket.s3-cloudmanv2-auth-bucket.bucket_regional_domain_name
     origin_access_control_id        = aws_cloudfront_origin_access_control.oac_s3-cloudmanv2-auth-bucket.id
