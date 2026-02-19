@@ -60,51 +60,6 @@ data "aws_dynamodb_table" "CloudManV2" {
 
 ### CATEGORY: IAM ###
 
-# Documento da política que permite o CloudFront gravar no bucket de logs
-data "aws_iam_policy_document" "cloudfront_logs_delivery_policy" {
-  # Declaração 1: Permissão para GRAVAR os logs (nos Objetos)
-  statement {
-    sid    = "AllowCloudFrontLogDelivery"
-    effect = "Allow"
-    principals {
-      type        = "Service"
-      identifiers = ["cloudfront.amazonaws.com"]
-    }
-    actions   = ["s3:PutObject"]
-    resources = ["${aws_s3_bucket.main-cloudman-v2-logs.arn}/*"]
-    condition {
-      test     = "StringEquals"
-      variable = "aws:SourceAccount"
-      values   = [data.aws_caller_identity.current.account_id]
-    }
-  }
-
-  # Declaração 2: Permissão para o CloudFront VALIDAR o bucket (no Bucket)
-  # ISSO É O QUE RESOLVE O ERRO DE ACL
-  statement {
-    sid    = "AllowCloudFrontGetBucketAcl"
-    effect = "Allow"
-    principals {
-      type        = "Service"
-      identifiers = ["cloudfront.amazonaws.com"]
-    }
-    actions   = ["s3:GetBucketAcl"]
-    resources = [aws_s3_bucket.main-cloudman-v2-logs.arn]
-    condition {
-      test     = "StringEquals"
-      variable = "aws:SourceAccount"
-      values   = [data.aws_caller_identity.current.account_id]
-    }
-  }
-}
-
-
-# Aplica a política ao bucket de logs
-resource "aws_s3_bucket_policy" "main-cloudman-v2-logs_policy" {
-  bucket = aws_s3_bucket.main-cloudman-v2-logs.id
-  policy = data.aws_iam_policy_document.cloudfront_logs_delivery_policy.json
-}
-
 data "aws_iam_policy_document" "lambda_function_DBAccessV2_st_Main_doc" {
   statement {
     sid                             = "AllowWriteLogs"
@@ -432,13 +387,6 @@ resource "aws_api_gateway_stage" "st" {
 }
 
 resource "aws_cloudfront_distribution" "MainCloudManV2" {
-  logging_config {
-    include_cookies = false
-    bucket          = aws_s3_bucket.main-cloudman-v2-logs.bucket_domain_name
-    prefix          = "cf-logs/" # Opcional: organiza os logs em uma pasta
-  }
-depends_on = [aws_s3_bucket_policy.main-cloudman-v2-logs_policy]
-
   aliases                           = ["dev.v2.cloudman.pro"]
   default_root_object               = "index.html"
   enabled                           = true
@@ -460,6 +408,10 @@ depends_on = [aws_s3_bucket_policy.main-cloudman-v2-logs_policy]
         forward                     = "all"
       }
     }
+  }
+  logging_config {
+    bucket                          = aws_s3_bucket.main-cloudman-v2-logs.bucket_domain_name
+    include_cookies                 = false
   }
   ordered_cache_behavior {
     target_origin_id                = "ordered_APICloudManV2"
@@ -494,11 +446,6 @@ depends_on = [aws_s3_bucket_policy.main-cloudman-v2-logs_policy]
       origin_ssl_protocols          = ["TLSv1.2"]
     }
   }
-  restrictions {
-    geo_restriction {
-      restriction_type              = "none"
-    }
-  }
   tags                              = {
     "Name" = "MainCloudManV2"
     "State" = "Main"
@@ -510,6 +457,7 @@ depends_on = [aws_s3_bucket_policy.main-cloudman-v2-logs_policy]
     minimum_protocol_version        = "TLSv1.2_2021"
     ssl_support_method              = "sni-only"
   }
+  depends_on                        = [aws_s3_bucket_policy.aws_s3_bucket_policy_main-cloudman-v2-logs_st_Main]
 }
 
 resource "aws_cloudfront_origin_access_control" "oac_s3-cloudmanv2-main-bucket" {
@@ -547,10 +495,15 @@ resource "aws_s3_bucket" "s3-cloudmanv2-main-bucket" {
   }
 }
 
+resource "aws_s3_bucket_acl" "main-cloudman-v2-logs_acl" {
+  acl                               = "log-delivery-write"
+  bucket                            = aws_s3_bucket.main-cloudman-v2-logs.id
+}
+
 resource "aws_s3_bucket_ownership_controls" "main-cloudman-v2-logs_controls" {
   bucket                            = aws_s3_bucket.main-cloudman-v2-logs.id
   rule {
-    object_ownership                = "BucketOwnerEnforced"
+    object_ownership                = "BucketOwnerPreferred"
   }
 }
 
@@ -559,6 +512,44 @@ resource "aws_s3_bucket_ownership_controls" "s3-cloudmanv2-main-bucket_controls"
   rule {
     object_ownership                = "BucketOwnerEnforced"
   }
+}
+
+data "aws_iam_policy_document" "aws_s3_bucket_policy_main-cloudman-v2-logs_st_Main_doc" {
+  statement {
+    sid                             = "AllowGetAcl"
+    effect                          = "Allow"
+    principals {
+      identifiers                   = ["cloudfront.amazonaws.com"]
+      type                          = "Service"
+    }
+    actions                         = ["s3:GetBucketAcl"]
+    resources                       = ["${aws_s3_bucket.main-cloudman-v2-logs.arn}"]
+    condition {
+      test                          = "StringEquals"
+      values                        = ["${data.aws_caller_identity.current.account_id}"]
+      variable                      = "AWS:SourceAccount"
+    }
+  }
+  statement {
+    sid                             = "AllowPutLogs"
+    effect                          = "Allow"
+    principals {
+      identifiers                   = ["cloudfront.amazonaws.com"]
+      type                          = "Service"
+    }
+    actions                         = ["s3:PutObject"]
+    resources                       = ["${aws_s3_bucket.main-cloudman-v2-logs.arn}/*"]
+    condition {
+      test                          = "StringEquals"
+      values                        = ["${data.aws_caller_identity.current.account_id}"]
+      variable                      = "AWS:SourceAccount"
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "aws_s3_bucket_policy_main-cloudman-v2-logs_st_Main" {
+  bucket                            = aws_s3_bucket.main-cloudman-v2-logs.id
+  policy                            = data.aws_iam_policy_document.aws_s3_bucket_policy_main-cloudman-v2-logs_st_Main_doc.json
 }
 
 data "aws_iam_policy_document" "aws_s3_bucket_policy_s3-cloudmanv2-main-bucket_st_Main_doc" {
