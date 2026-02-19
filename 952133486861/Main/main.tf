@@ -47,6 +47,14 @@ data "aws_cloudfront_response_headers_policy" "policy_securityheaderspolicy" {
 
 ### EXTERNAL REFERENCES ###
 
+data "aws_cognito_user_pools" "CloudManV2" {
+  name = "CloudManV2"
+}
+
+data "aws_cognito_user_pool" "CloudManV2" {
+  user_pool_id                      = data.aws_cognito_user_pools.CloudManV2.ids[0]
+}
+
 data "aws_s3_bucket" "s3-cloudmanv2-files" {
   bucket                            = "s3-cloudmanv2-files"
 }
@@ -258,7 +266,24 @@ locals {
         version = "1.0"
         }
         
+        components = {
+        securitySchemes = {
+            "ApiG_CognitoAuth" = {
+            type = "apiKey"
+            name = "Authorization"
+            in   = "header"
+            "x-amazon-apigateway-authtype" = "cognito_user_pools"
+            "x-amazon-apigateway-authorizer" = {
+                type = "cognito_user_pools"
+                providerARNs = [data.aws_cognito_user_pool.CloudManV2.arn]
+            }
+            }
+        }
+        }
         
+        security = [
+        { "ApiG_CognitoAuth" = [] }
+        ]
         paths = {
         for path in distinct([for i in local.api_config_APICloudManV2 : i.path]) :
         path => merge([
@@ -492,6 +517,9 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "s3-cloudmanv2-mai
   expected_bucket_owner             = data.aws_caller_identity.current.account_id
   rule {
     bucket_key_enabled              = true
+    apply_server_side_encryption_by_default {
+      sse_algorithm                 = "AES256"
+    }
   }
 }
 
