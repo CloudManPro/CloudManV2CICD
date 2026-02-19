@@ -446,6 +446,11 @@ resource "aws_cloudfront_distribution" "MainCloudManV2" {
       origin_ssl_protocols          = ["TLSv1.2"]
     }
   }
+  restrictions {
+    geo_restriction {
+      restriction_type              = "none"
+    }
+  }
   tags                              = {
     "Name" = "MainCloudManV2"
     "State" = "Main"
