@@ -251,114 +251,116 @@ locals {
       integ_req_params = null
     },
   ]
+
   openapi_spec_APICloudManV2 = {
-        openapi = "3.0.1"
-        info = {
-        title   = "APICloudManV2"
-        version = "1.0"
-        }
-        
-        components = {
-        securitySchemes = {
-            "ApiG_CognitoAuth" = {
-            type = "apiKey"
-            name = "Authorization"
-            in   = "header"
-            "x-amazon-apigateway-authtype" = "cognito_user_pools"
-            "x-amazon-apigateway-authorizer" = {
-                type = "cognito_user_pools"
-                providerARNs = [data.aws_cognito_user_pool.CloudManV2.arn]
-            }
-            }
-        }
-        }
-        
-        security = [
-        { "ApiG_CognitoAuth" = [] }
-        ]
-        paths = {
-        for path in distinct([for i in local.api_config_APICloudManV2 : i.path]) :
-        path => merge([
-            for item in local.api_config_APICloudManV2 :
-            merge(
-            {
-                for method in item.methods :
-                method => merge(
-                {
-                    "responses" = {
-                    "200" = {
-                        description = "Successful operation"
-                        # Definimos que o header pode existir, mas não forçamos valor aqui
-                        headers = {
-                        "Access-Control-Allow-Origin" = { type = "string" }
-                        "Set-Cookie" = { type = "string" }
-                        }
-                    }
-                    }
-                    "x-amazon-apigateway-integration" = merge(
-                    {
-                        uri        = item.uri
-                        httpMethod = item.integ_method == "MATCH" ? upper(method) : item.integ_method
-                        type       = item.type
-                    },
-                    # ALTERAÇÃO AQUI: Só adicionamos o bloco 'responses' se NÃO for aws_proxy.
-                    # No modo aws_proxy, a Lambda é responsável por retornar todos os headers.
-                    item.type == "aws_proxy" ? {} : {
-                        responses  = {
-                        "default" = {
-                            statusCode = "200"
-                            responseParameters = {
-                            "method.response.header.Access-Control-Allow-Origin" = "'*'"
-                            }
-                            responseTemplates = {
-                            "application/json" = "$input.body"
-                            }
-                        }
-                        }
-                    },
-                    item.credentials != null ? { credentials = item.credentials } : {},
-                    item.requestTemplates != null ? { requestTemplates = item.requestTemplates } : {},
-                    item.integ_req_params != null ? { requestParameters = item.integ_req_params } : {}
-                    )
-                },
-                item.parameters != null ? { parameters = item.parameters } : {}
-                )
-                if method != "options"
-            },
-            item.enable_mock ? { "options" = {
-          summary  = "CORS support"
-          consumes = ["application/json"]
-          produces = ["application/json"]
-          responses = {
-            "200" = {
-              description = "200 response"
-              headers = {
-                "Access-Control-Allow-Origin"  = { type = "string" }
-                "Access-Control-Allow-Methods" = { type = "string" }
-                "Access-Control-Allow-Headers" = { type = "string" }
-              }
-            }
+    openapi = "3.0.1"
+    info = {
+      title   = "APICloudManV2"
+      version = "1.0"
+    }
+    
+    components = {
+      securitySchemes = {
+        "ApiG_CognitoAuth" = {
+          type = "apiKey"
+          name = "Authorization"
+          in   = "header"
+          "x-amazon-apigateway-authtype" = "cognito_user_pools"
+          "x-amazon-apigateway-authorizer" = {
+            type = "cognito_user_pools"
+            providerARNs = [data.aws_cognito_user_pool.CloudManV2.arn]
           }
-          "x-amazon-apigateway-integration" = {
-            type = "mock"
-            requestTemplates = { "application/json" = "{\"statusCode\": 200}" }
+        }
+      }
+    }
+    
+    # O BLOCO DE SECURITY GLOBAL FOI REMOVIDO DAQUI
+    
+    paths = {
+      for path in distinct([for i in local.api_config_APICloudManV2 : i.path]) :
+      path => merge([
+        for item in local.api_config_APICloudManV2 :
+        merge(
+          {
+            for method in item.methods :
+            method => merge(
+              {
+                # CORREÇÃO AQUI: Segurança aplicada apenas aos métodos da API (ex: POST), deixando o OPTIONS livre
+                security = [
+                  { "ApiG_CognitoAuth" = [] }
+                ]
+                
+                "responses" = {
+                  "200" = {
+                    description = "Successful operation"
+                    headers = {
+                      "Access-Control-Allow-Origin" = { type = "string" }
+                      "Set-Cookie" = { type = "string" }
+                    }
+                  }
+                }
+                "x-amazon-apigateway-integration" = merge(
+                  {
+                    uri        = item.uri
+                    httpMethod = item.integ_method == "MATCH" ? upper(method) : item.integ_method
+                    type       = item.type
+                  },
+                  item.type == "aws_proxy" ? {} : {
+                    responses  = {
+                      "default" = {
+                        statusCode = "200"
+                        responseParameters = {
+                          "method.response.header.Access-Control-Allow-Origin" = "'*'"
+                        }
+                        responseTemplates = {
+                          "application/json" = "$input.body"
+                        }
+                      }
+                    }
+                  },
+                  item.credentials != null ? { credentials = item.credentials } : {},
+                  item.requestTemplates != null ? { requestTemplates = item.requestTemplates } : {},
+                  item.integ_req_params != null ? { requestParameters = item.integ_req_params } : {}
+                )
+              },
+              item.parameters != null ? { parameters = item.parameters } : {}
+            )
+            if method != "options"
+          },
+          item.enable_mock ? { "options" = {
+            summary  = "CORS support"
+            consumes = ["application/json"]
+            produces = ["application/json"]
             responses = {
-              default = {
-                statusCode = "200"
-                responseParameters = {
-                  "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
-                  "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                  "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+              "200" = {
+                description = "200 response"
+                headers = {
+                  "Access-Control-Allow-Origin"  = { type = "string" }
+                  "Access-Control-Allow-Methods" = { type = "string" }
+                  "Access-Control-Allow-Headers" = { type = "string" }
                 }
               }
             }
-          }
-        } } : {}
-            )
-            if item.path == path
-        ]...)
-        }
+            "x-amazon-apigateway-integration" = {
+              type = "mock"
+              requestTemplates = { "application/json" = "{\"statusCode\": 200}" }
+              responses = {
+                default = {
+                  statusCode = "200"
+                  responseParameters = {
+                    "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
+                    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+                    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+                  }
+                }
+              }
+            }
+          } } : {}
+        )
+        if item.path == path
+      ]...)
     }
+  }
 }
 
 resource "aws_api_gateway_rest_api" "APICloudManV2" {
