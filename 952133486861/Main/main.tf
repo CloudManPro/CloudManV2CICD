@@ -503,6 +503,8 @@ resource "aws_s3_bucket" "s3-cloudmanv2-main-bucket" {
 resource "aws_s3_bucket_acl" "main-cloudman-v2-logs_acl" {
   acl                               = "log-delivery-write"
   bucket                            = aws_s3_bucket.main-cloudman-v2-logs.id
+    depends_on = [aws_s3_bucket_ownership_controls.main-cloudman-v2-logs_controls]
+
 }
 
 resource "aws_s3_bucket_ownership_controls" "main-cloudman-v2-logs_controls" {
