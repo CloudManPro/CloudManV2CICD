@@ -34,10 +34,6 @@ data "aws_route53_zone" "Cloudman" {
   name                              = "cloudman.pro"
 }
 
-data "aws_cloudfront_cache_policy" "policy_cachingoptimized" {
-  name                              = "Managed-CachingOptimized"
-}
-
 
 
 
@@ -190,7 +186,7 @@ resource "aws_api_gateway_deployment" "AuthCloudManV2" {
 locals {
   api_config_AuthCloudManV2 = [
     {
-      path             = "/getstagev2"
+      path             = "/GetStageV2"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:GetStageV2/invocations"
       type             = "aws_proxy"
       methods          = ["post"]
@@ -378,6 +374,7 @@ resource "aws_cloudfront_distribution" "AuthCloudManV2" {
     path_pattern                    = "/st/*"
     viewer_protocol_policy          = "redirect-to-https"
     forwarded_values {
+      headers                       = ["Origin", "Access-Control-Request-Headers", "Access-Control-Request-Method"]
       query_string                  = false
       cookies {
         forward                     = "all"
@@ -550,13 +547,13 @@ resource "aws_lambda_function" "RedirectorV2" {
   architectures                     = ["x86_64"]
   filename                          = "${data.archive_file.archive_CloudManMainV2_RedirectorV2.output_path}"
   handler                           = "Redirector.lambda_handler"
-  memory_size                       = 3008
+  memory_size                       = 128
   publish                           = true
   reserved_concurrent_executions    = -1
   role                              = aws_iam_role.role_lambda_RedirectorV2.arn
   runtime                           = "python3.12"
   source_code_hash                  = "${data.archive_file.archive_CloudManMainV2_RedirectorV2.output_base64sha256}"
-  timeout                           = 30
+  timeout                           = 1
   tags                              = {
     "Name" = "RedirectorV2"
     "State" = "CDNMain"
@@ -570,7 +567,7 @@ resource "aws_lambda_permission" "perm_AuthCloudManV2_to_GetStageV2_openapi" {
   statement_id                      = "perm_AuthCloudManV2_to_GetStageV2_openapi"
   principal                         = "apigateway.amazonaws.com"
   action                            = "lambda:InvokeFunction"
-  source_arn                        = "${aws_api_gateway_rest_api.AuthCloudManV2.execution_arn}/*/POST/getstagev2"
+  source_arn                        = "${aws_api_gateway_rest_api.AuthCloudManV2.execution_arn}/*/POST/GetStageV2"
 }
 
 
