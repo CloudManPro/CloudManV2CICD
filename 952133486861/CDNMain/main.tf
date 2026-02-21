@@ -703,7 +703,7 @@ resource "aws_lambda_permission" "perm_APIAuthCloudManV2_to_GetStageV2_openapi" 
 ### CATEGORY: MONITORING ###
 
 resource "aws_cloudwatch_log_group" "APIAuthCloudManV2" {
-  name                              = "aws/apigateway/APIAuthCloudManV2"
+  name                              = "/aws/apigateway/APIAuthCloudManV2"
   log_group_class                   = "STANDARD"
   retention_in_days                 = 1
   skip_destroy                      = false
