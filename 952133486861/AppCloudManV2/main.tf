@@ -34,10 +34,6 @@ data "aws_route53_zone" "Cloudman" {
   name                              = "cloudman.pro"
 }
 
-data "aws_cloudfront_cache_policy" "policy_cachingdisabled" {
-  name                              = "Managed-CachingDisabled"
-}
-
 data "aws_cloudfront_response_headers_policy" "policy_securityheaderspolicy" {
   name                              = "Managed-SecurityHeadersPolicy"
 }
@@ -387,6 +383,9 @@ resource "aws_api_gateway_stage" "st" {
   deployment_id                     = aws_api_gateway_deployment.APIAppCloudManV2.id
   rest_api_id                       = aws_api_gateway_rest_api.APIAppCloudManV2.id
   stage_name                        = "st"
+  access_log_settings {
+    destination_arn                 = aws_cloudwatch_log_group.AppCloudManV2-ST.arn
+  }
   tags                              = {
     "Name" = "st"
     "State" = "AppCloudManV2"
@@ -423,13 +422,24 @@ resource "aws_cloudfront_distribution" "AppCloudManV2" {
     include_cookies                 = false
   }
   ordered_cache_behavior {
-    cache_policy_id                 = data.aws_cloudfront_cache_policy.policy_cachingdisabled.id
     response_headers_policy_id      = data.aws_cloudfront_response_headers_policy.policy_securityheaderspolicy.id
     target_origin_id                = "origin_APIAppCloudManV2"
     allowed_methods                 = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods                  = ["GET", "HEAD", "OPTIONS"]
+    compress                        = true
+    default_ttl                     = 0
+    max_ttl                         = 0
+    min_ttl                         = 0
     path_pattern                    = "/st/*"
     viewer_protocol_policy          = "redirect-to-https"
+    forwarded_values {
+      headers                       = ["Origin", "Access-Control-Request-Headers", "Access-Control-Request-Method"]
+      query_string                  = false
+      cookies {
+        forward                     = "whitelist"
+        whitelisted_names           = ["stage"]
+      }
+    }
   }
   origin {
     domain_name                     = aws_s3_bucket.app-cloudman-v2.bucket_regional_domain_name
