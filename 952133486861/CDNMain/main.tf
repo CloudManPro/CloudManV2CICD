@@ -57,10 +57,6 @@ data "aws_cognito_user_pool" "CloudManV2" {
   user_pool_id                      = data.aws_cognito_user_pools.CloudManV2.ids[0]
 }
 
-data "aws_iam_role" "role_Account" {
-  name                              = "role_Account"
-}
-
 
 
 
@@ -142,11 +138,6 @@ resource "aws_iam_role" "role_lambda_RedirectorV2" {
     "State" = "CDNMain"
     "CloudmanUser" = "GlobalUserName"
   }
-}
-
-resource "aws_iam_role_policy_attachment" "attach_cw_Account" {
-  policy_arn                        = "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
-  role                              = data.aws_iam_role.role_Account.name
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_function_GetStageV2_st_CDNMain_attach" {
