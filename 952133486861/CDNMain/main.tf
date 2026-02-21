@@ -57,6 +57,10 @@ data "aws_cognito_user_pool" "CloudManV2" {
   user_pool_id                      = data.aws_cognito_user_pools.CloudManV2.ids[0]
 }
 
+data "aws_iam_role" "role_Account" {
+  name                              = "role_Account"
+}
+
 
 
 
@@ -138,6 +142,11 @@ resource "aws_iam_role" "role_lambda_RedirectorV2" {
     "State" = "CDNMain"
     "CloudmanUser" = "GlobalUserName"
   }
+}
+
+resource "aws_iam_role_policy_attachment" "attach_cw_Account" {
+  policy_arn                        = "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+  role                              = data.aws_iam_role.role_Account.name
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_function_GetStageV2_st_CDNMain_attach" {
@@ -330,6 +339,21 @@ resource "aws_api_gateway_stage" "st" {
   deployment_id                     = aws_api_gateway_deployment.APIAuthCloudManV2.id
   rest_api_id                       = aws_api_gateway_rest_api.APIAuthCloudManV2.id
   stage_name                        = "st"
+  access_log_settings {
+    destination_arn                 = aws_cloudwatch_log_group.APIAuthCloudManV2.arn
+    format                          = jsonencode({
+        "requestId" = "$context.requestId"
+        "ip" = "$context.identity.sourceIp"
+        "caller" = "$context.identity.caller"
+        "user" = "$context.identity.user"
+        "requestTime" = "$context.requestTime"
+        "httpMethod" = "$context.httpMethod"
+        "resourcePath" = "$context.resourcePath"
+        "status" = "$context.status"
+        "protocol" = "$context.protocol"
+        "responseLength" = "$context.responseLength"
+      })
+  }
   tags                              = {
     "Name" = "st"
     "State" = "CDNMain"
@@ -668,6 +692,9 @@ resource "aws_lambda_function" "RedirectorV2" {
     "State" = "CDNMain"
     "CloudmanUser" = "GlobalUserName"
   }
+  timeouts {
+    delete                          = "20m"
+  }
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_RedirectorV2_st_CDNMain_attach]
 }
 
@@ -683,6 +710,18 @@ resource "aws_lambda_permission" "perm_APIAuthCloudManV2_to_GetStageV2_openapi" 
 
 
 ### CATEGORY: MONITORING ###
+
+resource "aws_cloudwatch_log_group" "APIAuthCloudManV2" {
+  name                              = "/aws/apigateway/st"
+  log_group_class                   = "STANDARD"
+  retention_in_days                 = 1
+  skip_destroy                      = false
+  tags                              = {
+    "Name" = "APIAuthCloudManV2"
+    "State" = "CDNMain"
+    "CloudmanUser" = "GlobalUserName"
+  }
+}
 
 resource "aws_cloudwatch_log_group" "GetStageV2" {
   name                              = "/aws/lambda/GetStageV2"
