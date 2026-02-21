@@ -535,7 +535,8 @@ data "aws_iam_policy_document" "aws_s3_bucket_policy_s3-cloudmanv2-auth-bucket_s
     sid                             = "AllowCloudFrontServicePrincipalReadOnly"
     effect                          = "Allow"
     principals {
-      Service                       = "cloudfront.amazonaws.com"
+      identifiers                   = ["cloudfront.amazonaws.com"]
+      type                          = "Service"
     }
     actions                         = ["s3:GetObject"]
     resources                       = ["${aws_s3_bucket.s3-cloudmanv2-auth-bucket.arn}/*"]
