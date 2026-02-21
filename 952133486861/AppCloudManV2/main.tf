@@ -34,10 +34,6 @@ data "aws_route53_zone" "Cloudman" {
   name                              = "cloudman.pro"
 }
 
-data "aws_cloudfront_response_headers_policy" "policy_securityheaderspolicy" {
-  name                              = "Managed-SecurityHeadersPolicy"
-}
-
 
 
 
@@ -434,7 +430,6 @@ resource "aws_cloudfront_distribution" "AppCloudManV2" {
     include_cookies                 = false
   }
   ordered_cache_behavior {
-    response_headers_policy_id      = data.aws_cloudfront_response_headers_policy.policy_securityheaderspolicy.id
     target_origin_id                = "origin_APIAppCloudManV2"
     allowed_methods                 = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods                  = ["GET", "HEAD", "OPTIONS"]
