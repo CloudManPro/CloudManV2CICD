@@ -34,14 +34,6 @@ data "aws_route53_zone" "Cloudman" {
   name                              = "cloudman.pro"
 }
 
-data "aws_cloudfront_cache_policy" "policy_cachingdisabled" {
-  name                              = "Managed-CachingDisabled"
-}
-
-data "aws_cloudfront_response_headers_policy" "policy_cors_and_securityheaderspolicy" {
-  name                              = "Managed-CORS-and-SecurityHeadersPolicy"
-}
-
 
 
 
@@ -415,13 +407,23 @@ resource "aws_cloudfront_distribution" "AuthCloudManV2" {
     }
   }
   ordered_cache_behavior {
-    cache_policy_id                 = data.aws_cloudfront_cache_policy.policy_cachingdisabled.id
-    response_headers_policy_id      = data.aws_cloudfront_response_headers_policy.policy_cors_and_securityheaderspolicy.id
     target_origin_id                = "origin_APIAuthCloudManV2"
     allowed_methods                 = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods                  = ["GET", "HEAD", "OPTIONS"]
+    compress                        = true
+    default_ttl                     = 0
+    max_ttl                         = 0
+    min_ttl                         = 0
     path_pattern                    = "/st/*"
     viewer_protocol_policy          = "redirect-to-https"
+    forwarded_values {
+      headers                       = ["Authorization", "Origin", "Referer", "Accept", "Content-Type", "Access-Control-Request-Method", "Access-Control-Request-Headers"]
+      query_string                  = false
+      cookies {
+        forward                     = "whitelist"
+        whitelisted_names           = ["stage"]
+      }
+    }
   }
   origin {
     domain_name                     = aws_s3_bucket.s3-cloudmanv2-auth-bucket.bucket_regional_domain_name
