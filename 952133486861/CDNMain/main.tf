@@ -34,6 +34,10 @@ data "aws_route53_zone" "Cloudman" {
   name                              = "cloudman.pro"
 }
 
+data "aws_cloudfront_cache_policy" "policy_cachingdisabled" {
+  name                              = "Managed-CachingDisabled"
+}
+
 
 
 
@@ -173,18 +177,18 @@ resource "aws_route53_record" "alias_aaaa_v2_to_AuthCloudManV2" {
   }
 }
 
-resource "aws_api_gateway_deployment" "AuthCloudManV2" {
-  rest_api_id                       = aws_api_gateway_rest_api.AuthCloudManV2.id
+resource "aws_api_gateway_deployment" "APIAuthCloudManV2" {
+  rest_api_id                       = aws_api_gateway_rest_api.APIAuthCloudManV2.id
   lifecycle {
     create_before_destroy           = true
   }
   triggers                          = {
-    "redeployment" = sha1(join(",", [jsonencode(aws_api_gateway_rest_api.AuthCloudManV2.body)]))
+    "redeployment" = sha1(join(",", [jsonencode(aws_api_gateway_rest_api.APIAuthCloudManV2.body)]))
   }
 }
 
 locals {
-  api_config_AuthCloudManV2 = [
+  api_config_APIAuthCloudManV2 = [
     {
       path             = "/GetStageV2"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:GetStageV2/invocations"
@@ -198,16 +202,16 @@ locals {
       integ_req_params = null
     },
   ]
-  openapi_spec_AuthCloudManV2 = {
+  openapi_spec_APIAuthCloudManV2 = {
         openapi = "3.0.1"
         info = {
-        title   = "AuthCloudManV2"
+        title   = "APIAuthCloudManV2"
         version = "1.0"
         }
         
         components = {
         securitySchemes = {
-            "AuthCloudManV2_CognitoAuth" = {
+            "APIAuthCloudManV2_CognitoAuth" = {
             type = "apiKey"
             name = "Authorization"
             in   = "header"
@@ -221,12 +225,12 @@ locals {
         }
         
         security = [
-        { "AuthCloudManV2_CognitoAuth" = [] }
+        { "APIAuthCloudManV2_CognitoAuth" = [] }
         ]
         paths = {
-        for path in distinct([for i in local.api_config_AuthCloudManV2 : i.path]) :
+        for path in distinct([for i in local.api_config_APIAuthCloudManV2 : i.path]) :
         path => merge([
-            for item in local.api_config_AuthCloudManV2 :
+            for item in local.api_config_APIAuthCloudManV2 :
             merge(
             {
                 for method in item.methods :
@@ -308,23 +312,23 @@ locals {
     }
 }
 
-resource "aws_api_gateway_rest_api" "AuthCloudManV2" {
-  name                              = "AuthCloudManV2"
-  body                              = jsonencode(local.openapi_spec_AuthCloudManV2)
+resource "aws_api_gateway_rest_api" "APIAuthCloudManV2" {
+  name                              = "APIAuthCloudManV2"
+  body                              = jsonencode(local.openapi_spec_APIAuthCloudManV2)
   endpoint_configuration {
     ip_address_type                 = "dualstack"
     types                           = ["REGIONAL"]
   }
   tags                              = {
-    "Name" = "AuthCloudManV2"
+    "Name" = "APIAuthCloudManV2"
     "State" = "CDNMain"
     "CloudmanUser" = "GlobalUserName"
   }
 }
 
 resource "aws_api_gateway_stage" "st" {
-  deployment_id                     = aws_api_gateway_deployment.AuthCloudManV2.id
-  rest_api_id                       = aws_api_gateway_rest_api.AuthCloudManV2.id
+  deployment_id                     = aws_api_gateway_deployment.APIAuthCloudManV2.id
+  rest_api_id                       = aws_api_gateway_rest_api.APIAuthCloudManV2.id
   stage_name                        = "st"
   tags                              = {
     "Name" = "st"
@@ -342,13 +346,41 @@ resource "aws_cloudfront_distribution" "AuthCloudManV2" {
   is_ipv6_enabled                   = true
   price_class                       = "PriceClass_All"
   default_cache_behavior {
-    target_origin_id                = "default_AuthCloudManV2"
+    target_origin_id                = "origin_AppBucket"
     allowed_methods                 = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods                  = ["GET", "HEAD", "OPTIONS"]
     compress                        = true
-    default_ttl                     = 3153600
-    max_ttl                         = 3153600
-    min_ttl                         = 3153600
+    default_ttl                     = 0
+    max_ttl                         = 0
+    min_ttl                         = 0
+    viewer_protocol_policy          = "redirect-to-https"
+    forwarded_values {
+      headers                       = ["Origin", "Access-Control-Request-Headers", "Access-Control-Request-Method"]
+      query_string                  = false
+      cookies {
+        forward                     = "whitelist"
+        whitelisted_names           = ["stage"]
+      }
+    }
+    lambda_function_association {
+      event_type                    = "origin-request"
+      include_body                  = false
+      lambda_arn                    = aws_lambda_function.RedirectorV2.qualified_arn
+    }
+  }
+  logging_config {
+    bucket                          = aws_s3_bucket.auth-cloudman-v2-logs.bucket_domain_name
+    include_cookies                 = false
+  }
+  ordered_cache_behavior {
+    target_origin_id                = "origin_AppBucket"
+    allowed_methods                 = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods                  = ["GET", "HEAD", "OPTIONS"]
+    compress                        = true
+    default_ttl                     = 300000
+    max_ttl                         = 300000
+    min_ttl                         = 300000
+    path_pattern                    = "/_app/*"
     viewer_protocol_policy          = "redirect-to-https"
     forwarded_values {
       query_string                  = false
@@ -364,31 +396,21 @@ resource "aws_cloudfront_distribution" "AuthCloudManV2" {
     }
   }
   ordered_cache_behavior {
-    target_origin_id                = "ordered_AuthAPICloudManV2"
+    cache_policy_id                 = data.aws_cloudfront_cache_policy.policy_cachingdisabled.id
+    target_origin_id                = "origin_APIAuthCloudManV2"
     allowed_methods                 = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods                  = ["GET", "HEAD", "OPTIONS"]
-    compress                        = false
-    default_ttl                     = 0
-    max_ttl                         = 0
-    min_ttl                         = 0
-    path_pattern                    = "/st/*"
+    path_pattern                    = "/api-auth-cloud-man-v2/*"
     viewer_protocol_policy          = "redirect-to-https"
-    forwarded_values {
-      headers                       = ["Origin", "Access-Control-Request-Headers", "Access-Control-Request-Method"]
-      query_string                  = false
-      cookies {
-        forward                     = "all"
-      }
-    }
   }
   origin {
     domain_name                     = aws_s3_bucket.s3-cloudmanv2-auth-bucket.bucket_regional_domain_name
     origin_access_control_id        = aws_cloudfront_origin_access_control.oac_s3-cloudmanv2-auth-bucket.id
-    origin_id                       = "default_AuthCloudManV2"
+    origin_id                       = "origin_AppBucket"
   }
   origin {
-    domain_name                     = "${aws_api_gateway_rest_api.AuthCloudManV2.id}.execute-api.${data.aws_region.current.name}.amazonaws.com"
-    origin_id                       = "ordered_AuthAPICloudManV2"
+    domain_name                     = "${aws_api_gateway_rest_api.APIAuthCloudManV2.id}.execute-api.${data.aws_region.current.name}.amazonaws.com"
+    origin_id                       = "origin_APIAuthCloudManV2"
     custom_origin_config {
       http_port                     = 80
       https_port                    = 443
@@ -412,6 +434,7 @@ resource "aws_cloudfront_distribution" "AuthCloudManV2" {
     minimum_protocol_version        = "TLSv1.2_2021"
     ssl_support_method              = "sni-only"
   }
+  depends_on                        = [aws_s3_bucket_policy.aws_s3_bucket_policy_auth-cloudman-v2-logs_st_CDNMain]
 }
 
 resource "aws_cloudfront_origin_access_control" "oac_s3-cloudmanv2-auth-bucket" {
@@ -427,6 +450,17 @@ resource "aws_cloudfront_origin_access_control" "oac_s3-cloudmanv2-auth-bucket" 
 
 ### CATEGORY: STORAGE ###
 
+resource "aws_s3_bucket" "auth-cloudman-v2-logs" {
+  bucket                            = "auth-cloudman-v2-logs"
+  force_destroy                     = false
+  object_lock_enabled               = false
+  tags                              = {
+    "Name" = "auth-cloudman-v2-logs"
+    "State" = "CDNMain"
+    "CloudmanUser" = "GlobalUserName"
+  }
+}
+
 resource "aws_s3_bucket" "s3-cloudmanv2-auth-bucket" {
   bucket                            = "s3-cloudmanv2-auth-bucket"
   force_destroy                     = true
@@ -438,6 +472,19 @@ resource "aws_s3_bucket" "s3-cloudmanv2-auth-bucket" {
   }
 }
 
+resource "aws_s3_bucket_acl" "auth-cloudman-v2-logs_acl" {
+  acl                               = "log-delivery-write"
+  bucket                            = aws_s3_bucket.auth-cloudman-v2-logs.id
+  depends_on                        = [aws_s3_bucket_ownership_controls.auth-cloudman-v2-logs_controls]
+}
+
+resource "aws_s3_bucket_ownership_controls" "auth-cloudman-v2-logs_controls" {
+  bucket                            = aws_s3_bucket.auth-cloudman-v2-logs.id
+  rule {
+    object_ownership                = "BucketOwnerPreferred"
+  }
+}
+
 resource "aws_s3_bucket_ownership_controls" "s3-cloudmanv2-auth-bucket_controls" {
   bucket                            = aws_s3_bucket.s3-cloudmanv2-auth-bucket.id
   rule {
@@ -445,13 +492,50 @@ resource "aws_s3_bucket_ownership_controls" "s3-cloudmanv2-auth-bucket_controls"
   }
 }
 
+data "aws_iam_policy_document" "aws_s3_bucket_policy_auth-cloudman-v2-logs_st_CDNMain_doc" {
+  statement {
+    sid                             = "AllowGetAcl"
+    effect                          = "Allow"
+    principals {
+      identifiers                   = ["cloudfront.amazonaws.com"]
+      type                          = "Service"
+    }
+    actions                         = ["s3:GetBucketAcl"]
+    resources                       = ["${aws_s3_bucket.auth-cloudman-v2-logs.arn}"]
+    condition {
+      test                          = "StringEquals"
+      values                        = ["${data.aws_caller_identity.current.account_id}"]
+      variable                      = "AWS:SourceAccount"
+    }
+  }
+  statement {
+    sid                             = "AllowPutLogs"
+    effect                          = "Allow"
+    principals {
+      identifiers                   = ["cloudfront.amazonaws.com"]
+      type                          = "Service"
+    }
+    actions                         = ["s3:PutObject"]
+    resources                       = ["${aws_s3_bucket.auth-cloudman-v2-logs.arn}/*"]
+    condition {
+      test                          = "StringEquals"
+      values                        = ["${data.aws_caller_identity.current.account_id}"]
+      variable                      = "AWS:SourceAccount"
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "aws_s3_bucket_policy_auth-cloudman-v2-logs_st_CDNMain" {
+  bucket                            = aws_s3_bucket.auth-cloudman-v2-logs.id
+  policy                            = data.aws_iam_policy_document.aws_s3_bucket_policy_auth-cloudman-v2-logs_st_CDNMain_doc.json
+}
+
 data "aws_iam_policy_document" "aws_s3_bucket_policy_s3-cloudmanv2-auth-bucket_st_CDNMain_doc" {
   statement {
     sid                             = "AllowCloudFrontServicePrincipalReadOnly"
     effect                          = "Allow"
     principals {
-      identifiers                   = ["cloudfront.amazonaws.com"]
-      type                          = "Service"
+      Service                       = "cloudfront.amazonaws.com"
     }
     actions                         = ["s3:GetObject"]
     resources                       = ["${aws_s3_bucket.s3-cloudmanv2-auth-bucket.arn}/*"]
@@ -468,12 +552,28 @@ resource "aws_s3_bucket_policy" "aws_s3_bucket_policy_s3-cloudmanv2-auth-bucket_
   policy                            = data.aws_iam_policy_document.aws_s3_bucket_policy_s3-cloudmanv2-auth-bucket_st_CDNMain_doc.json
 }
 
+resource "aws_s3_bucket_public_access_block" "auth-cloudman-v2-logs_block" {
+  block_public_acls                 = true
+  block_public_policy               = true
+  bucket                            = aws_s3_bucket.auth-cloudman-v2-logs.id
+  ignore_public_acls                = true
+  restrict_public_buckets           = true
+}
+
 resource "aws_s3_bucket_public_access_block" "s3-cloudmanv2-auth-bucket_block" {
   block_public_acls                 = true
   block_public_policy               = true
   bucket                            = aws_s3_bucket.s3-cloudmanv2-auth-bucket.id
   ignore_public_acls                = true
   restrict_public_buckets           = true
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "auth-cloudman-v2-logs_configuration" {
+  bucket                            = aws_s3_bucket.auth-cloudman-v2-logs.id
+  expected_bucket_owner             = data.aws_caller_identity.current.account_id
+  rule {
+    bucket_key_enabled              = true
+  }
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "s3-cloudmanv2-auth-bucket_configuration" {
@@ -484,6 +584,14 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "s3-cloudmanv2-aut
     apply_server_side_encryption_by_default {
       sse_algorithm                 = "AES256"
     }
+  }
+}
+
+resource "aws_s3_bucket_versioning" "auth-cloudman-v2-logs_versioning" {
+  bucket                            = aws_s3_bucket.auth-cloudman-v2-logs.id
+  versioning_configuration {
+    mfa_delete                      = "Disabled"
+    status                          = "Suspended"
   }
 }
 
@@ -562,12 +670,12 @@ resource "aws_lambda_function" "RedirectorV2" {
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_RedirectorV2_st_CDNMain_attach]
 }
 
-resource "aws_lambda_permission" "perm_AuthCloudManV2_to_GetStageV2_openapi" {
+resource "aws_lambda_permission" "perm_APIAuthCloudManV2_to_GetStageV2_openapi" {
   function_name                     = aws_lambda_function.GetStageV2.function_name
-  statement_id                      = "perm_AuthCloudManV2_to_GetStageV2_openapi"
+  statement_id                      = "perm_APIAuthCloudManV2_to_GetStageV2_openapi"
   principal                         = "apigateway.amazonaws.com"
   action                            = "lambda:InvokeFunction"
-  source_arn                        = "${aws_api_gateway_rest_api.AuthCloudManV2.execution_arn}/*/POST/GetStageV2"
+  source_arn                        = "${aws_api_gateway_rest_api.APIAuthCloudManV2.execution_arn}/*/POST/GetStageV2"
 }
 
 
