@@ -415,7 +415,7 @@ resource "aws_cloudfront_distribution" "AuthCloudManV2" {
     target_origin_id                = "origin_APIAuthCloudManV2"
     allowed_methods                 = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods                  = ["GET", "HEAD", "OPTIONS"]
-    path_pattern                    = "/api-auth-cloud-man-v2/*"
+    path_pattern                    = "/st/*"
     viewer_protocol_policy          = "redirect-to-https"
   }
   origin {
