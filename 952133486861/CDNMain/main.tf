@@ -34,12 +34,12 @@ data "aws_route53_zone" "Cloudman" {
   name                              = "cloudman.pro"
 }
 
-data "aws_cloudfront_origin_request_policy" "policy_allviewer" {
-  name                              = "Managed-AllViewer"
-}
-
 data "aws_cloudfront_cache_policy" "policy_cachingdisabled" {
   name                              = "Managed-CachingDisabled"
+}
+
+data "aws_cloudfront_response_headers_policy" "policy_cors_and_securityheaderspolicy" {
+  name                              = "Managed-CORS-and-SecurityHeadersPolicy"
 }
 
 
@@ -416,7 +416,7 @@ resource "aws_cloudfront_distribution" "AuthCloudManV2" {
   }
   ordered_cache_behavior {
     cache_policy_id                 = data.aws_cloudfront_cache_policy.policy_cachingdisabled.id
-    origin_request_policy_id        = data.aws_cloudfront_origin_request_policy.policy_allviewer.id
+    response_headers_policy_id      = data.aws_cloudfront_response_headers_policy.policy_cors_and_securityheaderspolicy.id
     target_origin_id                = "origin_APIAuthCloudManV2"
     allowed_methods                 = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods                  = ["GET", "HEAD", "OPTIONS"]
