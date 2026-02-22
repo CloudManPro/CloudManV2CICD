@@ -713,7 +713,7 @@ resource "aws_s3_bucket_versioning" "app-cloudman-v2_versioning" {
 
 data "archive_file" "archive_CloudManMainV2_AgentV2" {
   output_path                       = "${path.module}/CloudManMainV2_AgentV2.zip"
-  source_dir                        = "${path.module}/.external_modules/CloudManMainV2/LambdaFiles/HCLAWSV2"
+  source_dir                        = "${path.module}/.external_modules/CloudManMainV2/LambdaFiles/AgentV2"
   type                              = "zip"
 }
 
@@ -721,7 +721,7 @@ resource "aws_lambda_function" "AgentV2" {
   function_name                     = "AgentV2"
   architectures                     = ["arm64"]
   filename                          = "${data.archive_file.archive_CloudManMainV2_AgentV2.output_path}"
-  handler                           = "HCLAWSV2.lambda_handler"
+  handler                           = "AgentV2.lambda_handler"
   memory_size                       = 1024
   publish                           = false
   reserved_concurrent_executions    = -1
