@@ -60,6 +60,33 @@ data "aws_dynamodb_table" "CloudManV2" {
 
 ### CATEGORY: IAM ###
 
+data "aws_iam_policy_document" "lambda_function_AgentV2_st_AppCloudManV2_doc" {
+  statement {
+    sid                             = "AllowWriteLogs"
+    effect                          = "Allow"
+    actions                         = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
+    resources                       = ["${aws_cloudwatch_log_group.AgentV2.arn}:*"]
+  }
+  statement {
+    sid                             = "AllowDynamoDBCRUD"
+    effect                          = "Allow"
+    actions                         = ["dynamodb:DeleteItem", "dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:Query", "dynamodb:UpdateItem"]
+    resources                       = ["${data.aws_dynamodb_table.CloudManV2.arn}", "${data.aws_dynamodb_table.CloudManV2.arn}/*"]
+  }
+  statement {
+    sid                             = "AllowAllResources"
+    effect                          = "Allow"
+    actions                         = ["ce:GetCostAndUsage", "ec2:DescribeImages", "ec2:DescribeSpotPriceHistory", "pricing:GetProducts", "sts:AssumeRole", "tag:GetResources", "tag:TagResources", "tag:UntagResources"]
+    resources                       = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "lambda_function_AgentV2_st_AppCloudManV2" {
+  name                              = "lambda_function_AgentV2_st_AppCloudManV2"
+  description                       = "Access Policy for AgentV2"
+  policy                            = data.aws_iam_policy_document.lambda_function_AgentV2_st_AppCloudManV2_doc.json
+}
+
 data "aws_iam_policy_document" "lambda_function_DBAccessV2_st_AppCloudManV2_doc" {
   statement {
     sid                             = "AllowWriteLogs"
@@ -102,6 +129,27 @@ resource "aws_iam_policy" "lambda_function_HCLAWSV2_st_AppCloudManV2" {
   policy                            = data.aws_iam_policy_document.lambda_function_HCLAWSV2_st_AppCloudManV2_doc.json
 }
 
+resource "aws_iam_role" "role_lambda_AgentV2" {
+  name                              = "role_lambda_AgentV2"
+  assume_role_policy                = jsonencode({
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      }
+    }
+  ]
+})
+  tags                              = {
+    "Name" = "role_lambda_AgentV2"
+    "State" = "AppCloudManV2"
+    "CloudmanUser" = "GlobalUserName"
+  }
+}
+
 resource "aws_iam_role" "role_lambda_DBAccessV2" {
   name                              = "role_lambda_DBAccessV2"
   assume_role_policy                = jsonencode({
@@ -142,6 +190,11 @@ resource "aws_iam_role" "role_lambda_HCLAWSV2" {
     "State" = "AppCloudManV2"
     "CloudmanUser" = "GlobalUserName"
   }
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_function_AgentV2_st_AppCloudManV2_attach" {
+  policy_arn                        = aws_iam_policy.lambda_function_AgentV2_st_AppCloudManV2.arn
+  role                              = aws_iam_role.role_lambda_AgentV2.name
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_function_DBAccessV2_st_AppCloudManV2_attach" {
@@ -241,6 +294,18 @@ locals {
     {
       path             = "/HCLAWSV2"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:HCLAWSV2/invocations"
+      type             = "aws_proxy"
+      methods          = ["post"]
+      enable_mock      = true
+      credentials      = null
+      requestTemplates = null
+      integ_method     = "POST"
+      parameters       = null
+      integ_req_params = null
+    },
+    {
+      path             = "/AgentV2"
+      uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:AgentV2/invocations"
       type             = "aws_proxy"
       methods          = ["post"]
       enable_mock      = true
@@ -381,18 +446,18 @@ resource "aws_api_gateway_stage" "st" {
   stage_name                        = "st"
   access_log_settings {
     destination_arn                 = aws_cloudwatch_log_group.AppCloudManV2-ST.arn
-    format                          = jsonencode({
-        "requestId" = "$context.requestId"
-        "ip" = "$context.identity.sourceIp"
-        "caller" = "$context.identity.caller"
-        "user" = "$context.identity.user"
-        "requestTime" = "$context.requestTime"
-        "httpMethod" = "$context.httpMethod"
-        "resourcePath" = "$context.resourcePath"
-        "status" = "$context.status"
-        "protocol" = "$context.protocol"
-        "responseLength" = "$context.responseLength"
-      })
+    format {
+      caller                        = "$context.identity.caller"
+      httpMethod                    = "$context.httpMethod"
+      ip                            = "$context.identity.sourceIp"
+      protocol                      = "$context.protocol"
+      requestId                     = "$context.requestId"
+      requestTime                   = "$context.requestTime"
+      resourcePath                  = "$context.resourcePath"
+      responseLength                = "$context.responseLength"
+      status                        = "$context.status"
+      user                          = "$context.identity.user"
+    }
   }
   tags                              = {
     "Name" = "st"
@@ -657,6 +722,40 @@ resource "aws_s3_bucket_versioning" "app-cloudman-v2_versioning" {
 
 ### CATEGORY: COMPUTE ###
 
+data "archive_file" "archive_CloudManMainV2_AgentV2" {
+  output_path                       = "${path.module}/CloudManMainV2_AgentV2.zip"
+  source_dir                        = "${path.module}/.external_modules/CloudManMainV2/LambdaFiles/HCLAWSV2"
+  type                              = "zip"
+}
+
+resource "aws_lambda_function" "AgentV2" {
+  function_name                     = "AgentV2"
+  architectures                     = ["arm64"]
+  filename                          = "${data.archive_file.archive_CloudManMainV2_AgentV2.output_path}"
+  handler                           = "HCLAWSV2.lambda_handler"
+  memory_size                       = 1024
+  publish                           = false
+  reserved_concurrent_executions    = -1
+  role                              = aws_iam_role.role_lambda_AgentV2.arn
+  runtime                           = "python3.13"
+  source_code_hash                  = "${data.archive_file.archive_CloudManMainV2_AgentV2.output_base64sha256}"
+  timeout                           = 30
+  environment {
+    variables                       = {
+    "AWS_DYNAMODB_TABLE_TARGET_NAME_0" = "CloudManV2"
+    "REGION" = data.aws_region.current.name
+    "ACCOUNT" = data.aws_caller_identity.current.account_id
+    "NAME" = "AgentV2"
+  }
+  }
+  tags                              = {
+    "Name" = "AgentV2"
+    "State" = "AppCloudManV2"
+    "CloudmanUser" = "GlobalUserName"
+  }
+  depends_on                        = [aws_iam_role_policy_attachment.lambda_function_AgentV2_st_AppCloudManV2_attach]
+}
+
 data "archive_file" "archive_CloudManMainV2_DBAccessV2" {
   output_path                       = "${path.module}/CloudManMainV2_DBAccessV2.zip"
   source_dir                        = "${path.module}/.external_modules/CloudManMainV2/LambdaFiles/DBAccessV2"
@@ -684,6 +783,11 @@ resource "aws_lambda_function" "DBAccessV2" {
     "NAME" = "DBAccessV2"
     "AWS_S3_BUCKET_TARGET_ARN_0" = data.aws_s3_bucket.s3-cloudmanv2-files.arn
   }
+  }
+  lifecycle {
+    create_before_destroy           = false
+    ignore_changes                  = [filename]
+    prevent_destroy                 = false
   }
   tags                              = {
     "Name" = "DBAccessV2"
@@ -718,12 +822,25 @@ resource "aws_lambda_function" "HCLAWSV2" {
     "NAME" = "HCLAWSV2"
   }
   }
+  lifecycle {
+    create_before_destroy           = false
+    ignore_changes                  = [filename]
+    prevent_destroy                 = false
+  }
   tags                              = {
     "Name" = "HCLAWSV2"
     "State" = "AppCloudManV2"
     "CloudmanUser" = "GlobalUserName"
   }
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_HCLAWSV2_st_AppCloudManV2_attach]
+}
+
+resource "aws_lambda_permission" "perm_APIAppCloudManV2_to_AgentV2_openapi" {
+  function_name                     = aws_lambda_function.AgentV2.function_name
+  statement_id                      = "perm_APIAppCloudManV2_to_AgentV2_openapi"
+  principal                         = "apigateway.amazonaws.com"
+  action                            = "lambda:InvokeFunction"
+  source_arn                        = "${aws_api_gateway_rest_api.APIAppCloudManV2.execution_arn}/*/POST/AgentV2"
 }
 
 resource "aws_lambda_permission" "perm_APIAppCloudManV2_to_DBAccessV2_openapi" {
@@ -746,6 +863,18 @@ resource "aws_lambda_permission" "perm_APIAppCloudManV2_to_HCLAWSV2_openapi" {
 
 
 ### CATEGORY: MONITORING ###
+
+resource "aws_cloudwatch_log_group" "AgentV2" {
+  name                              = "/aws/lambda/AgentV2"
+  log_group_class                   = "STANDARD"
+  retention_in_days                 = 1
+  skip_destroy                      = false
+  tags                              = {
+    "Name" = "AgentV2"
+    "State" = "AppCloudManV2"
+    "CloudmanUser" = "GlobalUserName"
+  }
+}
 
 resource "aws_cloudwatch_log_group" "AppCloudManV2-ST" {
   name                              = "/aws/apigateway/st"
