@@ -737,10 +737,6 @@ resource "aws_lambda_function" "AgentV2" {
     "NAME" = "AgentV2"
   }
   }
-  logging_config {
-    application_log_level           = "INFO"
-    log_format                      = "Text"
-  }
   tags                              = {
     "Name" = "AgentV2"
     "State" = "AppCloudManV2"
