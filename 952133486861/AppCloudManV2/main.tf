@@ -446,18 +446,7 @@ resource "aws_api_gateway_stage" "st" {
   stage_name                        = "st"
   access_log_settings {
     destination_arn                 = aws_cloudwatch_log_group.AppCloudManV2-ST.arn
-    format {
-      caller                        = "$context.identity.caller"
-      httpMethod                    = "$context.httpMethod"
-      ip                            = "$context.identity.sourceIp"
-      protocol                      = "$context.protocol"
-      requestId                     = "$context.requestId"
-      requestTime                   = "$context.requestTime"
-      resourcePath                  = "$context.resourcePath"
-      responseLength                = "$context.responseLength"
-      status                        = "$context.status"
-      user                          = "$context.identity.user"
-    }
+    format                          = jsonencode({"requestId": "$context.requestId", "ip": "$context.identity.sourceIp", "caller": "$context.identity.caller", "user": "$context.identity.user", "requestTime": "$context.requestTime", "httpMethod": "$context.httpMethod", "resourcePath": "$context.resourcePath", "status": "$context.status", "protocol": "$context.protocol", "responseLength": "$context.responseLength"})
   }
   tags                              = {
     "Name" = "st"
@@ -747,6 +736,10 @@ resource "aws_lambda_function" "AgentV2" {
     "ACCOUNT" = data.aws_caller_identity.current.account_id
     "NAME" = "AgentV2"
   }
+  }
+  logging_config {
+    application_log_level           = "INFO"
+    log_format                      = "Text"
   }
   tags                              = {
     "Name" = "AgentV2"
