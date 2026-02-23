@@ -27,7 +27,7 @@ data "aws_region" "current" {}
 ### CATEGORY: STORAGE ###
 
 resource "aws_s3_bucket" "s3-cloudmanv2-files-dev" {
-  bucket                            = "s3-cloudmanv2-files"
+  bucket                            = "s3-cloudmanv2-files-dev"
   force_destroy                     = true
   object_lock_enabled               = false
   tags                              = {
@@ -73,7 +73,7 @@ resource "aws_s3_bucket_versioning" "s3-cloudmanv2-files-dev_versioning" {
 }
 
 resource "aws_dynamodb_table" "CloudManV2-dev" {
-  name                              = "CloudManV2"
+  name                              = "CloudManV2-dev"
   billing_mode                      = "PROVISIONED"
   deletion_protection_enabled       = false
   hash_key                          = "Partition"
