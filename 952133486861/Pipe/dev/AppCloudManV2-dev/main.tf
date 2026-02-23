@@ -31,7 +31,7 @@ data "aws_region" "current" {}
 ### SYSTEM DATA SOURCES ###
 
 data "aws_route53_zone" "Cloudman" {
-  name                              = "Cloudman"
+  name                              = "cloudman.pro"
 }
 
 
@@ -273,7 +273,7 @@ resource "aws_iam_role_policy_attachment" "lambda_function_HCLAWSV2-dev_st_AppCl
 }
 
 resource "aws_acm_certificate" "AppCloudManV2-dev" {
-  domain_name                       = "dev.v2.Cloudman"
+  domain_name                       = "dev.v2.cloudman.pro"
   key_algorithm                     = "RSA_2048"
   validation_method                 = "DNS"
   options {
@@ -312,7 +312,7 @@ resource "aws_route53_record" "Route53_Record_AppCloudManV2-dev" {
 }
 
 resource "aws_route53_record" "alias_a_dev-dev_to_AppCloudManV2-dev" {
-  name                              = "dev.v2.Cloudman"
+  name                              = "dev.v2.cloudman.pro"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "A"
   alias {
@@ -323,7 +323,7 @@ resource "aws_route53_record" "alias_a_dev-dev_to_AppCloudManV2-dev" {
 }
 
 resource "aws_route53_record" "alias_aaaa_dev-dev_to_AppCloudManV2-dev" {
-  name                              = "dev.v2.Cloudman"
+  name                              = "dev.v2.cloudman.pro"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "AAAA"
   alias {
@@ -537,7 +537,7 @@ resource "aws_api_gateway_stage" "st-dev" {
 }
 
 resource "aws_cloudfront_distribution" "AppCloudManV2-dev" {
-  aliases                           = ["dev.v2.Cloudman"]
+  aliases                           = ["dev.v2.cloudman.pro"]
   default_root_object               = "index.html"
   enabled                           = true
   http_version                      = "http2and3"
