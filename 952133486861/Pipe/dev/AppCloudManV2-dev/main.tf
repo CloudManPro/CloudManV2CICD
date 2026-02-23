@@ -82,6 +82,12 @@ data "aws_iam_policy_document" "lambda_function_AgentV2-dev_st_AppCloudManV2-dev
     resources                       = ["${data.aws_dynamodb_table.CloudManV2-dev.arn}", "${data.aws_dynamodb_table.CloudManV2-dev.arn}/*"]
   }
   statement {
+    sid                             = "AllowLambdaInvoke"
+    effect                          = "Allow"
+    actions                         = ["lambda:InvokeFunction"]
+    resources                       = ["${aws_lambda_function.GithubGateKeeper-dev.arn}"]
+  }
+  statement {
     sid                             = "AllowAllResources"
     effect                          = "Allow"
     actions                         = ["ce:GetCostAndUsage", "ec2:DescribeImages", "ec2:DescribeSpotPriceHistory", "pricing:GetProducts", "sts:AssumeRole", "tag:GetResources", "tag:TagResources", "tag:UntagResources"]
@@ -816,10 +822,12 @@ resource "aws_lambda_function" "AgentV2-dev" {
   environment {
     variables                       = {
     "AWS_DYNAMODB_TABLE_TARGET_NAME_0" = "CloudManV2-dev"
+    "AWS_LAMBDA_FUNCTION_TARGET_NAME_0" = "GithubGateKeeper-dev"
     "REGION" = data.aws_region.current.name
     "ACCOUNT" = data.aws_caller_identity.current.account_id
     "NAME" = "AgentV2-dev"
     "AWS_DYNAMODB_TABLE_TARGET_ARN_0" = data.aws_dynamodb_table.CloudManV2-dev.arn
+    "AWS_LAMBDA_FUNCTION_TARGET_ARN_0" = aws_lambda_function.GithubGateKeeper-dev.arn
   }
   }
   tags                              = {
@@ -979,6 +987,14 @@ resource "aws_lambda_permission" "perm_APIAppCloudManV2-dev_to_HCLAWSV2-dev_open
   principal                         = "apigateway.amazonaws.com"
   action                            = "lambda:InvokeFunction"
   source_arn                        = "${aws_api_gateway_rest_api.APIAppCloudManV2-dev.execution_arn}/*/*/HCLAWSV2-dev"
+}
+
+resource "aws_lambda_permission" "perm_AgentV2-dev_to_GithubGateKeeper-dev" {
+  function_name                     = aws_lambda_function.GithubGateKeeper-dev.function_name
+  statement_id                      = "perm_AgentV2-dev_to_GithubGateKeeper-dev"
+  principal                         = "lambda.amazonaws.com"
+  action                            = "lambda:InvokeFunction"
+  source_arn                        = aws_lambda_function.AgentV2-dev.arn
 }
 
 
