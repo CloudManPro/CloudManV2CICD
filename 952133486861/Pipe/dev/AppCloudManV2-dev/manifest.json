@@ -1,10 +1,10 @@
 {
   "external_repositories": [
     {
-      "repo_name": "CloudManMainV1-dev",
+      "repo_name": "CloudManMainV2",
       "org": "CloudManPro",
       "branch": "main",
-      "target_dir": ".external_modules/CloudManMainV1-dev",
+      "target_dir": ".external_modules/CloudManMainV2",
       "folders": [
         "LambdaFiles/GithubGateKeeper",
         "LambdaFiles/HCLAWSV2",
@@ -14,7 +14,7 @@
     }
   ],
   "action": "apply",
-  "trigger_id": "1771870684924",
+  "trigger_id": "1771871198282",
   "backend_global_config": {
     "provider": "aws",
     "role_arn": "arn:aws:iam::952133486861:role/CloudMan-Gitops-CloudManPro-CloudManV2CICD",
