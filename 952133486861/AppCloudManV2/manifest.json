@@ -8,12 +8,13 @@
       "folders": [
         "LambdaFiles/DBAccessV2",
         "LambdaFiles/HCLAWSV2",
-        "LambdaFiles/AgentV2"
+        "LambdaFiles/AgentV2",
+        "LambdaFiles/GithubGateKeeper"
       ]
     }
   ],
-  "action": "apply",
-  "trigger_id": "1771787330308",
+  "action": "plan",
+  "trigger_id": "1771810114102",
   "backend_global_config": {
     "provider": "aws",
     "role_arn": "arn:aws:iam::952133486861:role/CloudMan-Gitops-CloudManPro-CloudManV2CICD",
