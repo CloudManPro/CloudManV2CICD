@@ -1,0 +1,40 @@
+{
+  "external_repositories": [
+    {
+      "repo_name": "CloudManMainV1-dev",
+      "org": "CloudManPro",
+      "branch": "main",
+      "target_dir": ".external_modules/CloudManMainV1-dev",
+      "folders": [
+        "LambdaFiles/GithubGateKeeper",
+        "LambdaFiles/HCLAWSV2",
+        "LambdaFiles/DBAccessV2",
+        "LambdaFiles/AgentV2"
+      ]
+    }
+  ],
+  "action": "apply",
+  "trigger_id": "1771870684924",
+  "backend_global_config": {
+    "provider": "aws",
+    "role_arn": "arn:aws:iam::952133486861:role/CloudMan-Gitops-CloudManPro-CloudManV2CICD",
+    "region": "us-east-1"
+  },
+  "pipeline_stages": [
+    {
+      "stage_name": "Manual Trigger: AppCloudManV2-dev",
+      "parallel_execution": false,
+      "states": [
+        {
+          "path": "952133486861/Pipe/dev/AppCloudManV2-dev",
+          "provider": "aws",
+          "target_auth": {
+            "role_arn": "arn:aws:iam::952133486861:role/CloudMan-Gitops-CloudManPro-CloudManV2CICD",
+            "region": "us-east-1",
+            "secret_name": "AUTH_AWS_952133486861"
+          }
+        }
+      ]
+    }
+  ]
+}
