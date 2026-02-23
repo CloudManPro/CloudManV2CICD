@@ -14,7 +14,7 @@
     }
   ],
   "action": "apply",
-  "trigger_id": "1771871894020",
+  "trigger_id": "1771873098343",
   "backend_global_config": {
     "provider": "aws",
     "role_arn": "arn:aws:iam::952133486861:role/CloudMan-Gitops-CloudManPro-CloudManV2CICD",
