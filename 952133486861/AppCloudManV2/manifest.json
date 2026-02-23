@@ -6,15 +6,15 @@
       "branch": "main",
       "target_dir": ".external_modules/CloudManMainV2",
       "folders": [
-        "LambdaFiles/DBAccessV2",
+        "LambdaFiles/GithubGateKeeper",
         "LambdaFiles/HCLAWSV2",
-        "LambdaFiles/AgentV2",
-        "LambdaFiles/GithubGateKeeper"
+        "LambdaFiles/DBAccessV2",
+        "LambdaFiles/AgentV2"
       ]
     }
   ],
   "action": "apply",
-  "trigger_id": "1771810366165",
+  "trigger_id": "1771844351909",
   "backend_global_config": {
     "provider": "aws",
     "role_arn": "arn:aws:iam::952133486861:role/CloudMan-Gitops-CloudManPro-CloudManV2CICD",
