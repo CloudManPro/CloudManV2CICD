@@ -341,10 +341,10 @@ resource "aws_api_gateway_deployment" "APIAppCloudManV2" {
 locals {
   api_config_APIAppCloudManV2 = [
     {
-      path             = "/DBAccessV2"
-      uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:DBAccessV2/invocations"
+      path             = "/GithubGateKeeper"
+      uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:GithubGateKeeper/invocations"
       type             = "aws_proxy"
-      methods          = ["post"]
+      methods          = ["options", "post"]
       enable_mock      = true
       credentials      = null
       requestTemplates = null
@@ -356,7 +356,19 @@ locals {
       path             = "/HCLAWSV2"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:HCLAWSV2/invocations"
       type             = "aws_proxy"
-      methods          = ["post"]
+      methods          = ["options", "post"]
+      enable_mock      = true
+      credentials      = null
+      requestTemplates = null
+      integ_method     = "POST"
+      parameters       = null
+      integ_req_params = null
+    },
+    {
+      path             = "/DBAccessV2"
+      uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:DBAccessV2/invocations"
+      type             = "aws_proxy"
+      methods          = ["options", "post"]
       enable_mock      = true
       credentials      = null
       requestTemplates = null
@@ -368,19 +380,7 @@ locals {
       path             = "/AgentV2"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:AgentV2/invocations"
       type             = "aws_proxy"
-      methods          = ["post"]
-      enable_mock      = true
-      credentials      = null
-      requestTemplates = null
-      integ_method     = "POST"
-      parameters       = null
-      integ_req_params = null
-    },
-    {
-      path             = "/GithubGateKeeper"
-      uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:GithubGateKeeper/invocations"
-      type             = "aws_proxy"
-      methods          = ["post"]
+      methods          = ["options", "post"]
       enable_mock      = true
       credentials      = null
       requestTemplates = null
@@ -420,7 +420,7 @@ locals {
             for item in local.api_config_APIAppCloudManV2 :
             merge(
             {
-                for method in item.methods :
+                for method in toset(item.methods) :
                 method => merge(
                 {
                     "responses" = {
@@ -465,6 +465,7 @@ locals {
             },
             item.enable_mock ? { "options" = {
           summary  = "CORS support"
+          security = []  # <--- CORREÇÃO 1: Anula o authorizer global para o OPTIONS
           consumes = ["application/json"]
           produces = ["application/json"]
           responses = {
@@ -484,7 +485,7 @@ locals {
               default = {
                 statusCode = "200"
                 responseParameters = {
-                  "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
+                  "method.response.header.Access-Control-Allow-Methods" = "'OPTIONS,POST'"
                   "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
                   "method.response.header.Access-Control-Allow-Origin"  = "'*'"
                 }
@@ -937,7 +938,7 @@ resource "aws_lambda_permission" "perm_APIAppCloudManV2_to_AgentV2_openapi" {
   statement_id                      = "perm_APIAppCloudManV2_to_AgentV2_openapi"
   principal                         = "apigateway.amazonaws.com"
   action                            = "lambda:InvokeFunction"
-  source_arn                        = "${aws_api_gateway_rest_api.APIAppCloudManV2.execution_arn}/*/POST/AgentV2"
+  source_arn                        = "${aws_api_gateway_rest_api.APIAppCloudManV2.execution_arn}/*/*/AgentV2"
 }
 
 resource "aws_lambda_permission" "perm_APIAppCloudManV2_to_DBAccessV2_openapi" {
@@ -945,7 +946,7 @@ resource "aws_lambda_permission" "perm_APIAppCloudManV2_to_DBAccessV2_openapi" {
   statement_id                      = "perm_APIAppCloudManV2_to_DBAccessV2_openapi"
   principal                         = "apigateway.amazonaws.com"
   action                            = "lambda:InvokeFunction"
-  source_arn                        = "${aws_api_gateway_rest_api.APIAppCloudManV2.execution_arn}/*/POST/DBAccessV2"
+  source_arn                        = "${aws_api_gateway_rest_api.APIAppCloudManV2.execution_arn}/*/*/DBAccessV2"
 }
 
 resource "aws_lambda_permission" "perm_APIAppCloudManV2_to_GithubGateKeeper_openapi" {
@@ -953,7 +954,7 @@ resource "aws_lambda_permission" "perm_APIAppCloudManV2_to_GithubGateKeeper_open
   statement_id                      = "perm_APIAppCloudManV2_to_GithubGateKeeper_openapi"
   principal                         = "apigateway.amazonaws.com"
   action                            = "lambda:InvokeFunction"
-  source_arn                        = "${aws_api_gateway_rest_api.APIAppCloudManV2.execution_arn}/*/POST/GithubGateKeeper"
+  source_arn                        = "${aws_api_gateway_rest_api.APIAppCloudManV2.execution_arn}/*/*/GithubGateKeeper"
 }
 
 resource "aws_lambda_permission" "perm_APIAppCloudManV2_to_HCLAWSV2_openapi" {
@@ -961,7 +962,7 @@ resource "aws_lambda_permission" "perm_APIAppCloudManV2_to_HCLAWSV2_openapi" {
   statement_id                      = "perm_APIAppCloudManV2_to_HCLAWSV2_openapi"
   principal                         = "apigateway.amazonaws.com"
   action                            = "lambda:InvokeFunction"
-  source_arn                        = "${aws_api_gateway_rest_api.APIAppCloudManV2.execution_arn}/*/POST/HCLAWSV2"
+  source_arn                        = "${aws_api_gateway_rest_api.APIAppCloudManV2.execution_arn}/*/*/HCLAWSV2"
 }
 
 
