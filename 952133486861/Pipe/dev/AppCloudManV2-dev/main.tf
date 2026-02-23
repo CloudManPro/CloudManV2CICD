@@ -349,7 +349,7 @@ locals {
       path             = "/GithubGateKeeper-dev"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:GithubGateKeeper-dev/invocations"
       type             = "aws_proxy"
-      methods          = ["post", "options"]
+      methods          = ["options", "post"]
       enable_mock      = true
       credentials      = null
       requestTemplates = null
@@ -361,7 +361,7 @@ locals {
       path             = "/HCLAWSV2-dev"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:HCLAWSV2-dev/invocations"
       type             = "aws_proxy"
-      methods          = ["post", "options"]
+      methods          = ["options", "post"]
       enable_mock      = true
       credentials      = null
       requestTemplates = null
@@ -373,7 +373,7 @@ locals {
       path             = "/DBAccessV2-dev"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:DBAccessV2-dev/invocations"
       type             = "aws_proxy"
-      methods          = ["post", "options"]
+      methods          = ["options", "post"]
       enable_mock      = true
       credentials      = null
       requestTemplates = null
@@ -385,7 +385,7 @@ locals {
       path             = "/AgentV2-dev"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:AgentV2-dev/invocations"
       type             = "aws_proxy"
-      methods          = ["post", "options"]
+      methods          = ["options", "post"]
       enable_mock      = true
       credentials      = null
       requestTemplates = null
@@ -523,7 +523,7 @@ resource "aws_api_gateway_rest_api" "APIAppCloudManV2-dev" {
 resource "aws_api_gateway_stage" "st-dev" {
   deployment_id                     = aws_api_gateway_deployment.APIAppCloudManV2-dev.id
   rest_api_id                       = aws_api_gateway_rest_api.APIAppCloudManV2-dev.id
-  stage_name                        = "st-dev"
+  stage_name                        = "st"
   access_log_settings {
     destination_arn                 = aws_cloudwatch_log_group.AppCloudManV2-ST-dev.arn
     format                          = jsonencode({"requestId": "$context.requestId", "ip": "$context.identity.sourceIp", "caller": "$context.identity.caller", "user": "$context.identity.user", "requestTime": "$context.requestTime", "httpMethod": "$context.httpMethod", "resourcePath": "$context.resourcePath", "status": "$context.status", "protocol": "$context.protocol", "responseLength": "$context.responseLength"})
