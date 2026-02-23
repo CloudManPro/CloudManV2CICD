@@ -33,7 +33,7 @@ resource "aws_s3_bucket" "s3-cloudmanv2-files-dev" {
   tags                              = {
     "Name" = "s3-cloudmanv2-files-dev"
     "State" = "ClaudManDB-dev"
-    "CloudmanUser" = "GlobalUserName"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "dev"
   }
 }
@@ -93,7 +93,7 @@ resource "aws_dynamodb_table" "CloudManV2-dev" {
   tags                              = {
     "Name" = "CloudManV2-dev"
     "State" = "ClaudManDB-dev"
-    "CloudmanUser" = "GlobalUserName"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "dev"
   }
 }
