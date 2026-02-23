@@ -103,12 +103,6 @@ data "aws_iam_policy_document" "lambda_function_DBAccessV2_st_AppCloudManV2_doc"
     resources                       = ["${aws_cloudwatch_log_group.DBAccessV2.arn}:*"]
   }
   statement {
-    sid                             = "AllowDynamoDBCRUD"
-    effect                          = "Allow"
-    actions                         = ["dynamodb:DeleteItem", "dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:Query", "dynamodb:UpdateItem"]
-    resources                       = ["${data.aws_dynamodb_table.CloudManV2.arn}", "${data.aws_dynamodb_table.CloudManV2.arn}/*"]
-  }
-  statement {
     sid                             = "AllowBucketLevelActions"
     effect                          = "Allow"
     actions                         = ["s3:DeleteObject", "s3:GetBucketLocation", "s3:GetObject", "s3:ListBucket", "s3:PutObject"]
@@ -844,7 +838,6 @@ resource "aws_lambda_function" "DBAccessV2" {
   timeout                           = 3
   environment {
     variables                       = {
-    "AWS_DYNAMODB_TABLE_TARGET_NAME_0" = "CloudManV2"
     "AWS_S3_BUCKET_TARGET_NAME_0" = "s3-cloudmanv2-files"
     "REGION" = data.aws_region.current.name
     "ACCOUNT" = data.aws_caller_identity.current.account_id
