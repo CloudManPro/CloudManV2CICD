@@ -55,6 +55,14 @@ data "aws_dynamodb_table" "CloudManV2" {
   name                              = "CloudManV2"
 }
 
+data "aws_ssm_parameter" "GitHubAppKeyDev" {
+  name                              = "GitHubAppKeyDev"
+}
+
+data "aws_ssm_parameter" "GithubClientAndSecret" {
+  name                              = "GithubClientAndSecret"
+}
+
 
 
 
@@ -114,6 +122,39 @@ resource "aws_iam_policy" "lambda_function_DBAccessV2_st_AppCloudManV2" {
   policy                            = data.aws_iam_policy_document.lambda_function_DBAccessV2_st_AppCloudManV2_doc.json
 }
 
+data "aws_iam_policy_document" "lambda_function_GithubGateKeeper_st_AppCloudManV2_doc" {
+  statement {
+    sid                             = "AllowWriteLogs"
+    effect                          = "Allow"
+    actions                         = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
+    resources                       = ["${aws_cloudwatch_log_group.GithubGateKeeper.arn}:*"]
+  }
+  statement {
+    sid                             = "AllowDynamoDBCRUD"
+    effect                          = "Allow"
+    actions                         = ["dynamodb:DeleteItem", "dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:Query", "dynamodb:UpdateItem"]
+    resources                       = ["${data.aws_dynamodb_table.CloudManV2.arn}", "${data.aws_dynamodb_table.CloudManV2.arn}/*"]
+  }
+  statement {
+    sid                             = "AllowReadParam"
+    effect                          = "Allow"
+    actions                         = ["ssm:GetParameter", "ssm:GetParameters"]
+    resources                       = ["${data.aws_ssm_parameter.GitHubAppKeyDev.arn}"]
+  }
+  statement {
+    sid                             = "AllowReadParam1"
+    effect                          = "Allow"
+    actions                         = ["ssm:GetParameter", "ssm:GetParameters"]
+    resources                       = ["${data.aws_ssm_parameter.GithubClientAndSecret.arn}"]
+  }
+}
+
+resource "aws_iam_policy" "lambda_function_GithubGateKeeper_st_AppCloudManV2" {
+  name                              = "lambda_function_GithubGateKeeper_st_AppCloudManV2"
+  description                       = "Access Policy for GithubGateKeeper"
+  policy                            = data.aws_iam_policy_document.lambda_function_GithubGateKeeper_st_AppCloudManV2_doc.json
+}
+
 data "aws_iam_policy_document" "lambda_function_HCLAWSV2_st_AppCloudManV2_doc" {
   statement {
     sid                             = "AllowWriteLogs"
@@ -171,6 +212,27 @@ resource "aws_iam_role" "role_lambda_DBAccessV2" {
   }
 }
 
+resource "aws_iam_role" "role_lambda_GithubGateKeeper" {
+  name                              = "role_lambda_GithubGateKeeper"
+  assume_role_policy                = jsonencode({
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      }
+    }
+  ]
+})
+  tags                              = {
+    "Name" = "role_lambda_GithubGateKeeper"
+    "State" = "AppCloudManV2"
+    "CloudmanUser" = "GlobalUserName"
+  }
+}
+
 resource "aws_iam_role" "role_lambda_HCLAWSV2" {
   name                              = "role_lambda_HCLAWSV2"
   assume_role_policy                = jsonencode({
@@ -200,6 +262,11 @@ resource "aws_iam_role_policy_attachment" "lambda_function_AgentV2_st_AppCloudMa
 resource "aws_iam_role_policy_attachment" "lambda_function_DBAccessV2_st_AppCloudManV2_attach" {
   policy_arn                        = aws_iam_policy.lambda_function_DBAccessV2_st_AppCloudManV2.arn
   role                              = aws_iam_role.role_lambda_DBAccessV2.name
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_function_GithubGateKeeper_st_AppCloudManV2_attach" {
+  policy_arn                        = aws_iam_policy.lambda_function_GithubGateKeeper_st_AppCloudManV2.arn
+  role                              = aws_iam_role.role_lambda_GithubGateKeeper.name
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_function_HCLAWSV2_st_AppCloudManV2_attach" {
@@ -306,6 +373,18 @@ locals {
     {
       path             = "/AgentV2"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:AgentV2/invocations"
+      type             = "aws_proxy"
+      methods          = ["post"]
+      enable_mock      = true
+      credentials      = null
+      requestTemplates = null
+      integ_method     = "POST"
+      parameters       = null
+      integ_req_params = null
+    },
+    {
+      path             = "/GithubGateKeeper"
+      uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:GithubGateKeeper/invocations"
       type             = "aws_proxy"
       methods          = ["post"]
       enable_mock      = true
@@ -786,6 +865,42 @@ resource "aws_lambda_function" "DBAccessV2" {
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_DBAccessV2_st_AppCloudManV2_attach]
 }
 
+data "archive_file" "archive_CloudManMainV2_GithubGateKeeper" {
+  output_path                       = "${path.module}/CloudManMainV2_GithubGateKeeper.zip"
+  source_dir                        = "${path.module}/.external_modules/CloudManMainV2/LambdaFiles/GithubGateKeeper"
+  type                              = "zip"
+}
+
+resource "aws_lambda_function" "GithubGateKeeper" {
+  function_name                     = "GithubGateKeeper"
+  architectures                     = ["arm64"]
+  filename                          = "${data.archive_file.archive_CloudManMainV2_GithubGateKeeper.output_path}"
+  handler                           = "GithubGateKeeper.lambda_handler"
+  memory_size                       = 3008
+  publish                           = false
+  reserved_concurrent_executions    = -1
+  role                              = aws_iam_role.role_lambda_GithubGateKeeper.arn
+  runtime                           = "python3.13"
+  source_code_hash                  = "${data.archive_file.archive_CloudManMainV2_GithubGateKeeper.output_base64sha256}"
+  timeout                           = 30
+  environment {
+    variables                       = {
+    "AWS_SSM_PARAMETER_TARGET_NAME_APPKEY" = "GitHubAppKeyDev"
+    "AWS_SSM_PARAMETER_TARGET_NAME_SECRET" = "GithubClientAndSecret"
+    "AWS_DYNAMODB_TABLE_TARGET_NAME_0" = "CloudManV2"
+    "REGION" = data.aws_region.current.name
+    "ACCOUNT" = data.aws_caller_identity.current.account_id
+    "NAME" = "GithubGateKeeper"
+  }
+  }
+  tags                              = {
+    "Name" = "GithubGateKeeper"
+    "State" = "AppCloudManV2"
+    "CloudmanUser" = "GlobalUserName"
+  }
+  depends_on                        = [aws_iam_role_policy_attachment.lambda_function_GithubGateKeeper_st_AppCloudManV2_attach]
+}
+
 data "archive_file" "archive_CloudManMainV2_HCLAWSV2" {
   output_path                       = "${path.module}/CloudManMainV2_HCLAWSV2.zip"
   source_dir                        = "${path.module}/.external_modules/CloudManMainV2/LambdaFiles/HCLAWSV2"
@@ -840,6 +955,14 @@ resource "aws_lambda_permission" "perm_APIAppCloudManV2_to_DBAccessV2_openapi" {
   source_arn                        = "${aws_api_gateway_rest_api.APIAppCloudManV2.execution_arn}/*/POST/DBAccessV2"
 }
 
+resource "aws_lambda_permission" "perm_APIAppCloudManV2_to_GithubGateKeeper_openapi" {
+  function_name                     = aws_lambda_function.GithubGateKeeper.function_name
+  statement_id                      = "perm_APIAppCloudManV2_to_GithubGateKeeper_openapi"
+  principal                         = "apigateway.amazonaws.com"
+  action                            = "lambda:InvokeFunction"
+  source_arn                        = "${aws_api_gateway_rest_api.APIAppCloudManV2.execution_arn}/*/POST/GithubGateKeeper"
+}
+
 resource "aws_lambda_permission" "perm_APIAppCloudManV2_to_HCLAWSV2_openapi" {
   function_name                     = aws_lambda_function.HCLAWSV2.function_name
   statement_id                      = "perm_APIAppCloudManV2_to_HCLAWSV2_openapi"
@@ -884,6 +1007,18 @@ resource "aws_cloudwatch_log_group" "DBAccessV2" {
   skip_destroy                      = false
   tags                              = {
     "Name" = "DBAccessV2"
+    "State" = "AppCloudManV2"
+    "CloudmanUser" = "GlobalUserName"
+  }
+}
+
+resource "aws_cloudwatch_log_group" "GithubGateKeeper" {
+  name                              = "/aws/lambda/GithubGateKeeper"
+  log_group_class                   = "STANDARD"
+  retention_in_days                 = 1
+  skip_destroy                      = false
+  tags                              = {
+    "Name" = "GithubGateKeeper"
     "State" = "AppCloudManV2"
     "CloudmanUser" = "GlobalUserName"
   }
