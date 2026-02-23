@@ -273,7 +273,7 @@ resource "aws_iam_role_policy_attachment" "lambda_function_HCLAWSV2-dev_st_AppCl
 }
 
 resource "aws_acm_certificate" "AppCloudManV2-dev" {
-  domain_name                       = "dev-dev.v2.Cloudman"
+  domain_name                       = "dev.v2.Cloudman"
   key_algorithm                     = "RSA_2048"
   validation_method                 = "DNS"
   options {
@@ -312,7 +312,7 @@ resource "aws_route53_record" "Route53_Record_AppCloudManV2-dev" {
 }
 
 resource "aws_route53_record" "alias_a_dev-dev_to_AppCloudManV2-dev" {
-  name                              = "dev-dev.v2.Cloudman"
+  name                              = "dev.v2.Cloudman"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "A"
   alias {
@@ -323,7 +323,7 @@ resource "aws_route53_record" "alias_a_dev-dev_to_AppCloudManV2-dev" {
 }
 
 resource "aws_route53_record" "alias_aaaa_dev-dev_to_AppCloudManV2-dev" {
-  name                              = "dev-dev.v2.Cloudman"
+  name                              = "dev.v2.Cloudman"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "AAAA"
   alias {
@@ -349,7 +349,7 @@ locals {
       path             = "/GithubGateKeeper-dev"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:GithubGateKeeper-dev/invocations"
       type             = "aws_proxy"
-      methods          = ["options", "post"]
+      methods          = ["post", "options"]
       enable_mock      = true
       credentials      = null
       requestTemplates = null
@@ -361,7 +361,7 @@ locals {
       path             = "/HCLAWSV2-dev"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:HCLAWSV2-dev/invocations"
       type             = "aws_proxy"
-      methods          = ["options", "post"]
+      methods          = ["post", "options"]
       enable_mock      = true
       credentials      = null
       requestTemplates = null
@@ -373,7 +373,7 @@ locals {
       path             = "/DBAccessV2-dev"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:DBAccessV2-dev/invocations"
       type             = "aws_proxy"
-      methods          = ["options", "post"]
+      methods          = ["post", "options"]
       enable_mock      = true
       credentials      = null
       requestTemplates = null
@@ -385,7 +385,7 @@ locals {
       path             = "/AgentV2-dev"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:AgentV2-dev/invocations"
       type             = "aws_proxy"
-      methods          = ["options", "post"]
+      methods          = ["post", "options"]
       enable_mock      = true
       credentials      = null
       requestTemplates = null
@@ -537,7 +537,7 @@ resource "aws_api_gateway_stage" "st-dev" {
 }
 
 resource "aws_cloudfront_distribution" "AppCloudManV2-dev" {
-  aliases                           = ["dev-dev.v2.Cloudman"]
+  aliases                           = ["dev.v2.Cloudman"]
   default_root_object               = "index.html"
   enabled                           = true
   http_version                      = "http2and3"
@@ -795,23 +795,23 @@ resource "aws_s3_bucket_versioning" "app-cloudman-v2-logs-dev_versioning" {
 
 ### CATEGORY: COMPUTE ###
 
-data "archive_file" "archive_CloudManMainV1-dev_AgentV2-dev" {
-  output_path                       = "${path.module}/CloudManMainV1-dev_AgentV2-dev.zip"
-  source_dir                        = "${path.module}/.external_modules/CloudManMainV1-dev/LambdaFiles/AgentV2"
+data "archive_file" "archive_CloudManMainV2_AgentV2-dev" {
+  output_path                       = "${path.module}/CloudManMainV2_AgentV2-dev.zip"
+  source_dir                        = "${path.module}/.external_modules/CloudManMainV2/LambdaFiles/AgentV2"
   type                              = "zip"
 }
 
 resource "aws_lambda_function" "AgentV2-dev" {
   function_name                     = "AgentV2-dev"
   architectures                     = ["arm64"]
-  filename                          = "${data.archive_file.archive_CloudManMainV1-dev_AgentV2-dev.output_path}"
+  filename                          = "${data.archive_file.archive_CloudManMainV2_AgentV2-dev.output_path}"
   handler                           = "AgentV2.lambda_handler"
   memory_size                       = 1024
   publish                           = false
   reserved_concurrent_executions    = -1
   role                              = aws_iam_role.role_lambda_AgentV2-dev.arn
   runtime                           = "python3.13"
-  source_code_hash                  = "${data.archive_file.archive_CloudManMainV1-dev_AgentV2-dev.output_base64sha256}"
+  source_code_hash                  = "${data.archive_file.archive_CloudManMainV2_AgentV2-dev.output_base64sha256}"
   timeout                           = 30
   environment {
     variables                       = {
@@ -831,23 +831,23 @@ resource "aws_lambda_function" "AgentV2-dev" {
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_AgentV2-dev_st_AppCloudManV2-dev_attach]
 }
 
-data "archive_file" "archive_CloudManMainV1-dev_DBAccessV2-dev" {
-  output_path                       = "${path.module}/CloudManMainV1-dev_DBAccessV2-dev.zip"
-  source_dir                        = "${path.module}/.external_modules/CloudManMainV1-dev/LambdaFiles/DBAccessV2"
+data "archive_file" "archive_CloudManMainV2_DBAccessV2-dev" {
+  output_path                       = "${path.module}/CloudManMainV2_DBAccessV2-dev.zip"
+  source_dir                        = "${path.module}/.external_modules/CloudManMainV2/LambdaFiles/DBAccessV2"
   type                              = "zip"
 }
 
 resource "aws_lambda_function" "DBAccessV2-dev" {
   function_name                     = "DBAccessV2-dev"
   architectures                     = ["arm64"]
-  filename                          = "${data.archive_file.archive_CloudManMainV1-dev_DBAccessV2-dev.output_path}"
+  filename                          = "${data.archive_file.archive_CloudManMainV2_DBAccessV2-dev.output_path}"
   handler                           = "DBAccessV2.lambda_handler"
   memory_size                       = 1024
   publish                           = false
   reserved_concurrent_executions    = -1
   role                              = aws_iam_role.role_lambda_DBAccessV2-dev.arn
   runtime                           = "python3.13"
-  source_code_hash                  = "${data.archive_file.archive_CloudManMainV1-dev_DBAccessV2-dev.output_base64sha256}"
+  source_code_hash                  = "${data.archive_file.archive_CloudManMainV2_DBAccessV2-dev.output_base64sha256}"
   timeout                           = 3
   environment {
     variables                       = {
@@ -872,23 +872,23 @@ resource "aws_lambda_function" "DBAccessV2-dev" {
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_DBAccessV2-dev_st_AppCloudManV2-dev_attach]
 }
 
-data "archive_file" "archive_CloudManMainV1-dev_GithubGateKeeper-dev" {
-  output_path                       = "${path.module}/CloudManMainV1-dev_GithubGateKeeper-dev.zip"
-  source_dir                        = "${path.module}/.external_modules/CloudManMainV1-dev/LambdaFiles/GithubGateKeeper"
+data "archive_file" "archive_CloudManMainV2_GithubGateKeeper-dev" {
+  output_path                       = "${path.module}/CloudManMainV2_GithubGateKeeper-dev.zip"
+  source_dir                        = "${path.module}/.external_modules/CloudManMainV2/LambdaFiles/GithubGateKeeper"
   type                              = "zip"
 }
 
 resource "aws_lambda_function" "GithubGateKeeper-dev" {
   function_name                     = "GithubGateKeeper-dev"
   architectures                     = ["arm64"]
-  filename                          = "${data.archive_file.archive_CloudManMainV1-dev_GithubGateKeeper-dev.output_path}"
+  filename                          = "${data.archive_file.archive_CloudManMainV2_GithubGateKeeper-dev.output_path}"
   handler                           = "GithubGateKeeper.lambda_handler"
   memory_size                       = 3008
   publish                           = false
   reserved_concurrent_executions    = -1
   role                              = aws_iam_role.role_lambda_GithubGateKeeper-dev.arn
   runtime                           = "python3.13"
-  source_code_hash                  = "${data.archive_file.archive_CloudManMainV1-dev_GithubGateKeeper-dev.output_base64sha256}"
+  source_code_hash                  = "${data.archive_file.archive_CloudManMainV2_GithubGateKeeper-dev.output_base64sha256}"
   timeout                           = 30
   environment {
     variables                       = {
@@ -910,23 +910,23 @@ resource "aws_lambda_function" "GithubGateKeeper-dev" {
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_GithubGateKeeper-dev_st_AppCloudManV2-dev_attach]
 }
 
-data "archive_file" "archive_CloudManMainV1-dev_HCLAWSV2-dev" {
-  output_path                       = "${path.module}/CloudManMainV1-dev_HCLAWSV2-dev.zip"
-  source_dir                        = "${path.module}/.external_modules/CloudManMainV1-dev/LambdaFiles/HCLAWSV2"
+data "archive_file" "archive_CloudManMainV2_HCLAWSV2-dev" {
+  output_path                       = "${path.module}/CloudManMainV2_HCLAWSV2-dev.zip"
+  source_dir                        = "${path.module}/.external_modules/CloudManMainV2/LambdaFiles/HCLAWSV2"
   type                              = "zip"
 }
 
 resource "aws_lambda_function" "HCLAWSV2-dev" {
   function_name                     = "HCLAWSV2-dev"
   architectures                     = ["arm64"]
-  filename                          = "${data.archive_file.archive_CloudManMainV1-dev_HCLAWSV2-dev.output_path}"
+  filename                          = "${data.archive_file.archive_CloudManMainV2_HCLAWSV2-dev.output_path}"
   handler                           = "HCLAWSV2.lambda_handler"
   memory_size                       = 1024
   publish                           = false
   reserved_concurrent_executions    = -1
   role                              = aws_iam_role.role_lambda_HCLAWSV2-dev.arn
   runtime                           = "python3.13"
-  source_code_hash                  = "${data.archive_file.archive_CloudManMainV1-dev_HCLAWSV2-dev.output_base64sha256}"
+  source_code_hash                  = "${data.archive_file.archive_CloudManMainV2_HCLAWSV2-dev.output_base64sha256}"
   timeout                           = 5
   environment {
     variables                       = {
