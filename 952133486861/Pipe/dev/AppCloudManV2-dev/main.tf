@@ -582,7 +582,7 @@ resource "aws_cloudfront_distribution" "AppCloudManV2-dev" {
     viewer_protocol_policy          = "redirect-to-https"
     forwarded_values {
       headers                       = ["Origin", "Access-Control-Request-Headers", "Access-Control-Request-Method"]
-      query_string                  = false
+      query_string                  = true
       cookies {
         forward                     = "whitelist"
         whitelisted_names           = ["stage"]
@@ -895,7 +895,7 @@ resource "aws_lambda_function" "GithubGateKeeper-dev" {
   publish                           = false
   reserved_concurrent_executions    = -1
   role                              = aws_iam_role.role_lambda_GithubGateKeeper-dev.arn
-  runtime                           = "python3.13"
+  runtime                           = "python3.12"
   source_code_hash                  = "${data.archive_file.archive_CloudManMainV2_GithubGateKeeper-dev.output_base64sha256}"
   timeout                           = 30
   environment {
