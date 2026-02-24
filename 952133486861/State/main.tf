@@ -106,7 +106,7 @@ locals {
       path             = "/Function"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:Function/invocations"
       type             = "aws_proxy"
-      methods          = ["get", "post"]
+      methods          = ["post", "get"]
       method_auth      = {}
       enable_mock      = true
       credentials      = null
@@ -268,7 +268,7 @@ resource "aws_api_gateway_stage" "Stage" {
 
 data "archive_file" "archive_CloudMan_Function" {
   output_path                       = "${path.module}/CloudMan_Function.zip"
-  source_dir                        = "${path.module}/.external_modules/CloudMan/LambdaFiles\\LambdaHub2"
+  source_dir                        = "${path.module}/.external_modules/CloudMan/LambdaFiles/LambdaHub2"
   type                              = "zip"
 }
 
@@ -276,7 +276,7 @@ resource "aws_lambda_function" "Function" {
   function_name                     = "Function"
   architectures                     = ["arm64"]
   filename                          = "${data.archive_file.archive_CloudMan_Function.output_path}"
-  handler                           = "LambdaFiles\\LambdaHub2.lambda_handler"
+  handler                           = "LambdaHub2.lambda_handler"
   layers                            = ["arn:aws:lambda:us-east-1:952133486861:layer:PyJWTLayer-dev:3"]
   memory_size                       = 3008
   publish                           = false
@@ -301,7 +301,7 @@ resource "aws_lambda_function" "Function" {
 
 data "archive_file" "archive_CloudMan_Function1" {
   output_path                       = "${path.module}/CloudMan_Function1.zip"
-  source_dir                        = "${path.module}/.external_modules/CloudMan/LambdaFiles\\LambdaHub2"
+  source_dir                        = "${path.module}/.external_modules/CloudMan/LambdaFiles/LambdaHub2"
   type                              = "zip"
 }
 
@@ -309,7 +309,7 @@ resource "aws_lambda_function" "Function1" {
   function_name                     = "Function1"
   architectures                     = ["arm64"]
   filename                          = "${data.archive_file.archive_CloudMan_Function1.output_path}"
-  handler                           = "LambdaFiles\\LambdaHub2.lambda_handler"
+  handler                           = "LambdaHub2.lambda_handler"
   memory_size                       = 3008
   publish                           = false
   reserved_concurrent_executions    = -1
