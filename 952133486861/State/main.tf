@@ -24,22 +24,20 @@ provider "aws" {
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
+### EXTERNAL REFERENCES ###
+
+data "aws_cognito_user_pools" "CloudManV2" {
+  name = "CloudManV2"
+}
+
+data "aws_cognito_user_pool" "CloudManV2" {
+  user_pool_id                      = data.aws_cognito_user_pools.CloudManV2.ids[0]
+}
+
+
+
+
 ### CATEGORY: IAM ###
-
-data "aws_iam_policy_document" "lambda_function_Function1_st_State_doc" {
-  statement {
-    sid                             = "AllowLambdaInvoke"
-    effect                          = "Allow"
-    actions                         = ["lambda:InvokeFunction"]
-    resources                       = ["${aws_lambda_function.Function.arn}"]
-  }
-}
-
-resource "aws_iam_policy" "lambda_function_Function1_st_State" {
-  name                              = "lambda_function_Function1_st_State"
-  description                       = "Access Policy for Function1"
-  policy                            = data.aws_iam_policy_document.lambda_function_Function1_st_State_doc.json
-}
 
 resource "aws_iam_role" "role_lambda_Function" {
   name                              = "role_lambda_Function"
@@ -83,11 +81,6 @@ resource "aws_iam_role" "role_lambda_Function1" {
   }
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_function_Function1_st_State_attach" {
-  policy_arn                        = aws_iam_policy.lambda_function_Function1_st_State.arn
-  role                              = aws_iam_role.role_lambda_Function1.name
-}
-
 
 
 
@@ -99,7 +92,7 @@ locals {
       path             = "/Function"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:Function/invocations"
       type             = "aws_proxy"
-      methods          = ["post", "get"]
+      methods          = ["get", "post"]
       method_auth      = {}
       enable_mock      = true
       credentials      = null
@@ -113,7 +106,7 @@ locals {
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:Function1/invocations"
       type             = "aws_proxy"
       methods          = ["post"]
-      method_auth      = {}
+      method_auth      = {"post" = "ApiG1_CognitoAuth"}
       enable_mock      = false
       credentials      = null
       requestTemplates = null
@@ -129,6 +122,20 @@ locals {
         version = "1.0"
       }
       
+      components = {
+        securitySchemes = {
+            "ApiG1_CognitoAuth" = {
+              type = "apiKey"
+              name = "Authorization"
+              in   = "header"
+              "x-amazon-apigateway-authtype" = "cognito_user_pools"
+              "x-amazon-apigateway-authorizer" = {
+                type = "cognito_user_pools"
+                providerARNs = [data.aws_cognito_user_pool.CloudManV2.arn]
+              }
+            }
+        }
+      }
       paths = {
         for path in distinct([for i in local.api_config_RestAPI : i.path]) :
         path => merge([
@@ -232,20 +239,6 @@ resource "aws_api_gateway_rest_api" "RestAPI" {
 resource "aws_api_gateway_stage" "Stage" {
   rest_api_id                       = aws_api_gateway_rest_api.RestAPI.id
   stage_name                        = "prod"
-  access_log_settings {
-    format {
-      caller                        = "$context.identity.caller"
-      httpMethod                    = "$context.httpMethod"
-      ip                            = "$context.identity.sourceIp"
-      protocol                      = "$context.protocol"
-      requestId                     = "$context.requestId"
-      requestTime                   = "$context.requestTime"
-      resourcePath                  = "$context.resourcePath"
-      responseLength                = "$context.responseLength"
-      status                        = "$context.status"
-      user                          = "$context.identity.user"
-    }
-  }
   tags                              = {
     "Name" = "Stage"
     "State" = "State"
@@ -297,11 +290,9 @@ resource "aws_lambda_function" "Function1" {
   timeout                           = 30
   environment {
     variables                       = {
-    "AWS_LAMBDA_FUNCTION_TARGET_NAME_0" = "Function"
     "REGION" = data.aws_region.current.name
     "ACCOUNT" = data.aws_caller_identity.current.account_id
     "NAME" = "Function1"
-    "AWS_LAMBDA_FUNCTION_TARGET_ARN_0" = aws_lambda_function.Function.arn
   }
   }
   tags                              = {
@@ -309,15 +300,6 @@ resource "aws_lambda_function" "Function1" {
     "State" = "State"
     "CloudmanUser" = "CloudMan2"
   }
-  depends_on                        = [aws_iam_role_policy_attachment.lambda_function_Function1_st_State_attach]
-}
-
-resource "aws_lambda_permission" "perm_Function1_to_Function" {
-  function_name                     = aws_lambda_function.Function.function_name
-  statement_id                      = "perm_Function1_to_Function"
-  principal                         = "lambda.amazonaws.com"
-  action                            = "lambda:InvokeFunction"
-  source_arn                        = aws_lambda_function.Function1.arn
 }
 
 resource "aws_lambda_permission" "perm_RestAPI_to_Function1_openapi" {
