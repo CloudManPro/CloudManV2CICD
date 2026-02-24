@@ -1,17 +1,17 @@
 {
   "external_repositories": [
     {
-      "repo_name": "CloudManMain",
+      "repo_name": "CloudManMainV2",
       "org": "CloudManPro",
       "branch": "main",
-      "target_dir": ".external_modules/CloudManMain",
+      "target_dir": ".external_modules/CloudManMainV2",
       "folders": [
         "LambdaFiles\\LambdaHub2"
       ]
     }
   ],
   "action": "apply",
-  "trigger_id": "1771960697617",
+  "trigger_id": "1771960880009",
   "backend_global_config": {
     "provider": "aws",
     "role_arn": "arn:aws:iam::952133486861:role/CloudMan-Gitops-CloudManPro-CloudManV2CICD",
