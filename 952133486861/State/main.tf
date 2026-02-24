@@ -106,8 +106,8 @@ locals {
       path             = "/Function"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:Function/invocations"
       type             = "aws_proxy"
-      methods          = ["post", "get"]
-      method_auth      = {}
+      methods          = ["put", "post", "get"]
+      method_auth      = {"put" = "ApiG2_CognitoAuth"}
       enable_mock      = true
       credentials      = null
       requestTemplates = null
@@ -139,6 +139,16 @@ locals {
       components = {
         securitySchemes = {
             "ApiG1_CognitoAuth" = {
+              type = "apiKey"
+              name = "Authorization"
+              in   = "header"
+              "x-amazon-apigateway-authtype" = "cognito_user_pools"
+              "x-amazon-apigateway-authorizer" = {
+                type = "cognito_user_pools"
+                providerARNs = [data.aws_cognito_user_pool.CloudManV2.arn]
+              }
+            }
+            "ApiG2_CognitoAuth" = {
               type = "apiKey"
               name = "Authorization"
               in   = "header"
@@ -225,7 +235,7 @@ locals {
               default = {
                 statusCode = "200"
                 responseParameters = {
-                  "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS,POST'"
+                  "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS,POST,PUT'"
                   "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
                   "method.response.header.Access-Control-Allow-Origin"  = "'*'"
                 }
