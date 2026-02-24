@@ -47,12 +47,12 @@ data "aws_cognito_user_pool" "CloudManV2" {
   user_pool_id                      = data.aws_cognito_user_pools.CloudManV2.ids[0]
 }
 
-data "aws_dynamodb_table" "CloudManV2-dev" {
-  name                              = "CloudManV2-dev"
-}
-
 data "aws_s3_bucket" "s3-cloudmanv2-files-dev" {
   bucket                            = "s3-cloudmanv2-files-dev"
+}
+
+data "aws_dynamodb_table" "CloudManV2-dev" {
+  name                              = "CloudManV2-dev"
 }
 
 data "aws_ssm_parameter" "GitHubAppKeyDev" {
@@ -355,7 +355,8 @@ locals {
       path             = "/GithubGateKeeper-dev"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:GithubGateKeeper-dev/invocations"
       type             = "aws_proxy"
-      methods          = ["post", "get"]
+      methods          = ["get", "post"]
+      method_auth      = {"get" = "APIAppCloudManV2-dev_CognitoAuth_CloudManV2", "post" = "APIAppCloudManV2-dev_CognitoAuth_CloudManV2"}
       enable_mock      = true
       credentials      = null
       requestTemplates = null
@@ -367,7 +368,8 @@ locals {
       path             = "/HCLAWSV2-dev"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:HCLAWSV2-dev/invocations"
       type             = "aws_proxy"
-      methods          = ["post", "get"]
+      methods          = ["get", "post"]
+      method_auth      = {"get" = "APIAppCloudManV2-dev_CognitoAuth_CloudManV2", "post" = "APIAppCloudManV2-dev_CognitoAuth_CloudManV2"}
       enable_mock      = true
       credentials      = null
       requestTemplates = null
@@ -379,7 +381,8 @@ locals {
       path             = "/DBAccessV2-dev"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:DBAccessV2-dev/invocations"
       type             = "aws_proxy"
-      methods          = ["post", "get"]
+      methods          = ["get", "post"]
+      method_auth      = {"get" = "APIAppCloudManV2-dev_CognitoAuth_CloudManV2", "post" = "APIAppCloudManV2-dev_CognitoAuth_CloudManV2"}
       enable_mock      = true
       credentials      = null
       requestTemplates = null
@@ -391,7 +394,8 @@ locals {
       path             = "/AgentV2-dev"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:AgentV2-dev/invocations"
       type             = "aws_proxy"
-      methods          = ["post", "get"]
+      methods          = ["get", "post"]
+      method_auth      = {"get" = "APIAppCloudManV2-dev_CognitoAuth_CloudManV2", "post" = "APIAppCloudManV2-dev_CognitoAuth_CloudManV2"}
       enable_mock      = true
       credentials      = null
       requestTemplates = null
@@ -401,78 +405,78 @@ locals {
     },
   ]
   openapi_spec_APIAppCloudManV2-dev = {
-        openapi = "3.0.1"
-        info = {
+      openapi = "3.0.1"
+      info = {
         title   = "APIAppCloudManV2-dev"
         version = "1.0"
-        }
-        
-        components = {
+      }
+      
+      components = {
         securitySchemes = {
-            "AppCloudManV2-dev_CognitoAuth" = {
-            type = "apiKey"
-            name = "Authorization"
-            in   = "header"
-            "x-amazon-apigateway-authtype" = "cognito_user_pools"
-            "x-amazon-apigateway-authorizer" = {
+            "APIAppCloudManV2-dev_CognitoAuth_CloudManV2" = {
+              type = "apiKey"
+              name = "Authorization"
+              in   = "header"
+              "x-amazon-apigateway-authtype" = "cognito_user_pools"
+              "x-amazon-apigateway-authorizer" = {
                 type = "cognito_user_pools"
                 providerARNs = [data.aws_cognito_user_pool.CloudManV2.arn]
-            }
+              }
             }
         }
-        }
-        
-        security = [
-        { "AppCloudManV2-dev_CognitoAuth" = [] }
-        ]
-        paths = {
+      }
+      paths = {
         for path in distinct([for i in local.api_config_APIAppCloudManV2-dev : i.path]) :
         path => merge([
-            for item in local.api_config_APIAppCloudManV2-dev :
-            merge(
+          for item in local.api_config_APIAppCloudManV2-dev :
+          merge(
             {
-                for method in toset(item.methods) :
-                method => merge(
+              for method in toset(item.methods) :
+              method => merge(
                 {
-                    "responses" = {
+                  "responses" = {
                     "200" = {
-                        description = "Successful operation"
-                        # Definimos que o header pode existir, mas não forçamos valor aqui
-                        headers = {
+                      description = "Successful operation"
+                      headers = {
                         "Access-Control-Allow-Origin" = { type = "string" }
                         "Set-Cookie" = { type = "string" }
-                        }
+                      }
                     }
-                    }
-                    "x-amazon-apigateway-integration" = merge(
+                  }
+                  "x-amazon-apigateway-integration" = merge(
                     {
-                        uri        = item.uri
-                        httpMethod = item.integ_method == "MATCH" ? upper(method) : item.integ_method
-                        type       = item.type
+                      uri        = item.uri
+                      httpMethod = item.integ_method == "MATCH" ? upper(method) : item.integ_method
+                      type       = item.type
                     },
-                    # ALTERAÇÃO AQUI: Só adicionamos o bloco 'responses' se NÃO for aws_proxy.
-                    # No modo aws_proxy, a Lambda é responsável por retornar todos os headers.
                     item.type == "aws_proxy" ? {} : {
-                        responses  = {
+                      responses  = {
                         "default" = {
-                            statusCode = "200"
-                            responseParameters = {
+                          statusCode = "200"
+                          responseParameters = {
                             "method.response.header.Access-Control-Allow-Origin" = "'*'"
-                            }
-                            responseTemplates = {
+                          }
+                          responseTemplates = {
                             "application/json" = "$input.body"
-                            }
+                          }
                         }
-                        }
+                      }
                     },
                     item.credentials != null ? { credentials = item.credentials } : {},
                     item.requestTemplates != null ? { requestTemplates = item.requestTemplates } : {},
                     item.integ_req_params != null ? { requestParameters = item.integ_req_params } : {}
-                    )
+                  )
                 },
-                item.parameters != null ? { parameters = item.parameters } : {}
-                )
-                if method != "options"
+                item.parameters != null ? { parameters = item.parameters } : {},
+                
+                # ALTERAÇÃO CRUCIAL AQUI: Aplica a segurança SÓ SE o método exigir
+                contains(keys(item.method_auth), method) ? {
+                  security = [
+                    { (item.method_auth[method]) = [] }
+                  ]
+                } : {}
+              )
+              if method != "options"
             },
             item.enable_mock ? { "options" = {
           summary  = "CORS support"
@@ -504,10 +508,10 @@ locals {
             }
           }
         } } : {}
-            )
-            if item.path == path
+          )
+          if item.path == path
         ]...)
-        }
+      }
     }
 }
 
@@ -891,16 +895,18 @@ resource "aws_lambda_function" "GithubGateKeeper-dev" {
   architectures                     = ["arm64"]
   filename                          = "${data.archive_file.archive_CloudManMainV2_GithubGateKeeper-dev.output_path}"
   handler                           = "GithubGateKeeper.lambda_handler"
-  memory_size                       = 3008
+  layers                            = ["arn:aws:lambda:us-east-1:952133486861:layer:PyJWTLayer-dev:3"]
+  memory_size                       = 1024
   publish                           = false
   reserved_concurrent_executions    = -1
   role                              = aws_iam_role.role_lambda_GithubGateKeeper-dev.arn
   runtime                           = "python3.12"
   source_code_hash                  = "${data.archive_file.archive_CloudManMainV2_GithubGateKeeper-dev.output_base64sha256}"
-  timeout                           = 30
+  timeout                           = 10
   environment {
     variables                       = {
-    "CLOUDMAN_CICD_STAGE" = "dev"
+    "CLOUDMAN_CICD_STAGE" = "dec"
+    "MAIN_URL" = "v2.cloudman.pro"
     "AWS_SSM_PARAMETER_TARGET_NAME_APPKEY" = "GitHubAppKeyDev"
     "AWS_SSM_PARAMETER_TARGET_NAME_SECRET" = "GithubClientAndSecret"
     "AWS_DYNAMODB_TABLE_TARGET_NAME_0" = "CloudManV2-dev"
