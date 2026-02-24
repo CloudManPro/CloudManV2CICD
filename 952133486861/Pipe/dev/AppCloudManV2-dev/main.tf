@@ -905,7 +905,7 @@ resource "aws_lambda_function" "GithubGateKeeper-dev" {
   timeout                           = 10
   environment {
     variables                       = {
-    "CLOUDMAN_CICD_STAGE" = "dec"
+    "CLOUDMAN_CICD_STAGE" = "dev"
     "APP_URL" = "v2.cloudman.pro"
     "AWS_SSM_PARAMETER_TARGET_NAME_APPKEY" = "GitHubAppKeyDev"
     "AWS_SSM_PARAMETER_TARGET_NAME_SECRET" = "GithubClientAndSecret"
