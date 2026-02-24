@@ -2,6 +2,10 @@ terraform {
   required_version = ">= 1.0.0"
 
   required_providers {
+    archive = {
+      source  = "hashicorp/archive"
+      version = "~> 2.4.2"
+    }
     aws = {
       source  = "hashicorp/aws"
       version = "~> 5.0"
@@ -262,17 +266,24 @@ resource "aws_api_gateway_stage" "Stage" {
 
 ### CATEGORY: COMPUTE ###
 
+data "archive_file" "archive_CloudManMain_Function" {
+  output_path                       = "${path.module}/CloudManMain_Function.zip"
+  source_dir                        = "${path.module}/.external_modules/CloudManMain/LambdaFiles\\LambdaHub2"
+  type                              = "zip"
+}
+
 resource "aws_lambda_function" "Function" {
   function_name                     = "Function"
   architectures                     = ["arm64"]
-  filename                          = "teste"
-  handler                           = ".lambda_handler"
+  filename                          = "${data.archive_file.archive_CloudManMain_Function.output_path}"
+  handler                           = "LambdaFiles\\LambdaHub2.lambda_handler"
   layers                            = ["arn:aws:lambda:us-east-1:952133486861:layer:PyJWTLayer-dev:3"]
   memory_size                       = 3008
   publish                           = false
   reserved_concurrent_executions    = -1
   role                              = aws_iam_role.role_lambda_Function.arn
   runtime                           = "python3.13"
+  source_code_hash                  = "${data.archive_file.archive_CloudManMain_Function.output_base64sha256}"
   timeout                           = 30
   environment {
     variables                       = {
@@ -288,16 +299,23 @@ resource "aws_lambda_function" "Function" {
   }
 }
 
+data "archive_file" "archive_CloudManMain_Function1" {
+  output_path                       = "${path.module}/CloudManMain_Function1.zip"
+  source_dir                        = "${path.module}/.external_modules/CloudManMain/LambdaFiles\\LambdaHub2"
+  type                              = "zip"
+}
+
 resource "aws_lambda_function" "Function1" {
   function_name                     = "Function1"
   architectures                     = ["arm64"]
-  filename                          = "jkljjlj"
-  handler                           = ".lambda_handler"
+  filename                          = "${data.archive_file.archive_CloudManMain_Function1.output_path}"
+  handler                           = "LambdaFiles\\LambdaHub2.lambda_handler"
   memory_size                       = 3008
   publish                           = false
   reserved_concurrent_executions    = -1
   role                              = aws_iam_role.role_lambda_Function1.arn
   runtime                           = "python3.13"
+  source_code_hash                  = "${data.archive_file.archive_CloudManMain_Function1.output_base64sha256}"
   timeout                           = 30
   environment {
     variables                       = {
