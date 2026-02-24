@@ -38,6 +38,14 @@ data "aws_cognito_user_pool" "CloudManV2" {
   user_pool_id                      = data.aws_cognito_user_pools.CloudManV2.ids[0]
 }
 
+data "aws_cognito_user_pools" "CloudManV1" {
+  name = "CloudManV1"
+}
+
+data "aws_cognito_user_pool" "CloudManV1" {
+  user_pool_id                      = data.aws_cognito_user_pools.CloudManV1.ids[0]
+}
+
 
 
 
@@ -107,7 +115,7 @@ locals {
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:Function/invocations"
       type             = "aws_proxy"
       methods          = ["put", "get", "post"]
-      method_auth      = {"put" = "RestAPI_CognitoAuth_CloudManV2"}
+      method_auth      = {"put" = "RestAPI_CognitoAuth_CloudManV1"}
       enable_mock      = true
       credentials      = null
       requestTemplates = null
@@ -146,6 +154,16 @@ locals {
               "x-amazon-apigateway-authorizer" = {
                 type = "cognito_user_pools"
                 providerARNs = [data.aws_cognito_user_pool.CloudManV2.arn]
+              }
+            }
+            "RestAPI_CognitoAuth_CloudManV1" = {
+              type = "apiKey"
+              name = "Authorization"
+              in   = "header"
+              "x-amazon-apigateway-authtype" = "cognito_user_pools"
+              "x-amazon-apigateway-authorizer" = {
+                type = "cognito_user_pools"
+                providerARNs = [data.aws_cognito_user_pool.CloudManV1.arn]
               }
             }
         }
