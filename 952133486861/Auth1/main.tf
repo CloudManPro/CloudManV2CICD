@@ -200,6 +200,7 @@ resource "aws_cognito_user_pool_domain" "CloudManV1" {
   user_pool_id                      = aws_cognito_user_pool.CloudManV1.id
   certificate_arn                   = aws_acm_certificate.Certificate1.arn
   domain                            = "new.cog-auth.cloudman.pro"
+  depends_on                        = [aws_acm_certificate_validation.Validation_Certificate1]
 }
 
 
