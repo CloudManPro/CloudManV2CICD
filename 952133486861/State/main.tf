@@ -28,6 +28,19 @@ provider "aws" {
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
+### EXTERNAL REFERENCES ###
+
+data "aws_cognito_user_pools" "CloudManV2" {
+  name = "CloudManV2"
+}
+
+data "aws_cognito_user_pool" "CloudManV2" {
+  user_pool_id                      = data.aws_cognito_user_pools.CloudManV2.ids[0]
+}
+
+
+
+
 ### CATEGORY: IAM ###
 
 resource "aws_iam_role" "role_lambda_Function" {
@@ -87,8 +100,149 @@ resource "aws_api_gateway_deployment" "Deploy1" {
   }
 }
 
+locals {
+  api_config_RestAPI = [
+    {
+      path             = "/Function"
+      uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:Function/invocations"
+      type             = "aws_proxy"
+      methods          = ["put", "get", "post"]
+      method_auth      = {"put" = "RestAPI_CognitoAuth_CloudManV2"}
+      enable_mock      = true
+      credentials      = null
+      requestTemplates = null
+      integ_method     = "POST"
+      parameters       = null
+      integ_req_params = null
+    },
+    {
+      path             = "/Function1"
+      uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:Function1/invocations"
+      type             = "aws_proxy"
+      methods          = ["post"]
+      method_auth      = {"post" = "RestAPI_CognitoAuth_CloudManV2"}
+      enable_mock      = false
+      credentials      = null
+      requestTemplates = null
+      integ_method     = "POST"
+      parameters       = null
+      integ_req_params = null
+    },
+  ]
+  openapi_spec_RestAPI = {
+      openapi = "3.0.1"
+      info = {
+        title   = "RestAPI"
+        version = "1.0"
+      }
+      
+      components = {
+        securitySchemes = {
+            "RestAPI_CognitoAuth_CloudManV2" = {
+              type = "apiKey"
+              name = "Authorization"
+              in   = "header"
+              "x-amazon-apigateway-authtype" = "cognito_user_pools"
+              "x-amazon-apigateway-authorizer" = {
+                type = "cognito_user_pools"
+                providerARNs = [data.aws_cognito_user_pool.CloudManV2.arn]
+              }
+            }
+        }
+      }
+      paths = {
+        for path in distinct([for i in local.api_config_RestAPI : i.path]) :
+        path => merge([
+          for item in local.api_config_RestAPI :
+          merge(
+            {
+              for method in toset(item.methods) :
+              method => merge(
+                {
+                  "responses" = {
+                    "200" = {
+                      description = "Successful operation"
+                      headers = {
+                        "Access-Control-Allow-Origin" = { type = "string" }
+                        "Set-Cookie" = { type = "string" }
+                      }
+                    }
+                  }
+                  "x-amazon-apigateway-integration" = merge(
+                    {
+                      uri        = item.uri
+                      httpMethod = item.integ_method == "MATCH" ? upper(method) : item.integ_method
+                      type       = item.type
+                    },
+                    item.type == "aws_proxy" ? {} : {
+                      responses  = {
+                        "default" = {
+                          statusCode = "200"
+                          responseParameters = {
+                            "method.response.header.Access-Control-Allow-Origin" = "'*'"
+                          }
+                          responseTemplates = {
+                            "application/json" = "$input.body"
+                          }
+                        }
+                      }
+                    },
+                    item.credentials != null ? { credentials = item.credentials } : {},
+                    item.requestTemplates != null ? { requestTemplates = item.requestTemplates } : {},
+                    item.integ_req_params != null ? { requestParameters = item.integ_req_params } : {}
+                  )
+                },
+                item.parameters != null ? { parameters = item.parameters } : {},
+                
+                # ALTERAÇÃO CRUCIAL AQUI: Aplica a segurança SÓ SE o método exigir
+                contains(keys(item.method_auth), method) ? {
+                  security = [
+                    { (item.method_auth[method]) = [] }
+                  ]
+                } : {}
+              )
+              if method != "options"
+            },
+            item.enable_mock ? { "options" = {
+          summary  = "CORS support"
+          security = []  # <--- CORREÇÃO 1: Anula o authorizer global para o OPTIONS
+          consumes = ["application/json"]
+          produces = ["application/json"]
+          responses = {
+            "200" = {
+              description = "200 response"
+              headers = {
+                "Access-Control-Allow-Origin"  = { type = "string" }
+                "Access-Control-Allow-Methods" = { type = "string" }
+                "Access-Control-Allow-Headers" = { type = "string" }
+              }
+            }
+          }
+          "x-amazon-apigateway-integration" = {
+            type = "mock"
+            requestTemplates = { "application/json" = "{\"statusCode\": 200}" }
+            responses = {
+              default = {
+                statusCode = "200"
+                responseParameters = {
+                  "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS,POST,PUT'"
+                  "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+                  "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+                }
+              }
+            }
+          }
+        } } : {}
+          )
+          if item.path == path
+        ]...)
+      }
+    }
+}
+
 resource "aws_api_gateway_rest_api" "RestAPI" {
   name                              = "RestAPI"
+  body                              = jsonencode(local.openapi_spec_RestAPI)
   tags                              = {
     "Name" = "RestAPI"
     "State" = "State"
