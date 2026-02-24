@@ -355,7 +355,7 @@ locals {
       path             = "/GithubGateKeeper-dev"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:GithubGateKeeper-dev/invocations"
       type             = "aws_proxy"
-      methods          = ["get", "post"]
+      methods          = ["post", "get"]
       method_auth      = {"get" = "APIAppCloudManV2-dev_CognitoAuth_CloudManV2", "post" = "APIAppCloudManV2-dev_CognitoAuth_CloudManV2"}
       enable_mock      = true
       credentials      = null
@@ -368,7 +368,7 @@ locals {
       path             = "/HCLAWSV2-dev"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:HCLAWSV2-dev/invocations"
       type             = "aws_proxy"
-      methods          = ["get", "post"]
+      methods          = ["post", "get"]
       method_auth      = {"get" = "APIAppCloudManV2-dev_CognitoAuth_CloudManV2", "post" = "APIAppCloudManV2-dev_CognitoAuth_CloudManV2"}
       enable_mock      = true
       credentials      = null
@@ -381,7 +381,7 @@ locals {
       path             = "/DBAccessV2-dev"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:DBAccessV2-dev/invocations"
       type             = "aws_proxy"
-      methods          = ["get", "post"]
+      methods          = ["post", "get"]
       method_auth      = {"get" = "APIAppCloudManV2-dev_CognitoAuth_CloudManV2", "post" = "APIAppCloudManV2-dev_CognitoAuth_CloudManV2"}
       enable_mock      = true
       credentials      = null
@@ -394,7 +394,7 @@ locals {
       path             = "/AgentV2-dev"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:AgentV2-dev/invocations"
       type             = "aws_proxy"
-      methods          = ["get", "post"]
+      methods          = ["post", "get"]
       method_auth      = {"get" = "APIAppCloudManV2-dev_CognitoAuth_CloudManV2", "post" = "APIAppCloudManV2-dev_CognitoAuth_CloudManV2"}
       enable_mock      = true
       credentials      = null
@@ -906,7 +906,7 @@ resource "aws_lambda_function" "GithubGateKeeper-dev" {
   environment {
     variables                       = {
     "CLOUDMAN_CICD_STAGE" = "dec"
-    "MAIN_URL" = "v2.cloudman.pro"
+    "APP_URL" = "v2.cloudman.pro"
     "AWS_SSM_PARAMETER_TARGET_NAME_APPKEY" = "GitHubAppKeyDev"
     "AWS_SSM_PARAMETER_TARGET_NAME_SECRET" = "GithubClientAndSecret"
     "AWS_DYNAMODB_TABLE_TARGET_NAME_0" = "CloudManV2-dev"
