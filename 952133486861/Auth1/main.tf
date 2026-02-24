@@ -33,12 +33,25 @@ data "aws_route53_zone" "Cloudman" {
 
 
 
-### EXTERNAL REFERENCES ###
+### CATEGORY: IAM ###
 
-data "aws_acm_certificate" "Certificate" {
-  domain                            = "cog-auth.cloudman.pro"
-  most_recent                       = true
-  statuses                          = ["ISSUED"]
+resource "aws_acm_certificate" "Certificate1" {
+  domain_name                       = "new.cog-auth.cloudman.pro"
+  key_algorithm                     = "RSA_2048"
+  validation_method                 = "DNS"
+  options {
+    certificate_transparency_logging_preference = "ENABLED"
+  }
+  tags                              = {
+    "Name" = "Certificate1"
+    "State" = "Auth1"
+    "CloudmanUser" = "CloudMan2"
+  }
+}
+
+resource "aws_acm_certificate_validation" "Validation_Certificate1" {
+  certificate_arn                   = aws_acm_certificate.Certificate1.arn
+  validation_record_fqdns           = [for record in aws_route53_record.Route53_Record_Certificate1 : record.fqdn]
 }
 
 
@@ -46,8 +59,22 @@ data "aws_acm_certificate" "Certificate" {
 
 ### CATEGORY: NETWORK ###
 
-resource "aws_route53_record" "alias_a_cog-auth_to_CloudManV1" {
-  name                              = "cog-auth.cloudman.pro"
+resource "aws_route53_record" "Route53_Record_Certificate1" {
+  for_each                          = {for dvo in aws_acm_certificate.Certificate1.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name,
+      record = dvo.resource_record_value,
+      type   = dvo.resource_record_type
+    }}
+  name                              = "${each.value.name}"
+  zone_id                           = data.aws_route53_zone.Cloudman.zone_id
+  allow_overwrite                   = true
+  records                           = ["${each.value.record}"]
+  ttl                               = 300
+  type                              = "${each.value.type}"
+}
+
+resource "aws_route53_record" "alias_a_new_to_CloudManV1" {
+  name                              = "new.cog-auth.cloudman.pro"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "A"
   alias {
@@ -57,8 +84,8 @@ resource "aws_route53_record" "alias_a_cog-auth_to_CloudManV1" {
   }
 }
 
-resource "aws_route53_record" "alias_aaaa_cog-auth_to_CloudManV1" {
-  name                              = "cog-auth.cloudman.pro"
+resource "aws_route53_record" "alias_aaaa_new_to_CloudManV1" {
+  name                              = "new.cog-auth.cloudman.pro"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "AAAA"
   alias {
@@ -171,8 +198,8 @@ resource "aws_cognito_user_pool_client" "CloudManV1" {
 
 resource "aws_cognito_user_pool_domain" "CloudManV1" {
   user_pool_id                      = aws_cognito_user_pool.CloudManV1.id
-  certificate_arn                   = data.aws_acm_certificate.Certificate.arn
-  domain                            = "cog-auth.cloudman.pro"
+  certificate_arn                   = aws_acm_certificate.Certificate1.arn
+  domain                            = "new.cog-auth.cloudman.pro"
 }
 
 
