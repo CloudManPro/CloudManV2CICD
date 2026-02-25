@@ -10,8 +10,8 @@
       ]
     }
   ],
-  "action": "apply",
-  "trigger_id": "1772051674406",
+  "action": "destroy",
+  "trigger_id": "1772052365958",
   "backend_global_config": {
     "provider": "aws",
     "role_arn": "arn:aws:iam::952133486861:role/CloudMan-Gitops-CloudManPro-CloudManV2CICD",
@@ -19,7 +19,7 @@
   },
   "pipeline_stages": [
     {
-      "stage_name": "APPLY: prod",
+      "stage_name": "DESTROY: prod",
       "parallel_execution": false,
       "states": [
         {
