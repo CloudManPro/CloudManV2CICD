@@ -1,20 +1,6 @@
 {
-  "external_repositories": [
-    {
-      "repo_name": "CloudManMainV2",
-      "org": "CloudManPro",
-      "branch": "main",
-      "target_dir": ".external_modules/CloudManMainV2",
-      "folders": [
-        "LambdaFiles/GithubGateKeeper",
-        "LambdaFiles/HCLAWSV2",
-        "LambdaFiles/DBAccessV2",
-        "LambdaFiles/AgentV2"
-      ]
-    }
-  ],
-  "action": "apply",
-  "trigger_id": "1771977263855",
+  "action": "destroy",
+  "trigger_id": "1771979577192",
   "backend_global_config": {
     "provider": "aws",
     "role_arn": "arn:aws:iam::952133486861:role/CloudMan-Gitops-CloudManPro-CloudManV2CICD",
@@ -22,7 +8,7 @@
   },
   "pipeline_stages": [
     {
-      "stage_name": "Manual Trigger: AppCloudManV2-test",
+      "stage_name": "DESTROY: test",
       "parallel_execution": false,
       "states": [
         {
@@ -30,8 +16,15 @@
           "provider": "aws",
           "target_auth": {
             "role_arn": "arn:aws:iam::952133486861:role/CloudMan-Gitops-CloudManPro-CloudManV2CICD",
-            "region": "us-east-1",
-            "secret_name": "AUTH_AWS_952133486861"
+            "region": "us-east-1"
+          }
+        },
+        {
+          "path": "952133486861/Pipe/test/ClaudManDB-test",
+          "provider": "aws",
+          "target_auth": {
+            "role_arn": "arn:aws:iam::952133486861:role/CloudMan-Gitops-CloudManPro-CloudManV2CICD",
+            "region": "us-east-1"
           }
         }
       ]
