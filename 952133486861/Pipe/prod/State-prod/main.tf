@@ -10,7 +10,7 @@ terraform {
 
   backend "s3" {
     bucket         = "cloudan-v2-cicd"
-    key            = "952133486861/Pipe/prod/State-prod-3/main.tfstate"
+    key            = "952133486861/Pipe/prod/State-prod-4/main.tfstate"
     region         = "us-east-1"
     encrypt        = true
   }
@@ -26,11 +26,11 @@ data "aws_region" "current" {}
 
 ### CATEGORY: INTEGRATION ###
 
-resource "aws_sns_topic" "Topicz-prod-3" {
-  name                              = "Topicz-prod-3"
+resource "aws_sns_topic" "Topicz-prod-4" {
+  name                              = "Topicz-prod-4"
   tags                              = {
-    "Name" = "Topicz-prod-3"
-    "State" = "State-prod-3"
+    "Name" = "Topicz-prod-4"
+    "State" = "State-prod-4"
     "CloudmanUser" = "SystemUser"
     "Stage" = "prod"
   }
