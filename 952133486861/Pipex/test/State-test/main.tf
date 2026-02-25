@@ -71,7 +71,7 @@ resource "aws_iam_role" "role_lambda_Functionx-test" {
   tags                              = {
     "Name" = "role_lambda_Functionx-test"
     "State" = "State-test"
-    "CloudmanUser" = "Ricardo"
+    "CloudmanUser" = "SystemUser"
     "Stage" = "test"
   }
 }
@@ -116,7 +116,7 @@ resource "aws_lambda_function" "Functionx-test" {
   tags                              = {
     "Name" = "Functionx-test"
     "State" = "State-test"
-    "CloudmanUser" = "Ricardo"
+    "CloudmanUser" = "SystemUser"
     "Stage" = "test"
   }
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_Functionx-test_st_State-test_attach]
