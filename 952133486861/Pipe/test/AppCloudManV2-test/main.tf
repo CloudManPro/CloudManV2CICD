@@ -279,7 +279,7 @@ resource "aws_iam_role_policy_attachment" "lambda_function_HCLAWSV2-test_st_AppC
 }
 
 resource "aws_acm_certificate" "AppCloudManV2-test" {
-  domain_name                       = "test.v2.cloudman.pro"
+  domain_name                       = "dev.v2.cloudman.pro"
   key_algorithm                     = "RSA_2048"
   validation_method                 = "DNS"
   options {
@@ -317,8 +317,8 @@ resource "aws_route53_record" "Route53_Record_AppCloudManV2-test" {
   type                              = "${each.value.type}"
 }
 
-resource "aws_route53_record" "alias_a_test-test_to_AppCloudManV2-test" {
-  name                              = "test.v2.cloudman.pro"
+resource "aws_route53_record" "alias_a_dev-test_to_AppCloudManV2-test" {
+  name                              = "dev.v2.cloudman.pro"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "A"
   alias {
@@ -328,8 +328,8 @@ resource "aws_route53_record" "alias_a_test-test_to_AppCloudManV2-test" {
   }
 }
 
-resource "aws_route53_record" "alias_aaaa_test-test_to_AppCloudManV2-test" {
-  name                              = "test.v2.cloudman.pro"
+resource "aws_route53_record" "alias_aaaa_dev-test_to_AppCloudManV2-test" {
+  name                              = "dev.v2.cloudman.pro"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "AAAA"
   alias {
@@ -352,24 +352,11 @@ resource "aws_api_gateway_deployment" "APIAppCloudManV2-test" {
 locals {
   api_config_APIAppCloudManV2-test = [
     {
-      path             = "/GithubGateKeeper-test"
-      uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:GithubGateKeeper-test/invocations"
-      type             = "aws_proxy"
-      methods          = ["post", "get"]
-      method_auth      = {"get" = "APIAppCloudManV2-test_CognitoAuth_CloudManV2", "post" = "APIAppCloudManV2-test_CognitoAuth_CloudManV2"}
-      enable_mock      = true
-      credentials      = null
-      requestTemplates = null
-      integ_method     = "POST"
-      parameters       = null
-      integ_req_params = null
-    },
-    {
       path             = "/HCLAWSV2-test"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:HCLAWSV2-test/invocations"
       type             = "aws_proxy"
-      methods          = ["post", "get"]
-      method_auth      = {"get" = "APIAppCloudManV2-test_CognitoAuth_CloudManV2", "post" = "APIAppCloudManV2-test_CognitoAuth_CloudManV2"}
+      methods          = ["post"]
+      method_auth      = {"post" = "APIAppCloudManV2-test_CognitoAuth_CloudManV2"}
       enable_mock      = true
       credentials      = null
       requestTemplates = null
@@ -381,8 +368,8 @@ locals {
       path             = "/DBAccessV2-test"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:DBAccessV2-test/invocations"
       type             = "aws_proxy"
-      methods          = ["post", "get"]
-      method_auth      = {"get" = "APIAppCloudManV2-test_CognitoAuth_CloudManV2", "post" = "APIAppCloudManV2-test_CognitoAuth_CloudManV2"}
+      methods          = ["post"]
+      method_auth      = {"post" = "APIAppCloudManV2-test_CognitoAuth_CloudManV2"}
       enable_mock      = true
       credentials      = null
       requestTemplates = null
@@ -394,9 +381,22 @@ locals {
       path             = "/AgentV2-test"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:AgentV2-test/invocations"
       type             = "aws_proxy"
-      methods          = ["post", "get"]
-      method_auth      = {"get" = "APIAppCloudManV2-test_CognitoAuth_CloudManV2", "post" = "APIAppCloudManV2-test_CognitoAuth_CloudManV2"}
+      methods          = ["post"]
+      method_auth      = {"post" = "APIAppCloudManV2-test_CognitoAuth_CloudManV2"}
       enable_mock      = true
+      credentials      = null
+      requestTemplates = null
+      integ_method     = "POST"
+      parameters       = null
+      integ_req_params = null
+    },
+    {
+      path             = "/GithubGateKeeper-test"
+      uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:GithubGateKeeper-test/invocations"
+      type             = "aws_proxy"
+      methods          = ["get", "post"]
+      method_auth      = {}
+      enable_mock      = false
       credentials      = null
       requestTemplates = null
       integ_method     = "POST"
@@ -547,7 +547,7 @@ resource "aws_api_gateway_stage" "st-test" {
 }
 
 resource "aws_cloudfront_distribution" "AppCloudManV2-test" {
-  aliases                           = ["test.v2.cloudman.pro"]
+  aliases                           = ["dev.v2.cloudman.pro"]
   default_root_object               = "index.html"
   enabled                           = true
   http_version                      = "http2and3"
@@ -969,7 +969,7 @@ resource "aws_lambda_permission" "perm_APIAppCloudManV2-test_to_AgentV2-test_ope
   statement_id                      = "perm_APIAppCloudManV2-test_to_AgentV2-test_openapi"
   principal                         = "apigateway.amazonaws.com"
   action                            = "lambda:InvokeFunction"
-  source_arn                        = "${aws_api_gateway_rest_api.APIAppCloudManV2-test.execution_arn}/*/*/AgentV2-test"
+  source_arn                        = "${aws_api_gateway_rest_api.APIAppCloudManV2-test.execution_arn}/*/POST/AgentV2-test"
 }
 
 resource "aws_lambda_permission" "perm_APIAppCloudManV2-test_to_DBAccessV2-test_openapi" {
@@ -977,7 +977,7 @@ resource "aws_lambda_permission" "perm_APIAppCloudManV2-test_to_DBAccessV2-test_
   statement_id                      = "perm_APIAppCloudManV2-test_to_DBAccessV2-test_openapi"
   principal                         = "apigateway.amazonaws.com"
   action                            = "lambda:InvokeFunction"
-  source_arn                        = "${aws_api_gateway_rest_api.APIAppCloudManV2-test.execution_arn}/*/*/DBAccessV2-test"
+  source_arn                        = "${aws_api_gateway_rest_api.APIAppCloudManV2-test.execution_arn}/*/POST/DBAccessV2-test"
 }
 
 resource "aws_lambda_permission" "perm_APIAppCloudManV2-test_to_GithubGateKeeper-test_openapi" {
@@ -993,7 +993,7 @@ resource "aws_lambda_permission" "perm_APIAppCloudManV2-test_to_HCLAWSV2-test_op
   statement_id                      = "perm_APIAppCloudManV2-test_to_HCLAWSV2-test_openapi"
   principal                         = "apigateway.amazonaws.com"
   action                            = "lambda:InvokeFunction"
-  source_arn                        = "${aws_api_gateway_rest_api.APIAppCloudManV2-test.execution_arn}/*/*/HCLAWSV2-test"
+  source_arn                        = "${aws_api_gateway_rest_api.APIAppCloudManV2-test.execution_arn}/*/POST/HCLAWSV2-test"
 }
 
 resource "aws_lambda_permission" "perm_AgentV2-test_to_GithubGateKeeper-test" {
