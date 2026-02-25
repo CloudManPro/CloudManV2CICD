@@ -27,15 +27,12 @@ data "aws_region" "current" {}
 ### CATEGORY: INTEGRATION ###
 
 resource "aws_sns_topic" "Topicz-test" {
-  name                              = "Topicz-test.fifo"
-  content_based_deduplication       = true
-  fifo_throughput_scope             = "Topic"
-  fifo_topic                        = true
+  name                              = "Topicz-test"
   signature_version                 = 2
   tags                              = {
     "Name" = "Topicz-test"
     "State" = "State-test"
-    "CloudmanUser" = "Ricardo"
+    "CloudmanUser" = "SystemUser"
     "Stage" = "test"
   }
 }
