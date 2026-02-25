@@ -88,7 +88,7 @@ resource "aws_iam_role_policy_attachment" "lambda_function_Functionx-dev_st_Stat
 
 data "archive_file" "archive_CloudMan_Functionx-dev" {
   output_path                       = "${path.module}/CloudMan_Functionx-dev.zip"
-  source_dir                        = "${path.module}/.external_modules/CloudMan/LambdaFiles\\LambdaHub2"
+  source_dir                        = "${path.module}/.external_modules/CloudMan/LambdaFiles/LambdaHub2"
   type                              = "zip"
 }
 
@@ -96,7 +96,7 @@ resource "aws_lambda_function" "Functionx-dev" {
   function_name                     = "Functionx-dev"
   architectures                     = ["arm64"]
   filename                          = "${data.archive_file.archive_CloudMan_Functionx-dev.output_path}"
-  handler                           = "LambdaFiles\\LambdaHub2.lambda_handler"
+  handler                           = "LambdaHub2.lambda_handler"
   memory_size                       = 1024
   publish                           = false
   reserved_concurrent_executions    = -1
