@@ -352,24 +352,11 @@ resource "aws_api_gateway_deployment" "APIAppCloudManV2-dev" {
 locals {
   api_config_APIAppCloudManV2-dev = [
     {
-      path             = "/GithubGateKeeper-dev"
-      uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:GithubGateKeeper-dev/invocations"
-      type             = "aws_proxy"
-      methods          = ["post", "get"]
-      method_auth      = {"get" = "APIAppCloudManV2-dev_CognitoAuth_CloudManV2", "post" = "APIAppCloudManV2-dev_CognitoAuth_CloudManV2"}
-      enable_mock      = true
-      credentials      = null
-      requestTemplates = null
-      integ_method     = "POST"
-      parameters       = null
-      integ_req_params = null
-    },
-    {
       path             = "/HCLAWSV2-dev"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:HCLAWSV2-dev/invocations"
       type             = "aws_proxy"
-      methods          = ["post", "get"]
-      method_auth      = {"get" = "APIAppCloudManV2-dev_CognitoAuth_CloudManV2", "post" = "APIAppCloudManV2-dev_CognitoAuth_CloudManV2"}
+      methods          = ["post"]
+      method_auth      = {"post" = "APIAppCloudManV2-dev_CognitoAuth_CloudManV2"}
       enable_mock      = true
       credentials      = null
       requestTemplates = null
@@ -381,8 +368,8 @@ locals {
       path             = "/DBAccessV2-dev"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:DBAccessV2-dev/invocations"
       type             = "aws_proxy"
-      methods          = ["post", "get"]
-      method_auth      = {"get" = "APIAppCloudManV2-dev_CognitoAuth_CloudManV2", "post" = "APIAppCloudManV2-dev_CognitoAuth_CloudManV2"}
+      methods          = ["post"]
+      method_auth      = {"post" = "APIAppCloudManV2-dev_CognitoAuth_CloudManV2"}
       enable_mock      = true
       credentials      = null
       requestTemplates = null
@@ -394,9 +381,22 @@ locals {
       path             = "/AgentV2-dev"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:AgentV2-dev/invocations"
       type             = "aws_proxy"
-      methods          = ["post", "get"]
-      method_auth      = {"get" = "APIAppCloudManV2-dev_CognitoAuth_CloudManV2", "post" = "APIAppCloudManV2-dev_CognitoAuth_CloudManV2"}
+      methods          = ["post"]
+      method_auth      = {"post" = "APIAppCloudManV2-dev_CognitoAuth_CloudManV2"}
       enable_mock      = true
+      credentials      = null
+      requestTemplates = null
+      integ_method     = "POST"
+      parameters       = null
+      integ_req_params = null
+    },
+    {
+      path             = "/GithubGateKeeper-dev"
+      uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:GithubGateKeeper-dev/invocations"
+      type             = "aws_proxy"
+      methods          = ["get", "post"]
+      method_auth      = {}
+      enable_mock      = false
       credentials      = null
       requestTemplates = null
       integ_method     = "POST"
@@ -969,7 +969,7 @@ resource "aws_lambda_permission" "perm_APIAppCloudManV2-dev_to_AgentV2-dev_opena
   statement_id                      = "perm_APIAppCloudManV2-dev_to_AgentV2-dev_openapi"
   principal                         = "apigateway.amazonaws.com"
   action                            = "lambda:InvokeFunction"
-  source_arn                        = "${aws_api_gateway_rest_api.APIAppCloudManV2-dev.execution_arn}/*/*/AgentV2-dev"
+  source_arn                        = "${aws_api_gateway_rest_api.APIAppCloudManV2-dev.execution_arn}/*/POST/AgentV2-dev"
 }
 
 resource "aws_lambda_permission" "perm_APIAppCloudManV2-dev_to_DBAccessV2-dev_openapi" {
@@ -977,7 +977,7 @@ resource "aws_lambda_permission" "perm_APIAppCloudManV2-dev_to_DBAccessV2-dev_op
   statement_id                      = "perm_APIAppCloudManV2-dev_to_DBAccessV2-dev_openapi"
   principal                         = "apigateway.amazonaws.com"
   action                            = "lambda:InvokeFunction"
-  source_arn                        = "${aws_api_gateway_rest_api.APIAppCloudManV2-dev.execution_arn}/*/*/DBAccessV2-dev"
+  source_arn                        = "${aws_api_gateway_rest_api.APIAppCloudManV2-dev.execution_arn}/*/POST/DBAccessV2-dev"
 }
 
 resource "aws_lambda_permission" "perm_APIAppCloudManV2-dev_to_GithubGateKeeper-dev_openapi" {
@@ -993,7 +993,7 @@ resource "aws_lambda_permission" "perm_APIAppCloudManV2-dev_to_HCLAWSV2-dev_open
   statement_id                      = "perm_APIAppCloudManV2-dev_to_HCLAWSV2-dev_openapi"
   principal                         = "apigateway.amazonaws.com"
   action                            = "lambda:InvokeFunction"
-  source_arn                        = "${aws_api_gateway_rest_api.APIAppCloudManV2-dev.execution_arn}/*/*/HCLAWSV2-dev"
+  source_arn                        = "${aws_api_gateway_rest_api.APIAppCloudManV2-dev.execution_arn}/*/POST/HCLAWSV2-dev"
 }
 
 resource "aws_lambda_permission" "perm_AgentV2-dev_to_GithubGateKeeper-dev" {
