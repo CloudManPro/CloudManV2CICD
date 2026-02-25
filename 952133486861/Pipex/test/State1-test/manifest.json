@@ -1,0 +1,33 @@
+{
+  "action": "apply",
+  "trigger_id": "1772047880027",
+  "backend_global_config": {
+    "provider": "aws",
+    "role_arn": "arn:aws:iam::952133486861:role/CloudMan-Gitops-CloudManPro-CloudManV2CICD",
+    "region": "us-east-1"
+  },
+  "pipeline_stages": [
+    {
+      "stage_name": "APPLY: test",
+      "parallel_execution": false,
+      "states": [
+        {
+          "path": "952133486861/Pipex/test/State1-test",
+          "provider": "aws",
+          "target_auth": {
+            "role_arn": "arn:aws:iam::952133486861:role/CloudMan-Gitops-CloudManPro-CloudManV2CICD",
+            "region": "us-east-1"
+          }
+        },
+        {
+          "path": "952133486861/Pipex/test/State-test",
+          "provider": "aws",
+          "target_auth": {
+            "role_arn": "arn:aws:iam::952133486861:role/CloudMan-Gitops-CloudManPro-CloudManV2CICD",
+            "region": "us-east-1"
+          }
+        }
+      ]
+    }
+  ]
+}
