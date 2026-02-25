@@ -279,7 +279,7 @@ resource "aws_iam_role_policy_attachment" "lambda_function_HCLAWSV2-test_st_AppC
 }
 
 resource "aws_acm_certificate" "AppCloudManV2-test" {
-  domain_name                       = "dev.v2.cloudman.pro"
+  domain_name                       = "test.v2.cloudman.pro"
   key_algorithm                     = "RSA_2048"
   validation_method                 = "DNS"
   options {
@@ -317,8 +317,8 @@ resource "aws_route53_record" "Route53_Record_AppCloudManV2-test" {
   type                              = "${each.value.type}"
 }
 
-resource "aws_route53_record" "alias_a_dev-test_to_AppCloudManV2-test" {
-  name                              = "dev.v2.cloudman.pro"
+resource "aws_route53_record" "alias_a_test-test_to_AppCloudManV2-test" {
+  name                              = "test.v2.cloudman.pro"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "A"
   alias {
@@ -328,8 +328,8 @@ resource "aws_route53_record" "alias_a_dev-test_to_AppCloudManV2-test" {
   }
 }
 
-resource "aws_route53_record" "alias_aaaa_dev-test_to_AppCloudManV2-test" {
-  name                              = "dev.v2.cloudman.pro"
+resource "aws_route53_record" "alias_aaaa_test-test_to_AppCloudManV2-test" {
+  name                              = "test.v2.cloudman.pro"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "AAAA"
   alias {
@@ -547,7 +547,7 @@ resource "aws_api_gateway_stage" "st-test" {
 }
 
 resource "aws_cloudfront_distribution" "AppCloudManV2-test" {
-  aliases                           = ["dev.v2.cloudman.pro"]
+  aliases                           = ["test.v2.cloudman.pro"]
   default_root_object               = "index.html"
   enabled                           = true
   http_version                      = "http2and3"
