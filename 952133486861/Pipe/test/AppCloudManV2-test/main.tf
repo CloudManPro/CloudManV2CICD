@@ -55,12 +55,12 @@ data "aws_dynamodb_table" "CloudManV2-test" {
   name                              = "CloudManV2-test"
 }
 
-data "aws_ssm_parameter" "GitHubAppKeyDev" {
-  name                              = "GitHubAppKeyDev"
+data "aws_ssm_parameter" "GitHubAppKeyProd" {
+  name                              = "GitHubAppKeyProd"
 }
 
-data "aws_ssm_parameter" "GithubClientAndSecret" {
-  name                              = "GithubClientAndSecret"
+data "aws_ssm_parameter" "GithubClientAndSecretProd" {
+  name                              = "GithubClientAndSecretProd"
 }
 
 
@@ -139,13 +139,13 @@ data "aws_iam_policy_document" "lambda_function_GithubGateKeeper-test_st_AppClou
     sid                             = "AllowReadParam"
     effect                          = "Allow"
     actions                         = ["ssm:GetParameter", "ssm:GetParameters"]
-    resources                       = ["${data.aws_ssm_parameter.GitHubAppKeyDev.arn}"]
+    resources                       = ["${data.aws_ssm_parameter.GitHubAppKeyProd.arn}"]
   }
   statement {
     sid                             = "AllowReadParam1"
     effect                          = "Allow"
     actions                         = ["ssm:GetParameter", "ssm:GetParameters"]
-    resources                       = ["${data.aws_ssm_parameter.GithubClientAndSecret.arn}"]
+    resources                       = ["${data.aws_ssm_parameter.GithubClientAndSecretProd.arn}"]
   }
 }
 
@@ -279,7 +279,7 @@ resource "aws_iam_role_policy_attachment" "lambda_function_HCLAWSV2-test_st_AppC
 }
 
 resource "aws_acm_certificate" "AppCloudManV2-test" {
-  domain_name                       = "test.v2.cloudman.pro"
+  domain_name                       = "dev.v2.cloudman.pro"
   key_algorithm                     = "RSA_2048"
   validation_method                 = "DNS"
   options {
@@ -317,8 +317,8 @@ resource "aws_route53_record" "Route53_Record_AppCloudManV2-test" {
   type                              = "${each.value.type}"
 }
 
-resource "aws_route53_record" "alias_a_test-test_to_AppCloudManV2-test" {
-  name                              = "test.v2.cloudman.pro"
+resource "aws_route53_record" "alias_a_dev-test_to_AppCloudManV2-test" {
+  name                              = "dev.v2.cloudman.pro"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "A"
   alias {
@@ -328,8 +328,8 @@ resource "aws_route53_record" "alias_a_test-test_to_AppCloudManV2-test" {
   }
 }
 
-resource "aws_route53_record" "alias_aaaa_test-test_to_AppCloudManV2-test" {
-  name                              = "test.v2.cloudman.pro"
+resource "aws_route53_record" "alias_aaaa_dev-test_to_AppCloudManV2-test" {
+  name                              = "dev.v2.cloudman.pro"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "AAAA"
   alias {
@@ -547,7 +547,7 @@ resource "aws_api_gateway_stage" "st-test" {
 }
 
 resource "aws_cloudfront_distribution" "AppCloudManV2-test" {
-  aliases                           = ["test.v2.cloudman.pro"]
+  aliases                           = ["dev.v2.cloudman.pro"]
   default_root_object               = "index.html"
   enabled                           = true
   http_version                      = "http2and3"
@@ -908,8 +908,8 @@ resource "aws_lambda_function" "GithubGateKeeper-test" {
     "CLOUDMAN_CICD_STAGE" = "dev"
     "APP_URL" = "v2.cloudman.pro"
     "AWS_DYNAMODB_TABLE_TARGET_NAME_0" = "CloudManV2-test"
-    "AWS_SSM_PARAMETER_TARGET_NAME_APPKEY" = "GitHubAppKeyDev"
-    "AWS_SSM_PARAMETER_TARGET_NAME_SECRET" = "GithubClientAndSecret"
+    "AWS_SSM_PARAMETER_TARGET_NAME_APPKEY" = "GitHubAppKeyProd"
+    "AWS_SSM_PARAMETER_TARGET_NAME_SECRET" = "GithubClientAndSecretProd"
     "REGION" = data.aws_region.current.name
     "ACCOUNT" = data.aws_caller_identity.current.account_id
     "NAME" = "GithubGateKeeper-test"
