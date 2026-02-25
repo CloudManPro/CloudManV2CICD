@@ -26,12 +26,12 @@ data "aws_region" "current" {}
 
 ### CATEGORY: INTEGRATION ###
 
-resource "aws_sns_topic" "Topicz" {
-  name                              = "Topicz"
+resource "aws_sns_topic" "Topicjjj" {
+  name                              = "Topicjjj"
   tags                              = {
-    "Name" = "Topicz"
+    "Name" = "Topicjjj"
     "State" = "State"
-    "CloudmanUser" = "Ricardo"
+    "CloudmanUser" = "CloudMan2"
   }
 }
 
