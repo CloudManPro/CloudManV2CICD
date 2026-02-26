@@ -414,7 +414,7 @@ resource "aws_cloudfront_distribution" "AuthCloudManV2" {
     path_pattern                    = "/st/*"
     viewer_protocol_policy          = "redirect-to-https"
     forwarded_values {
-      headers                       = ["Origin", "Access-Control-Request-Headers", "Access-Control-Request-Method"]
+      headers                       = ["Origin", "Access-Control-Request-Headers", "Access-Control-Request-Method", "Accept", "Authorization"]
       query_string                  = false
       cookies {
         forward                     = "whitelist"
@@ -749,26 +749,13 @@ resource "aws_cloudwatch_log_group" "RedirectorV2" {
 
 ### CATEGORY: MISC ###
 
-resource "aws_ssm_parameter" "Parameter" {
-  name                              = "Parameter"
-  data_type                         = "text"
-  overwrite                         = false
-  tier                              = "Standard"
-  type                              = "String"
-  tags                              = {
-    "Name" = "Parameter"
-    "State" = "CDNMain"
-    "CloudmanUser" = "CloudMan2"
-  }
-}
-
 resource "aws_ssm_parameter" "PipelineCloudMan" {
   name                              = "PipelineCloudMan"
   data_type                         = "text"
   overwrite                         = false
   tier                              = "Standard"
   type                              = "String"
-  value                             = "{\"prod\":{\"blue\":\"5,\"green\":\"6\"}}"
+  value                             = "{\"prod\":{\"blue\":\"5\",\"green\":\"6\"}}"
   tags                              = {
     "Name" = "PipelineCloudMan"
     "State" = "CDNMain"
