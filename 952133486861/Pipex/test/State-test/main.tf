@@ -148,10 +148,11 @@ resource "aws_lambda_function" "Function1x-test" {
   timeout                           = 30
   environment {
     variables                       = {
-    "AWS_DYNAMODB_TABLE_TARGET_NAME_0" = "Tablex-test"
+    "CICD_STAGE" = "test"
+    "NAME" = "Function1x-test"
     "REGION" = data.aws_region.current.name
     "ACCOUNT" = data.aws_caller_identity.current.account_id
-    "NAME" = "Function1x-test"
+    "AWS_DYNAMODB_TABLE_TARGET_NAME_0" = "Tablex-test"
     "AWS_DYNAMODB_TABLE_TARGET_ARN_0" = data.aws_dynamodb_table.Tablex-test.arn
   }
   }
@@ -184,10 +185,11 @@ resource "aws_lambda_function" "Functionx-test" {
   timeout                           = 2
   environment {
     variables                       = {
-    "AWS_DYNAMODB_TABLE_TARGET_NAME_0" = "Tablex-test"
+    "CICD_STAGE" = "test"
+    "NAME" = "Functionx-test"
     "REGION" = data.aws_region.current.name
     "ACCOUNT" = data.aws_caller_identity.current.account_id
-    "NAME" = "Functionx-test"
+    "AWS_DYNAMODB_TABLE_TARGET_NAME_0" = "Tablex-test"
     "AWS_DYNAMODB_TABLE_TARGET_ARN_0" = data.aws_dynamodb_table.Tablex-test.arn
   }
   }
