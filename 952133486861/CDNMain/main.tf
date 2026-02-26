@@ -749,6 +749,19 @@ resource "aws_cloudwatch_log_group" "RedirectorV2" {
 
 ### CATEGORY: MISC ###
 
+resource "aws_ssm_parameter" "Parameter" {
+  name                              = "Parameter"
+  data_type                         = "text"
+  overwrite                         = false
+  tier                              = "Standard"
+  type                              = "String"
+  tags                              = {
+    "Name" = "Parameter"
+    "State" = "CDNMain"
+    "CloudmanUser" = "CloudMan2"
+  }
+}
+
 resource "aws_ssm_parameter" "PipelineCloudMan" {
   name                              = "PipelineCloudMan"
   data_type                         = "text"
