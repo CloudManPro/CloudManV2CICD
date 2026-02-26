@@ -755,6 +755,7 @@ resource "aws_ssm_parameter" "PipelineCloudMan" {
   overwrite                         = false
   tier                              = "Standard"
   type                              = "String"
+  value                             = "{\"prod\":{\"blue\":\"5,\"green\":\"6\"}}"
   tags                              = {
     "Name" = "PipelineCloudMan"
     "State" = "CDNMain"
