@@ -66,6 +66,12 @@ data "aws_iam_policy_document" "lambda_function_GetStageV2_st_CDNMain_doc" {
     resources                       = ["${aws_cloudwatch_log_group.GetStageV2.arn}:*"]
   }
   statement {
+    sid                             = "AllowReadParam"
+    effect                          = "Allow"
+    actions                         = ["ssm:GetParameter", "ssm:GetParameters"]
+    resources                       = ["${aws_ssm_parameter.PipelineCloudMan.arn}"]
+  }
+  statement {
     sid                             = "AllowBucketLevelActions"
     effect                          = "Allow"
     actions                         = ["s3:DeleteObject", "s3:GetBucketLocation", "s3:GetObject", "s3:ListBucket", "s3:PutObject"]
@@ -111,7 +117,7 @@ resource "aws_iam_role" "role_lambda_GetStageV2" {
   tags                              = {
     "Name" = "role_lambda_GetStageV2"
     "State" = "CDNMain"
-    "CloudmanUser" = "GlobalUserName"
+    "CloudmanUser" = "CloudMan2"
   }
 }
 
@@ -132,7 +138,7 @@ resource "aws_iam_role" "role_lambda_RedirectorV2" {
   tags                              = {
     "Name" = "role_lambda_RedirectorV2"
     "State" = "CDNMain"
-    "CloudmanUser" = "GlobalUserName"
+    "CloudmanUser" = "CloudMan2"
   }
 }
 
@@ -190,6 +196,7 @@ locals {
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:GetStageV2/invocations"
       type             = "aws_proxy"
       methods          = ["post"]
+      method_auth      = {"post" = "APIAuthCloudManV2_CognitoAuth_CloudManV2"}
       enable_mock      = true
       credentials      = null
       requestTemplates = null
@@ -199,81 +206,82 @@ locals {
     },
   ]
   openapi_spec_APIAuthCloudManV2 = {
-        openapi = "3.0.1"
-        info = {
+      openapi = "3.0.1"
+      info = {
         title   = "APIAuthCloudManV2"
         version = "1.0"
-        }
-        
-        components = {
+      }
+      
+      components = {
         securitySchemes = {
-            "APIAuthCloudManV2_CognitoAuth" = {
-            type = "apiKey"
-            name = "Authorization"
-            in   = "header"
-            "x-amazon-apigateway-authtype" = "cognito_user_pools"
-            "x-amazon-apigateway-authorizer" = {
+            "APIAuthCloudManV2_CognitoAuth_CloudManV2" = {
+              type = "apiKey"
+              name = "Authorization"
+              in   = "header"
+              "x-amazon-apigateway-authtype" = "cognito_user_pools"
+              "x-amazon-apigateway-authorizer" = {
                 type = "cognito_user_pools"
                 providerARNs = [data.aws_cognito_user_pool.CloudManV2.arn]
-            }
+              }
             }
         }
-        }
-        
-        security = [
-        { "APIAuthCloudManV2_CognitoAuth" = [] }
-        ]
-        paths = {
+      }
+      paths = {
         for path in distinct([for i in local.api_config_APIAuthCloudManV2 : i.path]) :
         path => merge([
-            for item in local.api_config_APIAuthCloudManV2 :
-            merge(
+          for item in local.api_config_APIAuthCloudManV2 :
+          merge(
             {
-                for method in item.methods :
-                method => merge(
+              for method in toset(item.methods) :
+              method => merge(
                 {
-                    "responses" = {
+                  "responses" = {
                     "200" = {
-                        description = "Successful operation"
-                        # Definimos que o header pode existir, mas não forçamos valor aqui
-                        headers = {
+                      description = "Successful operation"
+                      headers = {
                         "Access-Control-Allow-Origin" = { type = "string" }
                         "Set-Cookie" = { type = "string" }
-                        }
+                      }
                     }
-                    }
-                    "x-amazon-apigateway-integration" = merge(
+                  }
+                  "x-amazon-apigateway-integration" = merge(
                     {
-                        uri        = item.uri
-                        httpMethod = item.integ_method == "MATCH" ? upper(method) : item.integ_method
-                        type       = item.type
+                      uri        = item.uri
+                      httpMethod = item.integ_method == "MATCH" ? upper(method) : item.integ_method
+                      type       = item.type
                     },
-                    # ALTERAÇÃO AQUI: Só adicionamos o bloco 'responses' se NÃO for aws_proxy.
-                    # No modo aws_proxy, a Lambda é responsável por retornar todos os headers.
                     item.type == "aws_proxy" ? {} : {
-                        responses  = {
+                      responses  = {
                         "default" = {
-                            statusCode = "200"
-                            responseParameters = {
+                          statusCode = "200"
+                          responseParameters = {
                             "method.response.header.Access-Control-Allow-Origin" = "'*'"
-                            }
-                            responseTemplates = {
+                          }
+                          responseTemplates = {
                             "application/json" = "$input.body"
-                            }
+                          }
                         }
-                        }
+                      }
                     },
                     item.credentials != null ? { credentials = item.credentials } : {},
                     item.requestTemplates != null ? { requestTemplates = item.requestTemplates } : {},
                     item.integ_req_params != null ? { requestParameters = item.integ_req_params } : {}
-                    )
+                  )
                 },
-                item.parameters != null ? { parameters = item.parameters } : {}
-                )
-                if method != "options"
+                item.parameters != null ? { parameters = item.parameters } : {},
+                
+                # ALTERAÇÃO CRUCIAL AQUI: Aplica a segurança SÓ SE o método exigir
+                contains(keys(item.method_auth), method) ? {
+                  security = [
+                    { (item.method_auth[method]) = [] }
+                  ]
+                } : {}
+              )
+              if method != "options"
             },
             item.enable_mock ? { "options" = {
           summary  = "CORS support"
+          security = []  # <--- CORREÇÃO 1: Anula o authorizer global para o OPTIONS
           consumes = ["application/json"]
           produces = ["application/json"]
           responses = {
@@ -293,7 +301,7 @@ locals {
               default = {
                 statusCode = "200"
                 responseParameters = {
-                  "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
+                  "method.response.header.Access-Control-Allow-Methods" = "'OPTIONS,POST'"
                   "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
                   "method.response.header.Access-Control-Allow-Origin"  = "'*'"
                 }
@@ -301,10 +309,10 @@ locals {
             }
           }
         } } : {}
-            )
-            if item.path == path
+          )
+          if item.path == path
         ]...)
-        }
+      }
     }
 }
 
@@ -318,7 +326,7 @@ resource "aws_api_gateway_rest_api" "APIAuthCloudManV2" {
   tags                              = {
     "Name" = "APIAuthCloudManV2"
     "State" = "CDNMain"
-    "CloudmanUser" = "GlobalUserName"
+    "CloudmanUser" = "CloudMan2"
   }
 }
 
@@ -328,23 +336,12 @@ resource "aws_api_gateway_stage" "st" {
   stage_name                        = "st"
   access_log_settings {
     destination_arn                 = aws_cloudwatch_log_group.APIAuthCloudManV2.arn
-    format                          = jsonencode({
-        "requestId" = "$context.requestId"
-        "ip" = "$context.identity.sourceIp"
-        "caller" = "$context.identity.caller"
-        "user" = "$context.identity.user"
-        "requestTime" = "$context.requestTime"
-        "httpMethod" = "$context.httpMethod"
-        "resourcePath" = "$context.resourcePath"
-        "status" = "$context.status"
-        "protocol" = "$context.protocol"
-        "responseLength" = "$context.responseLength"
-      })
+    format                          = jsonencode({"requestId": "$context.requestId", "ip": "$context.identity.sourceIp", "caller": "$context.identity.caller", "user": "$context.identity.user", "requestTime": "$context.requestTime", "httpMethod": "$context.httpMethod", "resourcePath": "$context.resourcePath", "status": "$context.status", "protocol": "$context.protocol", "responseLength": "$context.responseLength"})
   }
   tags                              = {
     "Name" = "st"
     "State" = "CDNMain"
-    "CloudmanUser" = "GlobalUserName"
+    "CloudmanUser" = "CloudMan2"
   }
 }
 
@@ -417,7 +414,7 @@ resource "aws_cloudfront_distribution" "AuthCloudManV2" {
     path_pattern                    = "/st/*"
     viewer_protocol_policy          = "redirect-to-https"
     forwarded_values {
-      headers                       = ["Authorization", "Origin", "Referer", "Accept", "Content-Type", "Access-Control-Request-Method", "Access-Control-Request-Headers"]
+      headers                       = ["Origin", "Access-Control-Request-Headers", "Access-Control-Request-Method"]
       query_string                  = false
       cookies {
         forward                     = "whitelist"
@@ -448,7 +445,7 @@ resource "aws_cloudfront_distribution" "AuthCloudManV2" {
   tags                              = {
     "Name" = "AuthCloudManV2"
     "State" = "CDNMain"
-    "CloudmanUser" = "GlobalUserName"
+    "CloudmanUser" = "CloudMan2"
   }
   viewer_certificate {
     acm_certificate_arn             = data.aws_acm_certificate.CloudManV2.arn
@@ -479,7 +476,7 @@ resource "aws_s3_bucket" "auth-cloudman-v2-logs" {
   tags                              = {
     "Name" = "auth-cloudman-v2-logs"
     "State" = "CDNMain"
-    "CloudmanUser" = "GlobalUserName"
+    "CloudmanUser" = "CloudMan2"
   }
 }
 
@@ -490,7 +487,7 @@ resource "aws_s3_bucket" "s3-cloudmanv2-auth-bucket" {
   tags                              = {
     "Name" = "s3-cloudmanv2-auth-bucket"
     "State" = "CDNMain"
-    "CloudmanUser" = "GlobalUserName"
+    "CloudmanUser" = "CloudMan2"
   }
 }
 
@@ -652,17 +649,19 @@ resource "aws_lambda_function" "GetStageV2" {
   environment {
     variables                       = {
     "DOMAIN" = "${data.aws_route53_zone.Cloudman.name}"
-    "AWS_S3_BUCKET_TARGET_NAME_0" = "s3-cloudmanv2-auth-bucket"
+    "NAME" = "GetStageV2"
     "REGION" = data.aws_region.current.name
     "ACCOUNT" = data.aws_caller_identity.current.account_id
-    "NAME" = "GetStageV2"
+    "AWS_S3_BUCKET_TARGET_NAME_0" = "s3-cloudmanv2-auth-bucket"
+    "AWS_SSM_PARAMETER_TARGET_NAME_0" = "PipelineCloudMan"
     "AWS_S3_BUCKET_TARGET_ARN_0" = aws_s3_bucket.s3-cloudmanv2-auth-bucket.arn
+    "AWS_SSM_PARAMETER_TARGET_ARN_0" = aws_ssm_parameter.PipelineCloudMan.arn
   }
   }
   tags                              = {
     "Name" = "GetStageV2"
     "State" = "CDNMain"
-    "CloudmanUser" = "GlobalUserName"
+    "CloudmanUser" = "CloudMan2"
   }
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_GetStageV2_st_CDNMain_attach]
 }
@@ -688,7 +687,7 @@ resource "aws_lambda_function" "RedirectorV2" {
   tags                              = {
     "Name" = "RedirectorV2"
     "State" = "CDNMain"
-    "CloudmanUser" = "GlobalUserName"
+    "CloudmanUser" = "CloudMan2"
   }
   timeouts {
     delete                          = "20m"
@@ -717,7 +716,7 @@ resource "aws_cloudwatch_log_group" "APIAuthCloudManV2" {
   tags                              = {
     "Name" = "APIAuthCloudManV2"
     "State" = "CDNMain"
-    "CloudmanUser" = "GlobalUserName"
+    "CloudmanUser" = "CloudMan2"
   }
 }
 
@@ -729,7 +728,7 @@ resource "aws_cloudwatch_log_group" "GetStageV2" {
   tags                              = {
     "Name" = "GetStageV2"
     "State" = "CDNMain"
-    "CloudmanUser" = "GlobalUserName"
+    "CloudmanUser" = "CloudMan2"
   }
 }
 
@@ -741,7 +740,25 @@ resource "aws_cloudwatch_log_group" "RedirectorV2" {
   tags                              = {
     "Name" = "RedirectorV2"
     "State" = "CDNMain"
-    "CloudmanUser" = "GlobalUserName"
+    "CloudmanUser" = "CloudMan2"
+  }
+}
+
+
+
+
+### CATEGORY: MISC ###
+
+resource "aws_ssm_parameter" "PipelineCloudMan" {
+  name                              = "PipelineCloudMan"
+  data_type                         = "text"
+  overwrite                         = false
+  tier                              = "Standard"
+  type                              = "String"
+  tags                              = {
+    "Name" = "PipelineCloudMan"
+    "State" = "CDNMain"
+    "CloudmanUser" = "CloudMan2"
   }
 }
 
