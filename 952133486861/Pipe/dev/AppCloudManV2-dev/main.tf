@@ -394,7 +394,7 @@ locals {
       path             = "/GithubGateKeeper-dev"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:GithubGateKeeper-dev/invocations"
       type             = "aws_proxy"
-      methods          = ["get", "post"]
+      methods          = ["post", "get"]
       method_auth      = {}
       enable_mock      = false
       credentials      = null
@@ -825,6 +825,7 @@ resource "aws_lambda_function" "AgentV2-dev" {
   timeout                           = 30
   environment {
     variables                       = {
+    "CICD_STAGE" = "dev"
     "AWS_DYNAMODB_TABLE_TARGET_NAME_0" = "CloudManV2-dev"
     "AWS_LAMBDA_FUNCTION_TARGET_NAME_0" = "GithubGateKeeper-dev"
     "REGION" = data.aws_region.current.name
@@ -863,6 +864,7 @@ resource "aws_lambda_function" "DBAccessV2-dev" {
   timeout                           = 3
   environment {
     variables                       = {
+    "CICD_STAGE" = "dev"
     "AWS_S3_BUCKET_TARGET_NAME_0" = "s3-cloudmanv2-files-dev"
     "REGION" = data.aws_region.current.name
     "ACCOUNT" = data.aws_caller_identity.current.account_id
@@ -907,6 +909,7 @@ resource "aws_lambda_function" "GithubGateKeeper-dev" {
     variables                       = {
     "CLOUDMAN_CICD_STAGE" = "dev"
     "APP_URL" = "v2.cloudman.pro"
+    "CICD_STAGE" = "dev"
     "AWS_SSM_PARAMETER_TARGET_NAME_APPKEY" = "GitHubAppKeyDev"
     "AWS_SSM_PARAMETER_TARGET_NAME_SECRET" = "GithubClientAndSecret"
     "AWS_DYNAMODB_TABLE_TARGET_NAME_0" = "CloudManV2-dev"
