@@ -826,11 +826,11 @@ resource "aws_lambda_function" "AgentV2-dev" {
   environment {
     variables                       = {
     "CICD_STAGE" = "dev"
-    "AWS_DYNAMODB_TABLE_TARGET_NAME_0" = "CloudManV2-dev"
-    "AWS_LAMBDA_FUNCTION_TARGET_NAME_0" = "GithubGateKeeper-dev"
+    "NAME" = "AgentV2-dev"
     "REGION" = data.aws_region.current.name
     "ACCOUNT" = data.aws_caller_identity.current.account_id
-    "NAME" = "AgentV2-dev"
+    "AWS_DYNAMODB_TABLE_TARGET_NAME_0" = "CloudManV2-dev"
+    "AWS_LAMBDA_FUNCTION_TARGET_NAME_0" = "GithubGateKeeper-dev"
     "AWS_DYNAMODB_TABLE_TARGET_ARN_0" = data.aws_dynamodb_table.CloudManV2-dev.arn
     "AWS_LAMBDA_FUNCTION_TARGET_ARN_0" = aws_lambda_function.GithubGateKeeper-dev.arn
   }
@@ -865,10 +865,10 @@ resource "aws_lambda_function" "DBAccessV2-dev" {
   environment {
     variables                       = {
     "CICD_STAGE" = "dev"
-    "AWS_S3_BUCKET_TARGET_NAME_0" = "s3-cloudmanv2-files-dev"
+    "NAME" = "DBAccessV2-dev"
     "REGION" = data.aws_region.current.name
     "ACCOUNT" = data.aws_caller_identity.current.account_id
-    "NAME" = "DBAccessV2-dev"
+    "AWS_S3_BUCKET_TARGET_NAME_0" = "s3-cloudmanv2-files-dev"
     "AWS_S3_BUCKET_TARGET_ARN_0" = data.aws_s3_bucket.s3-cloudmanv2-files-dev.arn
   }
   }
@@ -910,12 +910,12 @@ resource "aws_lambda_function" "GithubGateKeeper-dev" {
     "CLOUDMAN_CICD_STAGE" = "dev"
     "APP_URL" = "v2.cloudman.pro"
     "CICD_STAGE" = "dev"
+    "NAME" = "GithubGateKeeper-dev"
+    "REGION" = data.aws_region.current.name
+    "ACCOUNT" = data.aws_caller_identity.current.account_id
     "AWS_SSM_PARAMETER_TARGET_NAME_APPKEY" = "GitHubAppKeyDev"
     "AWS_SSM_PARAMETER_TARGET_NAME_SECRET" = "GithubClientAndSecret"
     "AWS_DYNAMODB_TABLE_TARGET_NAME_0" = "CloudManV2-dev"
-    "REGION" = data.aws_region.current.name
-    "ACCOUNT" = data.aws_caller_identity.current.account_id
-    "NAME" = "GithubGateKeeper-dev"
     "AWS_DYNAMODB_TABLE_TARGET_ARN_0" = data.aws_dynamodb_table.CloudManV2-dev.arn
   }
   }
@@ -948,9 +948,10 @@ resource "aws_lambda_function" "HCLAWSV2-dev" {
   timeout                           = 5
   environment {
     variables                       = {
+    "CICD_STAGE" = "dev"
+    "NAME" = "HCLAWSV2-dev"
     "REGION" = data.aws_region.current.name
     "ACCOUNT" = data.aws_caller_identity.current.account_id
-    "NAME" = "HCLAWSV2-dev"
   }
   }
   lifecycle {
