@@ -187,7 +187,7 @@ resource "aws_iam_role" "role_lambda_AgentV2-alpha-2" {
   tags                              = {
     "Name" = "role_lambda_AgentV2-alpha-2"
     "State" = "AppCloudManV2-alpha-2"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "alpha"
   }
 }
@@ -209,7 +209,7 @@ resource "aws_iam_role" "role_lambda_DBAccessV2-alpha-2" {
   tags                              = {
     "Name" = "role_lambda_DBAccessV2-alpha-2"
     "State" = "AppCloudManV2-alpha-2"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "alpha"
   }
 }
@@ -231,7 +231,7 @@ resource "aws_iam_role" "role_lambda_GithubGateKeeper-alpha-2" {
   tags                              = {
     "Name" = "role_lambda_GithubGateKeeper-alpha-2"
     "State" = "AppCloudManV2-alpha-2"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "alpha"
   }
 }
@@ -253,7 +253,7 @@ resource "aws_iam_role" "role_lambda_HCLAWSV2-alpha-2" {
   tags                              = {
     "Name" = "role_lambda_HCLAWSV2-alpha-2"
     "State" = "AppCloudManV2-alpha-2"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "alpha"
   }
 }
@@ -279,7 +279,7 @@ resource "aws_iam_role_policy_attachment" "lambda_function_HCLAWSV2-alpha-2_st_A
 }
 
 resource "aws_acm_certificate" "AppCloudManV2-alpha-2" {
-  domain_name                       = "alpha.v2.cloudman.pro"
+  domain_name                       = "alpha-2.v2.cloudman.pro"
   key_algorithm                     = "RSA_2048"
   validation_method                 = "DNS"
   options {
@@ -288,7 +288,7 @@ resource "aws_acm_certificate" "AppCloudManV2-alpha-2" {
   tags                              = {
     "Name" = "AppCloudManV2-alpha-2"
     "State" = "AppCloudManV2-alpha-2"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "alpha"
   }
 }
@@ -317,8 +317,8 @@ resource "aws_route53_record" "Route53_Record_AppCloudManV2-alpha-2" {
   type                              = "${each.value.type}"
 }
 
-resource "aws_route53_record" "alias_a_alpha-alpha-2_to_AppCloudManV2-alpha-2" {
-  name                              = "alpha.v2.cloudman.pro"
+resource "aws_route53_record" "alias_a_alpha-2-alpha-2_to_AppCloudManV2-alpha-2" {
+  name                              = "alpha-2.v2.cloudman.pro"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "A"
   alias {
@@ -328,8 +328,8 @@ resource "aws_route53_record" "alias_a_alpha-alpha-2_to_AppCloudManV2-alpha-2" {
   }
 }
 
-resource "aws_route53_record" "alias_aaaa_alpha-alpha-2_to_AppCloudManV2-alpha-2" {
-  name                              = "alpha.v2.cloudman.pro"
+resource "aws_route53_record" "alias_aaaa_alpha-2-alpha-2_to_AppCloudManV2-alpha-2" {
+  name                              = "alpha-2.v2.cloudman.pro"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   type                              = "AAAA"
   alias {
@@ -394,7 +394,7 @@ locals {
       path             = "/GithubGateKeeper-alpha-2"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:GithubGateKeeper-alpha-2/invocations"
       type             = "aws_proxy"
-      methods          = ["post", "get"]
+      methods          = ["get", "post"]
       method_auth      = {}
       enable_mock      = false
       credentials      = null
@@ -525,7 +525,7 @@ resource "aws_api_gateway_rest_api" "APIAppCloudManV2-alpha-2" {
   tags                              = {
     "Name" = "APIAppCloudManV2-alpha-2"
     "State" = "AppCloudManV2-alpha-2"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "alpha"
   }
 }
@@ -541,13 +541,13 @@ resource "aws_api_gateway_stage" "st-alpha-2" {
   tags                              = {
     "Name" = "st-alpha-2"
     "State" = "AppCloudManV2-alpha-2"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "alpha"
   }
 }
 
 resource "aws_cloudfront_distribution" "AppCloudManV2-alpha-2" {
-  aliases                           = ["alpha.v2.cloudman.pro"]
+  aliases                           = ["alpha-2.v2.cloudman.pro"]
   default_root_object               = "index.html"
   enabled                           = true
   http_version                      = "http2and3"
@@ -616,7 +616,7 @@ resource "aws_cloudfront_distribution" "AppCloudManV2-alpha-2" {
   tags                              = {
     "Name" = "AppCloudManV2-alpha-2"
     "State" = "AppCloudManV2-alpha-2"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "alpha"
   }
   viewer_certificate {
@@ -648,7 +648,7 @@ resource "aws_s3_bucket" "app-cloudman-v2-alpha-2" {
   tags                              = {
     "Name" = "app-cloudman-v2-alpha-2"
     "State" = "AppCloudManV2-alpha-2"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "alpha"
   }
 }
@@ -660,7 +660,7 @@ resource "aws_s3_bucket" "app-cloudman-v2-logs-alpha-2" {
   tags                              = {
     "Name" = "app-cloudman-v2-logs-alpha-2"
     "State" = "AppCloudManV2-alpha-2"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "alpha"
   }
 }
@@ -838,7 +838,7 @@ resource "aws_lambda_function" "AgentV2-alpha-2" {
   tags                              = {
     "Name" = "AgentV2-alpha-2"
     "State" = "AppCloudManV2-alpha-2"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "alpha"
   }
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_AgentV2-alpha-2_st_AppCloudManV2-alpha-2_attach]
@@ -880,7 +880,7 @@ resource "aws_lambda_function" "DBAccessV2-alpha-2" {
   tags                              = {
     "Name" = "DBAccessV2-alpha-2"
     "State" = "AppCloudManV2-alpha-2"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "alpha"
   }
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_DBAccessV2-alpha-2_st_AppCloudManV2-alpha-2_attach]
@@ -922,7 +922,7 @@ resource "aws_lambda_function" "GithubGateKeeper-alpha-2" {
   tags                              = {
     "Name" = "GithubGateKeeper-alpha-2"
     "State" = "AppCloudManV2-alpha-2"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "alpha"
   }
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_GithubGateKeeper-alpha-2_st_AppCloudManV2-alpha-2_attach]
@@ -962,7 +962,7 @@ resource "aws_lambda_function" "HCLAWSV2-alpha-2" {
   tags                              = {
     "Name" = "HCLAWSV2-alpha-2"
     "State" = "AppCloudManV2-alpha-2"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "alpha"
   }
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_HCLAWSV2-alpha-2_st_AppCloudManV2-alpha-2_attach]
@@ -1021,7 +1021,7 @@ resource "aws_cloudwatch_log_group" "AgentV2-alpha-2" {
   tags                              = {
     "Name" = "AgentV2-alpha-2"
     "State" = "AppCloudManV2-alpha-2"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "alpha"
   }
 }
@@ -1034,7 +1034,7 @@ resource "aws_cloudwatch_log_group" "AppCloudManV2-ST-alpha-2" {
   tags                              = {
     "Name" = "AppCloudManV2-ST-alpha-2"
     "State" = "AppCloudManV2-alpha-2"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "alpha"
   }
 }
@@ -1047,7 +1047,7 @@ resource "aws_cloudwatch_log_group" "DBAccessV2-alpha-2" {
   tags                              = {
     "Name" = "DBAccessV2-alpha-2"
     "State" = "AppCloudManV2-alpha-2"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "alpha"
   }
 }
@@ -1060,7 +1060,7 @@ resource "aws_cloudwatch_log_group" "GithubGateKeeper-alpha-2" {
   tags                              = {
     "Name" = "GithubGateKeeper-alpha-2"
     "State" = "AppCloudManV2-alpha-2"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "alpha"
   }
 }
@@ -1073,7 +1073,7 @@ resource "aws_cloudwatch_log_group" "HCLAWSV2-alpha-2" {
   tags                              = {
     "Name" = "HCLAWSV2-alpha-2"
     "State" = "AppCloudManV2-alpha-2"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "alpha"
   }
 }
