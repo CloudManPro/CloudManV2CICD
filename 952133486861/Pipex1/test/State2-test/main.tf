@@ -31,7 +31,7 @@ resource "aws_sns_topic" "Topic-test" {
   tags                              = {
     "Name" = "Topic-test"
     "State" = "State2-test"
-    "CloudmanUser" = "Ricardo"
+    "CloudmanUser" = "SystemUser"
     "Stage" = "test"
   }
 }
