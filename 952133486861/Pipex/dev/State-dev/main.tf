@@ -128,23 +128,23 @@ resource "aws_iam_role_policy_attachment" "lambda_function_Functionx-dev_st_Stat
 
 ### CATEGORY: COMPUTE ###
 
-data "archive_file" "archive_CloudMan_Function1x-dev" {
-  output_path                       = "${path.module}/CloudMan_Function1x-dev.zip"
-  source_dir                        = "${path.module}/.external_modules/CloudMan/LambdaFiles/LambdaHub2"
+data "archive_file" "archive_CloudManMain_Function1x-dev" {
+  output_path                       = "${path.module}/CloudManMain_Function1x-dev.zip"
+  source_dir                        = "${path.module}/.external_modules/CloudManMain/LambdaFiles/Agent"
   type                              = "zip"
 }
 
 resource "aws_lambda_function" "Function1x-dev" {
   function_name                     = "Function1x-dev"
   architectures                     = ["arm64"]
-  filename                          = "${data.archive_file.archive_CloudMan_Function1x-dev.output_path}"
-  handler                           = "LambdaHub2.lambda_handler"
+  filename                          = "${data.archive_file.archive_CloudManMain_Function1x-dev.output_path}"
+  handler                           = "Agent.lambda_handler"
   memory_size                       = 3008
   publish                           = false
   reserved_concurrent_executions    = -1
   role                              = aws_iam_role.role_lambda_Function1x-dev.arn
   runtime                           = "python3.13"
-  source_code_hash                  = "${data.archive_file.archive_CloudMan_Function1x-dev.output_base64sha256}"
+  source_code_hash                  = "${data.archive_file.archive_CloudManMain_Function1x-dev.output_base64sha256}"
   timeout                           = 30
   environment {
     variables                       = {
@@ -153,7 +153,6 @@ resource "aws_lambda_function" "Function1x-dev" {
     "REGION" = data.aws_region.current.name
     "ACCOUNT" = data.aws_caller_identity.current.account_id
     "AWS_DYNAMODB_TABLE_TARGET_NAME_0" = "Tablex-dev"
-    "AWS_DYNAMODB_TABLE_TARGET_ARN_0" = data.aws_dynamodb_table.Tablex-dev.arn
   }
   }
   tags                              = {
@@ -165,23 +164,23 @@ resource "aws_lambda_function" "Function1x-dev" {
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_Function1x-dev_st_State-dev_attach]
 }
 
-data "archive_file" "archive_CloudMan_Functionx-dev" {
-  output_path                       = "${path.module}/CloudMan_Functionx-dev.zip"
-  source_dir                        = "${path.module}/.external_modules/CloudMan/LambdaFiles/LambdaHub2"
+data "archive_file" "archive_CloudManMain_Functionx-dev" {
+  output_path                       = "${path.module}/CloudManMain_Functionx-dev.zip"
+  source_dir                        = "${path.module}/.external_modules/CloudManMain/LambdaFiles/Agent"
   type                              = "zip"
 }
 
 resource "aws_lambda_function" "Functionx-dev" {
   function_name                     = "Functionx-dev"
   architectures                     = ["arm64"]
-  filename                          = "${data.archive_file.archive_CloudMan_Functionx-dev.output_path}"
-  handler                           = "LambdaHub2.lambda_handler"
+  filename                          = "${data.archive_file.archive_CloudManMain_Functionx-dev.output_path}"
+  handler                           = "Agent.lambda_handler"
   memory_size                       = 1024
   publish                           = false
   reserved_concurrent_executions    = -1
   role                              = aws_iam_role.role_lambda_Functionx-dev.arn
   runtime                           = "python3.13"
-  source_code_hash                  = "${data.archive_file.archive_CloudMan_Functionx-dev.output_base64sha256}"
+  source_code_hash                  = "${data.archive_file.archive_CloudManMain_Functionx-dev.output_base64sha256}"
   timeout                           = 2
   environment {
     variables                       = {
@@ -190,7 +189,6 @@ resource "aws_lambda_function" "Functionx-dev" {
     "REGION" = data.aws_region.current.name
     "ACCOUNT" = data.aws_caller_identity.current.account_id
     "AWS_DYNAMODB_TABLE_TARGET_NAME_0" = "Tablex-dev"
-    "AWS_DYNAMODB_TABLE_TARGET_ARN_0" = data.aws_dynamodb_table.Tablex-dev.arn
   }
   }
   tags                              = {
