@@ -710,13 +710,6 @@ resource "aws_lambda_function" "CallBackRedirector" {
   runtime                           = "python3.12"
   source_code_hash                  = "${data.archive_file.archive_CloudManMainV2_CallBackRedirector.output_base64sha256}"
   timeout                           = 1
-  environment {
-    variables                       = {
-    "NAME" = "CallBackRedirector"
-    "REGION" = data.aws_region.current.name
-    "ACCOUNT" = data.aws_caller_identity.current.account_id
-  }
-  }
   tags                              = {
     "Name" = "CallBackRedirector"
     "State" = "CDNMain"
