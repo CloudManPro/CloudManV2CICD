@@ -236,7 +236,7 @@ locals {
       path             = "/GetStageV2"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:GetStageV2/invocations"
       type             = "aws_proxy"
-      methods          = ["options", "post"]
+      methods          = ["post", "options"]
       method_auth      = {"options" = "APIAuthCloudManV2_CognitoAuth_CloudManV2", "post" = "APIAuthCloudManV2_CognitoAuth_CloudManV2"}
       enable_mock      = false
       credentials      = null
