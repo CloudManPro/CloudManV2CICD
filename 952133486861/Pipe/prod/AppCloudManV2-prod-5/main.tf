@@ -202,7 +202,7 @@ resource "aws_iam_role" "role_lambda_AgentV2-prod-5" {
   tags                              = {
     "Name" = "role_lambda_AgentV2-prod-5"
     "State" = "AppCloudManV2-prod-5"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "prod"
   }
 }
@@ -224,7 +224,7 @@ resource "aws_iam_role" "role_lambda_DBAccessV2-prod-5" {
   tags                              = {
     "Name" = "role_lambda_DBAccessV2-prod-5"
     "State" = "AppCloudManV2-prod-5"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "prod"
   }
 }
@@ -246,7 +246,7 @@ resource "aws_iam_role" "role_lambda_GithubGateKeeper-prod-5" {
   tags                              = {
     "Name" = "role_lambda_GithubGateKeeper-prod-5"
     "State" = "AppCloudManV2-prod-5"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "prod"
   }
 }
@@ -268,7 +268,7 @@ resource "aws_iam_role" "role_lambda_HCLAWSV2-prod-5" {
   tags                              = {
     "Name" = "role_lambda_HCLAWSV2-prod-5"
     "State" = "AppCloudManV2-prod-5"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "prod"
   }
 }
@@ -290,7 +290,7 @@ resource "aws_iam_role" "role_lambda_HCLCloudFlare-prod-5" {
   tags                              = {
     "Name" = "role_lambda_HCLCloudFlare-prod-5"
     "State" = "AppCloudManV2-prod-5"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "prod"
   }
 }
@@ -312,7 +312,7 @@ resource "aws_iam_role" "role_lambda_HCLCloudFlare1-prod-5" {
   tags                              = {
     "Name" = "role_lambda_HCLCloudFlare1-prod-5"
     "State" = "AppCloudManV2-prod-5"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "prod"
   }
 }
@@ -352,7 +352,7 @@ resource "aws_acm_certificate" "AppCloudManV2-prod-5" {
   tags                              = {
     "Name" = "AppCloudManV2-prod-5"
     "State" = "AppCloudManV2-prod-5"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "prod"
   }
 }
@@ -615,7 +615,7 @@ resource "aws_api_gateway_rest_api" "APIAppCloudManV2-prod-5" {
   tags                              = {
     "Name" = "APIAppCloudManV2-prod-5"
     "State" = "AppCloudManV2-prod-5"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "prod"
   }
 }
@@ -631,7 +631,7 @@ resource "aws_api_gateway_stage" "st-prod-5" {
   tags                              = {
     "Name" = "st-prod-5"
     "State" = "AppCloudManV2-prod-5"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "prod"
   }
 }
@@ -706,7 +706,7 @@ resource "aws_cloudfront_distribution" "AppCloudManV2-prod-5" {
   tags                              = {
     "Name" = "AppCloudManV2-prod-5"
     "State" = "AppCloudManV2-prod-5"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "prod"
   }
   viewer_certificate {
@@ -738,7 +738,7 @@ resource "aws_s3_bucket" "app-cloudman-v2-logs-prod-5" {
   tags                              = {
     "Name" = "app-cloudman-v2-logs-prod-5"
     "State" = "AppCloudManV2-prod-5"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "prod"
   }
 }
@@ -750,7 +750,7 @@ resource "aws_s3_bucket" "app-cloudman-v2-prod-5" {
   tags                              = {
     "Name" = "app-cloudman-v2-prod-5"
     "State" = "AppCloudManV2-prod-5"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "prod"
   }
 }
@@ -916,6 +916,7 @@ resource "aws_lambda_function" "AgentV2-prod-5" {
   environment {
     variables                       = {
     "CICD_STAGE" = "prod"
+    "CICD_VERSION" = "5"
     "NAME" = "AgentV2-prod-5"
     "REGION" = data.aws_region.current.name
     "ACCOUNT" = data.aws_caller_identity.current.account_id
@@ -928,7 +929,7 @@ resource "aws_lambda_function" "AgentV2-prod-5" {
   tags                              = {
     "Name" = "AgentV2-prod-5"
     "State" = "AppCloudManV2-prod-5"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "prod"
   }
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_AgentV2-prod-5_st_AppCloudManV2-prod-5_attach]
@@ -955,6 +956,7 @@ resource "aws_lambda_function" "DBAccessV2-prod-5" {
   environment {
     variables                       = {
     "CICD_STAGE" = "prod"
+    "CICD_VERSION" = "5"
     "NAME" = "DBAccessV2-prod-5"
     "REGION" = data.aws_region.current.name
     "ACCOUNT" = data.aws_caller_identity.current.account_id
@@ -970,7 +972,7 @@ resource "aws_lambda_function" "DBAccessV2-prod-5" {
   tags                              = {
     "Name" = "DBAccessV2-prod-5"
     "State" = "AppCloudManV2-prod-5"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "prod"
   }
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_DBAccessV2-prod-5_st_AppCloudManV2-prod-5_attach]
@@ -1000,6 +1002,7 @@ resource "aws_lambda_function" "GithubGateKeeper-prod-5" {
     "CLOUDMAN_CICD_STAGE" = "dev"
     "APP_URL" = "v2.cloudman.pro"
     "CICD_STAGE" = "prod"
+    "CICD_VERSION" = "5"
     "NAME" = "GithubGateKeeper-prod-5"
     "REGION" = data.aws_region.current.name
     "ACCOUNT" = data.aws_caller_identity.current.account_id
@@ -1012,7 +1015,7 @@ resource "aws_lambda_function" "GithubGateKeeper-prod-5" {
   tags                              = {
     "Name" = "GithubGateKeeper-prod-5"
     "State" = "AppCloudManV2-prod-5"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "prod"
   }
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_GithubGateKeeper-prod-5_st_AppCloudManV2-prod-5_attach]
@@ -1039,6 +1042,7 @@ resource "aws_lambda_function" "HCLAWSV2-prod-5" {
   environment {
     variables                       = {
     "CICD_STAGE" = "prod"
+    "CICD_VERSION" = "5"
     "NAME" = "HCLAWSV2-prod-5"
     "REGION" = data.aws_region.current.name
     "ACCOUNT" = data.aws_caller_identity.current.account_id
@@ -1052,7 +1056,7 @@ resource "aws_lambda_function" "HCLAWSV2-prod-5" {
   tags                              = {
     "Name" = "HCLAWSV2-prod-5"
     "State" = "AppCloudManV2-prod-5"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "prod"
   }
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_HCLAWSV2-prod-5_st_AppCloudManV2-prod-5_attach]
@@ -1079,6 +1083,7 @@ resource "aws_lambda_function" "HCLCloudFlare-prod-5" {
   environment {
     variables                       = {
     "CICD_STAGE" = "prod"
+    "CICD_VERSION" = "5"
     "NAME" = "HCLCloudFlare-prod-5"
     "REGION" = data.aws_region.current.name
     "ACCOUNT" = data.aws_caller_identity.current.account_id
@@ -1087,7 +1092,7 @@ resource "aws_lambda_function" "HCLCloudFlare-prod-5" {
   tags                              = {
     "Name" = "HCLCloudFlare-prod-5"
     "State" = "AppCloudManV2-prod-5"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "prod"
   }
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_HCLCloudFlare-prod-5_st_AppCloudManV2-prod-5_attach]
@@ -1114,6 +1119,7 @@ resource "aws_lambda_function" "HCLCloudFlare1-prod-5" {
   environment {
     variables                       = {
     "CICD_STAGE" = "prod"
+    "CICD_VERSION" = "5"
     "NAME" = "HCLCloudFlare1-prod-5"
     "REGION" = data.aws_region.current.name
     "ACCOUNT" = data.aws_caller_identity.current.account_id
@@ -1122,7 +1128,7 @@ resource "aws_lambda_function" "HCLCloudFlare1-prod-5" {
   tags                              = {
     "Name" = "HCLCloudFlare1-prod-5"
     "State" = "AppCloudManV2-prod-5"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "prod"
   }
 }
@@ -1196,7 +1202,7 @@ resource "aws_cloudwatch_log_group" "AgentV2-prod-5" {
   tags                              = {
     "Name" = "AgentV2-prod-5"
     "State" = "AppCloudManV2-prod-5"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "prod"
   }
 }
@@ -1209,7 +1215,7 @@ resource "aws_cloudwatch_log_group" "AppCloudManV2-ST-prod-5" {
   tags                              = {
     "Name" = "AppCloudManV2-ST-prod-5"
     "State" = "AppCloudManV2-prod-5"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "prod"
   }
 }
@@ -1222,7 +1228,7 @@ resource "aws_cloudwatch_log_group" "DBAccessV2-prod-5" {
   tags                              = {
     "Name" = "DBAccessV2-prod-5"
     "State" = "AppCloudManV2-prod-5"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "prod"
   }
 }
@@ -1235,7 +1241,7 @@ resource "aws_cloudwatch_log_group" "GithubGateKeeper-prod-5" {
   tags                              = {
     "Name" = "GithubGateKeeper-prod-5"
     "State" = "AppCloudManV2-prod-5"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "prod"
   }
 }
@@ -1248,7 +1254,7 @@ resource "aws_cloudwatch_log_group" "HCLAWSV2-prod-5" {
   tags                              = {
     "Name" = "HCLAWSV2-prod-5"
     "State" = "AppCloudManV2-prod-5"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "prod"
   }
 }
@@ -1261,7 +1267,7 @@ resource "aws_cloudwatch_log_group" "HCLCloudFlare-prod-5" {
   tags                              = {
     "Name" = "HCLCloudFlare-prod-5"
     "State" = "AppCloudManV2-prod-5"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "prod"
   }
 }
@@ -1273,7 +1279,7 @@ resource "aws_cloudwatch_log_group" "LogGroup-prod-5" {
   tags                              = {
     "Name" = "LogGroup-prod-5"
     "State" = "AppCloudManV2-prod-5"
-    "CloudmanUser" = "SystemUser"
+    "CloudmanUser" = "CloudMan2"
     "Stage" = "prod"
   }
 }
