@@ -7,12 +7,13 @@
       "target_dir": ".external_modules/CloudManMainV2",
       "folders": [
         "LambdaFiles/GetStageV2",
-        "LambdaFiles/Redirector"
+        "LambdaFiles/Redirector",
+        "LambdaFiles/CallBackRedirector"
       ]
     }
   ],
-  "action": "apply",
-  "trigger_id": "1772147048299",
+  "action": "plan",
+  "trigger_id": "1773102197396",
   "backend_global_config": {
     "provider": "aws",
     "role_arn": "arn:aws:iam::952133486861:role/CloudMan-Gitops-CloudManPro-CloudManV2CICD",
