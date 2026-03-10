@@ -2,10 +2,21 @@ terraform {
   required_version = ">= 1.0.0"
 
   required_providers {
+    archive = {
+      source  = "hashicorp/archive"
+      version = "~> 2.4.2"
+    }
     aws = {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+  }
+
+  backend "s3" {
+    bucket         = "cloudan-v2-cicd"
+    key            = "952133486861/State/main.tfstate"
+    region         = "us-east-1"
+    encrypt        = true
   }
 }
 
@@ -45,16 +56,23 @@ resource "aws_iam_role" "role_lambda_alphaX" {
 
 ### CATEGORY: COMPUTE ###
 
+data "archive_file" "archive_CloudManMainV2_alphaX" {
+  output_path                       = "${path.module}/CloudManMainV2_alphaX.zip"
+  source_dir                        = "${path.module}/.external_modules/CloudManMainV2/LambdaFiles/GithubGateKeeper"
+  type                              = "zip"
+}
+
 resource "aws_lambda_function" "alphaX" {
   function_name                     = "alphaX"
   architectures                     = ["arm64"]
-  filename                          = "teste"
-  handler                           = "index.lambda_handler"
+  filename                          = "${data.archive_file.archive_CloudManMainV2_alphaX.output_path}"
+  handler                           = "GithubGateKeeper.lambda_handler"
   memory_size                       = 3008
   publish                           = false
   reserved_concurrent_executions    = -1
   role                              = aws_iam_role.role_lambda_alphaX.arn
   runtime                           = "python3.13"
+  source_code_hash                  = "${data.archive_file.archive_CloudManMainV2_alphaX.output_base64sha256}"
   timeout                           = 30
   environment {
     variables                       = {
