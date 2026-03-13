@@ -79,6 +79,10 @@ resource "aws_security_group" "efs_file_system_EFS2_group" {
 resource "aws_efs_file_system" "EFS2" {
   encrypted                         = true
   throughput_mode                   = "elastic"
+  lifecycle_policy {
+    transition_to_archive           = "AFTER_180_DAYS"
+    transition_to_ia                = "AFTER_30_DAYS"
+  }
   tags                              = {
     "Name" = "EFS2"
     "State" = "State3"
