@@ -80,13 +80,16 @@ resource "aws_efs_file_system" "EFS2" {
   encrypted                         = true
   throughput_mode                   = "elastic"
   lifecycle_policy {
-    transition_to_archive           = "AFTER_180_DAYS"
-  }
-  lifecycle_policy {
     transition_to_ia                = "AFTER_30_DAYS"
   }
   lifecycle_policy {
+    transition_to_archive           = "AFTER_270_DAYS"
+  }
+  lifecycle_policy {
     transition_to_primary_storage_class = "AFTER_1_ACCESS"
+  }
+  protection {
+    replication_overwrite           = "ENABLED"
   }
   tags                              = {
     "Name" = "EFS2"
