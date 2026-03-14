@@ -1,0 +1,39 @@
+{
+  "external_repositories": [
+    {
+      "repo_name": "STRUCT8_Templates",
+      "org": "CloudManPro",
+      "branch": "main",
+      "target_dir": ".external_modules/STRUCT8_Templates",
+      "folders": [
+        "EC2/Scripts/WordPressProfessional.sh",
+        "EC2/Scripts/WordPress/FetchAndRunS3Script.sh"
+      ]
+    }
+  ],
+  "action": "apply",
+  "trigger_id": "1773496261873",
+  "backend_global_config": {
+    "provider": "aws",
+    "role_arn": "arn:aws:iam::952133486861:role/CloudMan-Gitops-CloudManPro-CloudManV2CICD",
+    "region": "us-east-1",
+    "bucket": "cloudan-v2-cicd"
+  },
+  "pipeline_stages": [
+    {
+      "stage_name": "Manual Trigger: Stateful",
+      "parallel_execution": false,
+      "states": [
+        {
+          "path": "952133486861/Stateful",
+          "provider": "aws",
+          "target_auth": {
+            "role_arn": "arn:aws:iam::952133486861:role/CloudMan-Gitops-CloudManPro-CloudManV2CICD",
+            "region": "us-east-1",
+            "secret_name": "AUTH_AWS_952133486861"
+          }
+        }
+      ]
+    }
+  ]
+}
