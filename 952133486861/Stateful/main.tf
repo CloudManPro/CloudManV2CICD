@@ -522,6 +522,20 @@ resource "aws_s3_bucket_versioning" "wp-script-cloudman_versioning" {
   }
 }
 
+resource "aws_s3_object" "WordPressProfessional" {
+  source                            = "${path.module}/.external_modules/STRUCT8_Templates/EC2/Scripts/WordPressProfessional.sh"
+  bucket                            = aws_s3_bucket.wp-script-cloudman.bucket
+  checksum_algorithm                = "CRC32"
+  content_type                      = "application/x-sh"
+  etag                              = filemd5("${path.module}/.external_modules/STRUCT8_Templates/EC2/Scripts/WordPressProfessional.sh")
+  key                               = "WordPressProfessional.sh"
+  tags                              = {
+    "Name" = "WordPressProfessional"
+    "State" = "Stateful"
+    "CloudmanUser" = "Ricardo"
+  }
+}
+
 resource "aws_db_instance" "Database1" {
   db_name                           = "wordpress"
   db_subnet_group_name              = aws_db_subnet_group.subnet_group_Database1.name
@@ -584,6 +598,12 @@ resource "aws_efs_access_point" "AP" {
 resource "aws_efs_file_system" "EFS" {
   encrypted                         = true
   throughput_mode                   = "elastic"
+  lifecycle_policy {
+    transition_to_primary_storage_class = "AFTER_1_ACCESS"
+  }
+  protection {
+    replication_overwrite           = "ENABLED"
+  }
   tags                              = {
     "Name" = "EFS"
     "State" = "Stateful"
