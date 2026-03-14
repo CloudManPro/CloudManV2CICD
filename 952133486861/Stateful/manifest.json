@@ -6,13 +6,12 @@
       "branch": "main",
       "target_dir": ".external_modules/STRUCT8_Templates",
       "folders": [
-        "EC2/Scripts/WordPressProfessional.sh",
         "EC2/Scripts/WordPress/FetchAndRunS3Script.sh"
       ]
     }
   ],
   "action": "apply",
-  "trigger_id": "1773497188640",
+  "trigger_id": "1773497637892",
   "backend_global_config": {
     "provider": "aws",
     "role_arn": "arn:aws:iam::952133486861:role/CloudMan-Gitops-CloudManPro-CloudManV2CICD",
