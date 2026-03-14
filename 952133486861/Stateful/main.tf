@@ -522,20 +522,6 @@ resource "aws_s3_bucket_versioning" "wp-script-cloudman_versioning" {
   }
 }
 
-resource "aws_s3_object" "WordPressProfessional" {
-  source                            = "${path.module}/.external_modules/STRUCT8_Templates/EC2/Scripts/WordPressProfessional.sh"
-  bucket                            = aws_s3_bucket.wp-script-cloudman.bucket
-  checksum_algorithm                = "CRC32"
-  content_type                      = "application/x-sh"
-  etag                              = filemd5("${path.module}/.external_modules/STRUCT8_Templates/EC2/Scripts/WordPressProfessional.sh")
-  key                               = "WordPressProfessional.sh"
-  tags                              = {
-    "Name" = "WordPressProfessional"
-    "State" = "Stateful"
-    "CloudmanUser" = "Ricardo"
-  }
-}
-
 resource "aws_db_instance" "Database1" {
   db_name                           = "wordpress"
   db_subnet_group_name              = aws_db_subnet_group.subnet_group_Database1.name
@@ -566,7 +552,7 @@ resource "aws_db_instance" "Database1" {
 
 resource "aws_db_subnet_group" "subnet_group_Database1" {
   name                              = "database1-subnet-group"
-  subnet_ids                        = [aws_subnet.DB_b.id, aws_subnet.DB_a.id]
+  subnet_ids                        = [aws_subnet.DB_a.id, aws_subnet.DB_b.id]
   tags                              = {
     "Name" = "subnet_group_Database1"
     "State" = "Stateful"
@@ -575,6 +561,7 @@ resource "aws_db_subnet_group" "subnet_group_Database1" {
 }
 
 resource "aws_efs_access_point" "AP" {
+  file_system_id                    = aws_efs_file_system.EFS.id
   posix_user {
     gid                             = 48
     uid                             = 48
