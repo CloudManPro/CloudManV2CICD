@@ -2,10 +2,6 @@ terraform {
   required_version = ">= 1.0.0"
 
   required_providers {
-    archive = {
-      source  = "hashicorp/archive"
-      version = "~> 2.4.2"
-    }
     aws = {
       source  = "hashicorp/aws"
       version = "~> 5.0"
@@ -28,117 +24,53 @@ provider "aws" {
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
+### SYSTEM DATA SOURCES ###
+
+data "aws_route53_zone" "CloudMan" {
+  name                              = "cloudman.pro"
+}
+
+
+
+
 ### CATEGORY: IAM ###
 
-resource "aws_iam_role" "role_lambda_Function" {
-  name                              = "role_lambda_Function"
-  assume_role_policy                = jsonencode({
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": "sts:AssumeRole",
-      "Effect": "Allow",
-      "Principal": {
-        "Service": "lambda.amazonaws.com"
-      }
-    }
-  ]
-})
+resource "aws_acm_certificate" "CertificateWP" {
+  domain_name                       = "wp.cloudman.pro"
+  key_algorithm                     = "RSA_2048"
+  validation_method                 = "DNS"
+  options {
+    certificate_transparency_logging_preference = "ENABLED"
+  }
   tags                              = {
-    "Name" = "role_lambda_Function"
+    "Name" = "CertificateWP"
     "State" = "State4"
     "CloudmanUser" = "Ricardo"
   }
 }
 
-resource "aws_iam_role" "role_lambda_Function1" {
-  name                              = "role_lambda_Function1"
-  assume_role_policy                = jsonencode({
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": "sts:AssumeRole",
-      "Effect": "Allow",
-      "Principal": {
-        "Service": "lambda.amazonaws.com"
-      }
-    }
-  ]
-})
-  tags                              = {
-    "Name" = "role_lambda_Function1"
-    "State" = "State4"
-    "CloudmanUser" = "Ricardo"
-  }
+resource "aws_acm_certificate_validation" "Validation_CertificateWP" {
+  certificate_arn                   = aws_acm_certificate.CertificateWP.arn
+  validation_record_fqdns           = [for record in aws_route53_record.Route53_Record_CertificateWP : record.fqdn]
 }
 
 
 
 
-### CATEGORY: COMPUTE ###
+### CATEGORY: NETWORK ###
 
-data "archive_file" "archive_CloudMan_Function" {
-  output_path                       = "${path.module}/CloudMan_Function.zip"
-  source_dir                        = "${path.module}/.external_modules/CloudMan/LambdaFiles/LambdaHub2"
-  type                              = "zip"
-}
-
-resource "aws_lambda_function" "Function" {
-  function_name                     = "Function"
-  architectures                     = ["arm64"]
-  filename                          = "${data.archive_file.archive_CloudMan_Function.output_path}"
-  handler                           = "LambdaHub2.lambda_handler"
-  memory_size                       = 3008
-  publish                           = false
-  reserved_concurrent_executions    = -1
-  role                              = aws_iam_role.role_lambda_Function.arn
-  runtime                           = "python3.13"
-  source_code_hash                  = "${data.archive_file.archive_CloudMan_Function.output_base64sha256}"
-  timeout                           = 30
-  environment {
-    variables                       = {
-    "NAME" = "Function"
-    "REGION" = data.aws_region.current.name
-    "ACCOUNT" = data.aws_caller_identity.current.account_id
-  }
-  }
-  tags                              = {
-    "Name" = "Function"
-    "State" = "State4"
-    "CloudmanUser" = "Ricardo"
-  }
-}
-
-data "archive_file" "archive_CloudManMain_Function1" {
-  output_path                       = "${path.module}/CloudManMain_Function1.zip"
-  source_dir                        = "${path.module}/.external_modules/CloudManMain/LambdaFiles/Agent"
-  type                              = "zip"
-}
-
-resource "aws_lambda_function" "Function1" {
-  function_name                     = "Function1"
-  architectures                     = ["arm64"]
-  filename                          = "${data.archive_file.archive_CloudManMain_Function1.output_path}"
-  handler                           = "Agent.lambda_handler"
-  memory_size                       = 3008
-  publish                           = false
-  reserved_concurrent_executions    = -1
-  role                              = aws_iam_role.role_lambda_Function1.arn
-  runtime                           = "python3.13"
-  source_code_hash                  = "${data.archive_file.archive_CloudManMain_Function1.output_base64sha256}"
-  timeout                           = 30
-  environment {
-    variables                       = {
-    "NAME" = "Function1"
-    "REGION" = data.aws_region.current.name
-    "ACCOUNT" = data.aws_caller_identity.current.account_id
-  }
-  }
-  tags                              = {
-    "Name" = "Function1"
-    "State" = "State4"
-    "CloudmanUser" = "Ricardo"
-  }
+resource "aws_route53_record" "Route53_Record_CertificateWP" {
+  for_each                          = {for dvo in aws_acm_certificate.CertificateWP.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name,
+      record = dvo.resource_record_value,
+      type   = dvo.resource_record_type
+    }}
+  name                              = "${each.value.name}"
+  zone_id                           = data.aws_route53_zone.CloudMan.zone_id
+  allow_overwrite                   = true
+  records                           = ["${each.value.record}"]
+  ttl                               = 300
+  type                              = "${each.value.type}"
 }
 
 
