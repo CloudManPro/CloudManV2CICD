@@ -50,8 +50,8 @@ data "aws_vpc" "WordPress" {
   }
 }
 
-data "aws_db_instance" "Database1" {
-  db_instance_identifier            = "Database1"
+data "aws_db_instance" "database1" {
+  db_instance_identifier            = "database1"
 }
 
 data "aws_efs_access_points" "AP" {
@@ -85,6 +85,20 @@ data "aws_internet_gateway" "IGW" {
   }
 }
 
+data "aws_security_group" "db_instance_database1_group" {
+  filter {
+    name                            = "tag:Name"
+    values                          = ["db_instance_database1_group"]
+  }
+}
+
+data "aws_security_group" "efs_file_system_EFS_group" {
+  filter {
+    name                            = "tag:Name"
+    values                          = ["efs_file_system_EFS_group"]
+  }
+}
+
 
 
 
@@ -102,10 +116,10 @@ resource "aws_iam_instance_profile" "profile_Instance" {
 
 data "aws_iam_policy_document" "instance_Instance_st_Stateless_doc" {
   statement {
-    sid                             = "AllowRDSSecretAccessDatabase1"
+    sid                             = "AllowRDSSecretAccessdatabase1"
     effect                          = "Allow"
     actions                         = ["secretsmanager:DescribeSecret", "secretsmanager:GetSecretValue"]
-    resources                       = ["${data.aws_db_instance.Database1.master_user_secret[0].secret_arn}"]
+    resources                       = ["${data.aws_db_instance.database1.master_user_secret[0].secret_arn}"]
   }
   statement {
     sid                             = "AllowBucketLevelActions"
@@ -250,7 +264,7 @@ resource "aws_security_group_rule" "rule_instance_Instance_group_egress_all_prot
   type                              = "egress"
 }
 
-resource "aws_security_group_rule" "rule_instance_Instance_group_ingress_tcp_443_443" {
+resource "aws_security_group_rule" "rule_instance_Instance_group_ingress_tcp_443" {
   security_group_id                 = aws_security_group.instance_Instance_group.id
   cidr_blocks                       = ["0.0.0.0/0"]
   from_port                         = 443
@@ -259,12 +273,32 @@ resource "aws_security_group_rule" "rule_instance_Instance_group_ingress_tcp_443
   type                              = "ingress"
 }
 
-resource "aws_security_group_rule" "rule_instance_Instance_group_ingress_tcp_80_80" {
+resource "aws_security_group_rule" "rule_instance_Instance_group_ingress_tcp_80" {
   security_group_id                 = aws_security_group.instance_Instance_group.id
   cidr_blocks                       = ["0.0.0.0/0"]
   from_port                         = 80
   protocol                          = "tcp"
   to_port                           = 80
+  type                              = "ingress"
+}
+
+resource "aws_security_group_rule" "rule_instance_Instance_group_to_db_instance_database1_group_tcp_3306" {
+  security_group_id                 = data.aws_security_group.db_instance_database1_group.id
+  source_security_group_id          = aws_security_group.instance_Instance_group.id
+  description                       = "Allow from instance_Instance_group (tcp:3306-3306)"
+  from_port                         = 3306
+  protocol                          = "tcp"
+  to_port                           = 3306
+  type                              = "ingress"
+}
+
+resource "aws_security_group_rule" "rule_instance_Instance_group_to_efs_file_system_EFS_group_tcp_2049" {
+  security_group_id                 = data.aws_security_group.efs_file_system_EFS_group.id
+  source_security_group_id          = aws_security_group.instance_Instance_group.id
+  description                       = "Allow from instance_Instance_group (tcp:2049-2049)"
+  from_port                         = 2049
+  protocol                          = "tcp"
+  to_port                           = 2049
   type                              = "ingress"
 }
 
@@ -439,9 +473,9 @@ PHP_VERSION="8.3"
 NAME="Instance"
 REGION="${data.aws_region.current.name}"
 ACCOUNT="${data.aws_caller_identity.current.account_id}"
-AWS_DB_INSTANCE_ENDPOINT_DB="${data.aws_db_instance.Database1.endpoint}"
-AWS_DB_INSTANCE_DB_NAME_DB="${data.aws_db_instance.Database1.db_name}"
-AWS_DB_INSTANCE_SECRET_ARN_DB="${one(data.aws_db_instance.Database1.master_user_secret[*].secret_arn)}"
+AWS_DB_INSTANCE_ENDPOINT_DB="${data.aws_db_instance.database1.endpoint}"
+AWS_DB_INSTANCE_DB_NAME_DB="${data.aws_db_instance.database1.db_name}"
+AWS_DB_INSTANCE_SECRET_ARN_DB="${one(data.aws_db_instance.database1.master_user_secret[*].secret_arn)}"
 AWS_EFS_ACCESS_POINT_ID_0="${data.aws_efs_access_point.AP.id}"
 AWS_S3_BUCKET_NAME_OFF_LOAD="s3-off-load-wp-abcd"
 AWS_S3_BUCKET_NAME_SCRIPT="wp-script-cloudman"
