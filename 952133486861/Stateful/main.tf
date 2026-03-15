@@ -654,7 +654,7 @@ resource "aws_instance" "Instance" {
 cat << 'EOFENV' > /etc/struct8_env
 AWS_S3_SCRIPT_KEY="WordPressProfessional.sh"
 WPDOMAIN="wp.cloudman.pro"
-ENABLE_PROXYSQL="true"
+ENABLE_PROXYSQL="false"
 WP_VERSION="6.7"
 PHP_VERSION="8.3"
 NAME="Instance"
