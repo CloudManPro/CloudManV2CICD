@@ -980,7 +980,7 @@ locals {
   }]
     "secrets" = [{
     "name" = "AWS_DB_INSTANCE_PASS_DB"
-    "valueFrom" = "${one(aws_db_instance.Database4.master_user_secret[*].secret_arn)}:password::"
+    "valueFrom" = "${one(aws_db_instance.database4.master_user_secret[*].secret_arn)}:password::"
   }]
     "mountPoints" = [{
     "sourceVolume" = "aws_efs_access_point_AP2"
