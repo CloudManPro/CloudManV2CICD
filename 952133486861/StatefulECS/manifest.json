@@ -1,17 +1,7 @@
 {
-  "external_repositories": [
-    {
-      "repo_name": "CloudMan",
-      "org": "CloudManPro",
-      "branch": "main",
-      "target_dir": ".external_modules/CloudMan",
-      "folders": [
-        "EC2/NATGateway/NAT.sh"
-      ]
-    }
-  ],
-  "action": "destroy",
-  "trigger_id": "1773702785282",
+  "external_repositories": [],
+  "action": "apply",
+  "trigger_id": "1773704293827",
   "backend_global_config": {
     "provider": "aws",
     "role_arn": "arn:aws:iam::952133486861:role/CloudMan-Gitops-CloudManPro-CloudManV2CICD",
