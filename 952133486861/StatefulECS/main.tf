@@ -71,6 +71,12 @@ data "aws_iam_policy_document" "ecs_task_definition_WordPress_execution_st_State
     actions                         = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
     resources                       = ["${aws_cloudwatch_log_group.WordPress.arn}:*"]
   }
+  statement {
+    sid                             = "AllowRDSSecretAccessdatabase4"
+    effect                          = "Allow"
+    actions                         = ["secretsmanager:DescribeSecret", "secretsmanager:GetSecretValue"]
+    resources                       = ["${aws_db_instance.database4.master_user_secret[0].secret_arn}"]
+  }
 }
 
 resource "aws_iam_policy" "ecs_task_definition_WordPress_execution_st_StatefulECS" {
@@ -80,12 +86,6 @@ resource "aws_iam_policy" "ecs_task_definition_WordPress_execution_st_StatefulEC
 }
 
 data "aws_iam_policy_document" "ecs_task_definition_WordPress_task_st_StatefulECS_doc" {
-  statement {
-    sid                             = "AllowRDSSecretAccessdatabase4"
-    effect                          = "Allow"
-    actions                         = ["secretsmanager:DescribeSecret", "secretsmanager:GetSecretValue"]
-    resources                       = ["${aws_db_instance.database4.master_user_secret[0].secret_arn}"]
-  }
   statement {
     sid                             = "AllowEFSAccess"
     effect                          = "Allow"
@@ -930,7 +930,7 @@ resource "aws_ecs_service" "WordPress_service" {
   network_configuration {
     assign_public_ip                = false
     security_groups                 = [aws_security_group.SG_ECS_WP.id]
-    subnets                         = [aws_subnet.WP-a.id, aws_subnet.WP-b.id]
+    subnets                         = [aws_subnet.WP-b.id, aws_subnet.WP-a.id]
   }
   tags                              = {
     "Name" = "WordPress_service"
@@ -998,8 +998,7 @@ locals {
         export WORDPRESS_CONFIG_EXTRA='if (isset($_SERVER["HTTP_X_FORWARDED_PROTO"]) && $_SERVER["HTTP_X_FORWARDED_PROTO"] === "https") { $_SERVER["HTTPS"] = "on"; } else if (isset($_SERVER["HTTP_CLOUDFRONT_FORWARDED_PROTO"]) && $_SERVER["HTTP_CLOUDFRONT_FORWARDED_PROTO"] === "https") { $_SERVER["HTTPS"] = "on"; }'
         
         exec docker-entrypoint.sh apache2-foreground
-      EOT
-                    ]
+      EOT\n]
     "privileged" = false
     "readonlyRootFilesystem" = false
     "logConfiguration" = {
@@ -1038,7 +1037,7 @@ resource "aws_ecs_task_definition" "WordPress" {
       }
     }
   }
-  depends_on                        = [aws_iam_role_policy_attachment.ecs_task_definition_WordPress_task_st_StatefulECS_attach, aws_iam_role_policy_attachment.ecs_task_definition_WordPress_execution_st_StatefulECS_attach]
+  depends_on                        = [aws_iam_role_policy_attachment.ecs_task_definition_WordPress_execution_st_StatefulECS_attach, aws_iam_role_policy_attachment.ecs_task_definition_WordPress_task_st_StatefulECS_attach]
 }
 
 
