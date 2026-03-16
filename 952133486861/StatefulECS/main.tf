@@ -81,10 +81,10 @@ resource "aws_iam_policy" "ecs_task_definition_WordPress_execution_st_StatefulEC
 
 data "aws_iam_policy_document" "ecs_task_definition_WordPress_task_st_StatefulECS_doc" {
   statement {
-    sid                             = "AllowRDSSecretAccessDatabase4"
+    sid                             = "AllowRDSSecretAccessdatabase4"
     effect                          = "Allow"
     actions                         = ["secretsmanager:DescribeSecret", "secretsmanager:GetSecretValue"]
-    resources                       = ["${aws_db_instance.Database4.master_user_secret[0].secret_arn}"]
+    resources                       = ["${aws_db_instance.database4.master_user_secret[0].secret_arn}"]
   }
   statement {
     sid                             = "AllowEFSAccess"
@@ -434,13 +434,13 @@ resource "aws_security_group" "SG_ECS_WP" {
   }
 }
 
-resource "aws_security_group" "db_instance_Database4_group" {
-  name                              = "db_instance_Database4_group"
+resource "aws_security_group" "db_instance_database4_group" {
+  name                              = "db_instance_database4_group"
   vpc_id                            = aws_vpc.WordPress3.id
   description                       = "SG RDS"
   revoke_rules_on_delete            = false
   tags                              = {
-    "Name" = "db_instance_Database4_group"
+    "Name" = "db_instance_database4_group"
     "State" = "StatefulECS"
     "CloudmanUser" = "Ricardo"
   }
@@ -489,8 +489,8 @@ resource "aws_security_group_rule" "rule_SG_ECS_WP_egress_all_protocols" {
   type                              = "egress"
 }
 
-resource "aws_security_group_rule" "rule_SG_ECS_WP_to_db_instance_Database4_group_tcp_3306" {
-  security_group_id                 = aws_security_group.db_instance_Database4_group.id
+resource "aws_security_group_rule" "rule_SG_ECS_WP_to_db_instance_database4_group_tcp_3306" {
+  security_group_id                 = aws_security_group.db_instance_database4_group.id
   source_security_group_id          = aws_security_group.SG_ECS_WP.id
   description                       = "RDS Access"
   from_port                         = 3306
@@ -765,9 +765,9 @@ resource "aws_s3_bucket_versioning" "s3-off-load-wp-abcd1_versioning" {
   }
 }
 
-resource "aws_db_instance" "Database4" {
+resource "aws_db_instance" "database4" {
   db_name                           = "wordpress"
-  db_subnet_group_name              = aws_db_subnet_group.subnet_group_Database4.name
+  db_subnet_group_name              = aws_db_subnet_group.subnet_group_database4.name
   allocated_storage                 = 20
   availability_zone                 = aws_subnet.DB_a1.availability_zone
   backup_retention_period           = 0
@@ -776,7 +776,7 @@ resource "aws_db_instance" "Database4" {
   engine                            = "mysql"
   engine_version                    = "8.0"
   iam_database_authentication_enabled = true
-  identifier                        = "Database4"
+  identifier                        = "database4"
   instance_class                    = "db.t3.micro"
   manage_master_user_password       = true
   max_allocated_storage             = 100
@@ -785,19 +785,19 @@ resource "aws_db_instance" "Database4" {
   storage_type                      = "gp3"
   upgrade_storage_config            = false
   username                          = "admin"
-  vpc_security_group_ids            = [aws_security_group.db_instance_Database4_group.id]
+  vpc_security_group_ids            = [aws_security_group.db_instance_database4_group.id]
   tags                              = {
-    "Name" = "Database4"
+    "Name" = "database4"
     "State" = "StatefulECS"
     "CloudmanUser" = "Ricardo"
   }
 }
 
-resource "aws_db_subnet_group" "subnet_group_Database4" {
+resource "aws_db_subnet_group" "subnet_group_database4" {
   name                              = "database4-subnet-group"
-  subnet_ids                        = [aws_subnet.DB_a1.id, aws_subnet.DB_b1.id]
+  subnet_ids                        = [aws_subnet.DB_b1.id, aws_subnet.DB_a1.id]
   tags                              = {
-    "Name" = "subnet_group_Database4"
+    "Name" = "subnet_group_database4"
     "State" = "StatefulECS"
     "CloudmanUser" = "Ricardo"
   }
@@ -929,7 +929,7 @@ resource "aws_ecs_service" "WordPress_service" {
   network_configuration {
     assign_public_ip                = false
     security_groups                 = [aws_security_group.SG_ECS_WP.id]
-    subnets                         = [aws_subnet.WP-b.id, aws_subnet.WP-a.id]
+    subnets                         = [aws_subnet.WP-a.id, aws_subnet.WP-b.id]
   }
   tags                              = {
     "Name" = "WordPress_service"
@@ -961,13 +961,13 @@ locals {
     "value" = "${data.aws_caller_identity.current.account_id}"
   }, {
     "name" = "AWS_DB_INSTANCE_ENDPOINT_DB"
-    "value" = "${aws_db_instance.Database4.endpoint}"
+    "value" = "${aws_db_instance.database4.endpoint}"
   }, {
     "name" = "AWS_DB_INSTANCE_DB_NAME_DB"
-    "value" = "${aws_db_instance.Database4.db_name}"
+    "value" = "${aws_db_instance.database4.db_name}"
   }, {
     "name" = "AWS_DB_INSTANCE_USER_NAME_DB"
-    "value" = "${aws_db_instance.Database4.username}"
+    "value" = "${aws_db_instance.database4.username}"
   }, {
     "name" = "AWS_EFS_FILE_SYSTEM_ID_0"
     "value" = "${aws_efs_file_system.EFS2.id}"
