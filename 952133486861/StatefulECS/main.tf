@@ -986,7 +986,7 @@ locals {
     "containerPath" = "/var/www/html"
     "readOnly" = false
   }]
-    "entryPoint" = ["sh", "-c", <<-EOT
+    "entryPoint" = ["sh", "-c", <<-'EOT'
         export WORDPRESS_DB_HOST=$AWS_DB_INSTANCE_ENDPOINT_DB
         export WORDPRESS_DB_NAME=$AWS_DB_INSTANCE_DB_NAME_DB
         export WORDPRESS_DB_USER=$AWS_DB_INSTANCE_USER_NAME_DB
