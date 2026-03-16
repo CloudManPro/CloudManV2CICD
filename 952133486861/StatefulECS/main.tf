@@ -998,7 +998,8 @@ locals {
         export WORDPRESS_CONFIG_EXTRA='if (isset($_SERVER["HTTP_X_FORWARDED_PROTO"]) && $_SERVER["HTTP_X_FORWARDED_PROTO"] === "https") { $_SERVER["HTTPS"] = "on"; } else if (isset($_SERVER["HTTP_CLOUDFRONT_FORWARDED_PROTO"]) && $_SERVER["HTTP_CLOUDFRONT_FORWARDED_PROTO"] === "https") { $_SERVER["HTTPS"] = "on"; }'
         
         exec docker-entrypoint.sh apache2-foreground
-      EOT]
+      EOT
+                    ]
     "privileged" = false
     "readonlyRootFilesystem" = false
     "logConfiguration" = {
