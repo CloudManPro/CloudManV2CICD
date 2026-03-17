@@ -7,6 +7,13 @@ terraform {
       version = "~> 5.0"
     }
   }
+
+  backend "s3" {
+    bucket         = "cloudan-v2-cicd"
+    key            = "952133486861/State1/main.tfstate"
+    region         = "us-east-1"
+    encrypt        = true
+  }
 }
 
 # --- Main Cloud Provider ---
@@ -19,10 +26,10 @@ data "aws_region" "current" {}
 
 ### CATEGORY: INTEGRATION ###
 
-resource "aws_sns_topic" "Topic2" {
-  name                              = "Topic2"
+resource "aws_sns_topic" "Topic2kk" {
+  name                              = "Topic2kk"
   tags                              = {
-    "Name" = "Topic2"
+    "Name" = "Topic2kk"
     "State" = "State1"
     "CloudmanUser" = "CloudMan2"
   }
