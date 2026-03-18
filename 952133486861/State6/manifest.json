@@ -1,21 +1,23 @@
 {
   "external_repositories": [
     {
-      "repo_name": "CloudMan",
+      "repo_name": "STRUCT8_Templates",
       "org": "CloudManPro",
       "branch": "main",
-      "target_dir": ".external_modules/CloudMan",
+      "target_dir": ".external_modules/STRUCT8_Templates",
       "folders": [
-        "LambdaFiles/Githubx"
+        "EC2/Scripts/WordPress/FetchAndRunS3Script.sh",
+        "EC2/Scripts/WordPress/WordPressProfessional.sh"
       ]
     }
   ],
-  "action": "destroy",
-  "trigger_id": "1773150903399",
+  "action": "apply",
+  "trigger_id": "1773850398957",
   "backend_global_config": {
     "provider": "aws",
     "role_arn": "arn:aws:iam::952133486861:role/CloudMan-Gitops-CloudManPro-CloudManV2CICD",
-    "region": "us-east-1"
+    "region": "us-east-1",
+    "bucket": "cloudan-v2-cicd"
   },
   "pipeline_stages": [
     {
