@@ -57,13 +57,13 @@ import {
 }
 
 import {
-  to = aws_route_table_association.project-rtb-public_subnet_0c41cdce4a4ecdd3a_rtb_0696e55dfe97754cf
-  id = "subnet-0c41cdce4a4ecdd3a/rtb-0696e55dfe97754cf"
+  to = aws_route_table_association.project-rtb-public_subnet_049cfff09522aa1e8_rtb_0696e55dfe97754cf
+  id = "subnet-049cfff09522aa1e8/rtb-0696e55dfe97754cf"
 }
 
 import {
-  to = aws_route_table_association.project-rtb-public_subnet_049cfff09522aa1e8_rtb_0696e55dfe97754cf
-  id = "subnet-049cfff09522aa1e8/rtb-0696e55dfe97754cf"
+  to = aws_route_table_association.project-rtb-public_subnet_0c41cdce4a4ecdd3a_rtb_0696e55dfe97754cf
+  id = "subnet-0c41cdce4a4ecdd3a/rtb-0696e55dfe97754cf"
 }
 
 import {
