@@ -99,6 +99,12 @@ resource "aws_internet_gateway" "project-igw" {
   }
 }
 
+resource "aws_route" "aws_route_project_rtb_public_project_igw" {
+  gateway_id                        = aws_internet_gateway.project-igw.id
+  route_table_id                    = aws_route_table.project-rtb-public.id
+  destination_cidr_block            = "0.0.0.0/0"
+}
+
 resource "aws_route_table" "project-rtb-public" {
   vpc_id                            = aws_vpc.project-vpc.id
   tags                              = {
@@ -106,6 +112,16 @@ resource "aws_route_table" "project-rtb-public" {
     "State" = "StateImport"
     "CloudmanUser" = "Ricardo"
   }
+}
+
+resource "aws_route_table_association" "aws_route_table_association_project_subnet_public1_us_east_1a_project_rtb_public" {
+  route_table_id                    = aws_route_table.project-rtb-public.id
+  subnet_id                         = aws_subnet.project-subnet-public1-us-east-1a.id
+}
+
+resource "aws_route_table_association" "aws_route_table_association_project_subnet_public2_us_east_1b_project_rtb_public" {
+  route_table_id                    = aws_route_table.project-rtb-public.id
+  subnet_id                         = aws_subnet.project-subnet-public2-us-east-1b.id
 }
 
 
