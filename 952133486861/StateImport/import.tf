@@ -12,8 +12,8 @@ import {
 }
 
 import {
-  to = aws_subnet.project-subnet-private1-us-east-1a
-  id = "subnet-0e49f7d42b6759b2b"
+  to = aws_subnet.project-subnet-private2-us-east-1b
+  id = "subnet-08c60b7ddb33a0e47"
 }
 
 import {
@@ -22,13 +22,13 @@ import {
 }
 
 import {
-  to = aws_subnet.project-subnet-private2-us-east-1b
-  id = "subnet-08c60b7ddb33a0e47"
+  to = aws_subnet.project-subnet-public1-us-east-1a
+  id = "subnet-0c41cdce4a4ecdd3a"
 }
 
 import {
-  to = aws_subnet.project-subnet-public1-us-east-1a
-  id = "subnet-0c41cdce4a4ecdd3a"
+  to = aws_subnet.project-subnet-private1-us-east-1a
+  id = "subnet-0e49f7d42b6759b2b"
 }
 
 import {
