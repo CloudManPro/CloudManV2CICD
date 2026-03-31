@@ -30,6 +30,21 @@ data "aws_region" "current" {}
 
 ### CATEGORY: IAM ###
 
+data "aws_iam_policy_document" "lambda_function_FunctionEB_st_StateEB_doc" {
+  statement {
+    sid                             = "AllowWriteLogs"
+    effect                          = "Allow"
+    actions                         = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
+    resources                       = ["${aws_cloudwatch_log_group.FunctionEB.arn}:*"]
+  }
+}
+
+resource "aws_iam_policy" "lambda_function_FunctionEB_st_StateEB" {
+  name                              = "lambda_function_FunctionEB_st_StateEB"
+  description                       = "Access Policy for FunctionEB"
+  policy                            = data.aws_iam_policy_document.lambda_function_FunctionEB_st_StateEB_doc.json
+}
+
 resource "aws_iam_role" "role_lambda_FunctionEB" {
   name                              = "role_lambda_FunctionEB"
   assume_role_policy                = jsonencode({
@@ -49,6 +64,11 @@ resource "aws_iam_role" "role_lambda_FunctionEB" {
     "State" = "StateEB"
     "CloudmanUser" = "Ricardo"
   }
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_function_FunctionEB_st_StateEB_attach" {
+  policy_arn                        = aws_iam_policy.lambda_function_FunctionEB_st_StateEB.arn
+  role                              = aws_iam_role.role_lambda_FunctionEB.name
 }
 
 
@@ -86,6 +106,7 @@ resource "aws_lambda_function" "FunctionEB" {
     "State" = "StateEB"
     "CloudmanUser" = "Ricardo"
   }
+  depends_on                        = [aws_iam_role_policy_attachment.lambda_function_FunctionEB_st_StateEB_attach]
 }
 
 resource "aws_lambda_permission" "perm_Rule_to_FunctionEB" {
@@ -115,6 +136,23 @@ resource "aws_cloudwatch_event_rule" "Rule" {
 resource "aws_cloudwatch_event_target" "Target" {
   arn                               = aws_lambda_function.FunctionEB.arn 
   rule                              = aws_cloudwatch_event_rule.Rule.name
+}
+
+
+
+
+### CATEGORY: MONITORING ###
+
+resource "aws_cloudwatch_log_group" "FunctionEB" {
+  name                              = "/aws/lambda/FunctionEB"
+  log_group_class                   = "STANDARD"
+  retention_in_days                 = 1
+  skip_destroy                      = false
+  tags                              = {
+    "Name" = "FunctionEB"
+    "State" = "StateEB"
+    "CloudmanUser" = "Ricardo"
+  }
 }
 
 
