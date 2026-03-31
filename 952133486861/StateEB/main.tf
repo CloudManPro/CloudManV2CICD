@@ -139,11 +139,6 @@ data "aws_iam_policy_document" "aws_sqs_queue_policy_Queue_st_StateEB_doc" {
 resource "aws_sqs_queue_policy" "aws_sqs_queue_policy_Queue_st_StateEB" {
   policy                            = data.aws_iam_policy_document.aws_sqs_queue_policy_Queue_st_StateEB_doc.json
   queue_url                         = aws_sqs_queue.Queue.id
-  tags                              = {
-    "Name" = "aws_sqs_queue_policy_Queue_st_StateEB"
-    "State" = "StateEB"
-    "CloudmanUser" = "Ricardo"
-  }
 }
 
 resource "aws_sns_topic" "Topic2" {
@@ -176,11 +171,6 @@ data "aws_iam_policy_document" "aws_sns_topic_policy_Topic2_st_StateEB_doc" {
 resource "aws_sns_topic_policy" "aws_sns_topic_policy_Topic2_st_StateEB" {
   arn                               = aws_sns_topic.Topic2.arn
   policy                            = data.aws_iam_policy_document.aws_sns_topic_policy_Topic2_st_StateEB_doc.json
-  tags                              = {
-    "Name" = "aws_sns_topic_policy_Topic2_st_StateEB"
-    "State" = "StateEB"
-    "CloudmanUser" = "Ricardo"
-  }
 }
 
 resource "aws_cloudwatch_event_rule" "Rule" {
