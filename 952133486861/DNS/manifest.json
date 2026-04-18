@@ -1,7 +1,7 @@
 {
   "external_repositories": [],
   "action": "apply",
-  "trigger_id": "1776540422640",
+  "trigger_id": "1776540629037",
   "backend_global_config": {
     "provider": "aws",
     "role_arn": "arn:aws:iam::952133486861:role/CloudMan-Gitops-Struct8-CloudManV2CICD",
