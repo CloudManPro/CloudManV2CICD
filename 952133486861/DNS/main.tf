@@ -54,7 +54,7 @@ resource "aws_acm_certificate" "Certificate" {
 }
 
 resource "aws_acm_certificate" "Certificate1" {
-  domain_name                       = "struct8.com"
+  domain_name                       = "app.struct8.com"
   key_algorithm                     = "RSA_2048"
   validation_method                 = "DNS"
   options {
