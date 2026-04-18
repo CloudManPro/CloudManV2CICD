@@ -443,10 +443,6 @@ resource "aws_cloudfront_distribution" "AuthCloudManV2" {
       lambda_arn                    = aws_lambda_function.RedirectorV2.qualified_arn
     }
   }
-  logging_config {
-    bucket                          = aws_s3_bucket.auth-cloudman-v2-logs.bucket_domain_name
-    include_cookies                 = false
-  }
   ordered_cache_behavior {
     target_origin_id                = "origin_AppBucket"
     allowed_methods                 = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
@@ -543,7 +539,6 @@ resource "aws_cloudfront_distribution" "AuthCloudManV2" {
     minimum_protocol_version        = "TLSv1.2_2021"
     ssl_support_method              = "sni-only"
   }
-  depends_on                        = [aws_s3_bucket_policy.aws_s3_bucket_policy_auth-cloudman-v2-logs_st_CDNMain]
 }
 
 resource "aws_cloudfront_origin_access_control" "oac_s3-cloudmanv2-auth-bucket" {
@@ -559,17 +554,6 @@ resource "aws_cloudfront_origin_access_control" "oac_s3-cloudmanv2-auth-bucket" 
 
 ### CATEGORY: STORAGE ###
 
-resource "aws_s3_bucket" "auth-cloudman-v2-logs" {
-  bucket                            = "auth-cloudman-v2-logs"
-  force_destroy                     = true
-  object_lock_enabled               = false
-  tags                              = {
-    "Name" = "auth-cloudman-v2-logs"
-    "State" = "CDNMain"
-    "Struct8User" = "Struc8"
-  }
-}
-
 resource "aws_s3_bucket" "s3-cloudmanv2-auth-bucket" {
   bucket                            = "s3-cloudmanv2-auth-bucket"
   force_destroy                     = true
@@ -581,62 +565,11 @@ resource "aws_s3_bucket" "s3-cloudmanv2-auth-bucket" {
   }
 }
 
-resource "aws_s3_bucket_acl" "auth-cloudman-v2-logs_acl" {
-  acl                               = "log-delivery-write"
-  bucket                            = aws_s3_bucket.auth-cloudman-v2-logs.id
-  depends_on                        = [aws_s3_bucket_ownership_controls.auth-cloudman-v2-logs_controls]
-}
-
-resource "aws_s3_bucket_ownership_controls" "auth-cloudman-v2-logs_controls" {
-  bucket                            = aws_s3_bucket.auth-cloudman-v2-logs.id
-  rule {
-    object_ownership                = "BucketOwnerPreferred"
-  }
-}
-
 resource "aws_s3_bucket_ownership_controls" "s3-cloudmanv2-auth-bucket_controls" {
   bucket                            = aws_s3_bucket.s3-cloudmanv2-auth-bucket.id
   rule {
     object_ownership                = "BucketOwnerEnforced"
   }
-}
-
-data "aws_iam_policy_document" "aws_s3_bucket_policy_auth-cloudman-v2-logs_st_CDNMain_doc" {
-  statement {
-    sid                             = "AllowGetAcl"
-    effect                          = "Allow"
-    principals {
-      identifiers                   = ["cloudfront.amazonaws.com"]
-      type                          = "Service"
-    }
-    actions                         = ["s3:GetBucketAcl"]
-    resources                       = ["${aws_s3_bucket.auth-cloudman-v2-logs.arn}"]
-    condition {
-      test                          = "StringEquals"
-      values                        = ["${data.aws_caller_identity.current.account_id}"]
-      variable                      = "AWS:SourceAccount"
-    }
-  }
-  statement {
-    sid                             = "AllowPutLogs"
-    effect                          = "Allow"
-    principals {
-      identifiers                   = ["cloudfront.amazonaws.com"]
-      type                          = "Service"
-    }
-    actions                         = ["s3:PutObject"]
-    resources                       = ["${aws_s3_bucket.auth-cloudman-v2-logs.arn}/*"]
-    condition {
-      test                          = "StringEquals"
-      values                        = ["${data.aws_caller_identity.current.account_id}"]
-      variable                      = "AWS:SourceAccount"
-    }
-  }
-}
-
-resource "aws_s3_bucket_policy" "aws_s3_bucket_policy_auth-cloudman-v2-logs_st_CDNMain" {
-  bucket                            = aws_s3_bucket.auth-cloudman-v2-logs.id
-  policy                            = data.aws_iam_policy_document.aws_s3_bucket_policy_auth-cloudman-v2-logs_st_CDNMain_doc.json
 }
 
 data "aws_iam_policy_document" "aws_s3_bucket_policy_s3-cloudmanv2-auth-bucket_st_CDNMain_doc" {
@@ -662,28 +595,12 @@ resource "aws_s3_bucket_policy" "aws_s3_bucket_policy_s3-cloudmanv2-auth-bucket_
   policy                            = data.aws_iam_policy_document.aws_s3_bucket_policy_s3-cloudmanv2-auth-bucket_st_CDNMain_doc.json
 }
 
-resource "aws_s3_bucket_public_access_block" "auth-cloudman-v2-logs_block" {
-  block_public_acls                 = true
-  block_public_policy               = true
-  bucket                            = aws_s3_bucket.auth-cloudman-v2-logs.id
-  ignore_public_acls                = true
-  restrict_public_buckets           = true
-}
-
 resource "aws_s3_bucket_public_access_block" "s3-cloudmanv2-auth-bucket_block" {
   block_public_acls                 = true
   block_public_policy               = true
   bucket                            = aws_s3_bucket.s3-cloudmanv2-auth-bucket.id
   ignore_public_acls                = true
   restrict_public_buckets           = true
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "auth-cloudman-v2-logs_configuration" {
-  bucket                            = aws_s3_bucket.auth-cloudman-v2-logs.id
-  expected_bucket_owner             = data.aws_caller_identity.current.account_id
-  rule {
-    bucket_key_enabled              = true
-  }
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "s3-cloudmanv2-auth-bucket_configuration" {
@@ -694,14 +611,6 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "s3-cloudmanv2-aut
     apply_server_side_encryption_by_default {
       sse_algorithm                 = "AES256"
     }
-  }
-}
-
-resource "aws_s3_bucket_versioning" "auth-cloudman-v2-logs_versioning" {
-  bucket                            = aws_s3_bucket.auth-cloudman-v2-logs.id
-  versioning_configuration {
-    mfa_delete                      = "Disabled"
-    status                          = "Suspended"
   }
 }
 
