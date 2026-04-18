@@ -48,7 +48,7 @@ jobs:
   sync-job:
     # Chama o Engine Centralizado
     # Certifique-se de que o repositório 'cloudman-core' é público ou que a App tem acesso a ele
-    uses: CloudManPro/cloudman-core/.github/workflows/lambda-sync.yml@main
+    uses: Struct8/cloudman-core/.github/workflows/lambda-sync.yml@main
     with:
       # Repassa todos os inputs recebidos do Backend para o Engine
       direction: ${{ inputs.direction }}
