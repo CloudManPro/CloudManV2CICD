@@ -12,7 +12,6 @@ terraform {
     bucket         = "cloudan-v2-cicd"
     key            = "952133486861/DNS/main.tfstate"
     region         = "us-east-1"
-    dynamodb_table = ""
     encrypt        = true
   }
 }
@@ -31,8 +30,8 @@ data "aws_route53_zone" "Cloudman" {
   name                              = "cloudman.pro"
 }
 
-data "aws_cloudfront_cache_policy" "policy_cachingoptimized" {
-  name                              = "Managed-CachingOptimized"
+data "aws_route53_zone" "struct8" {
+  name                              = "struct8.com"
 }
 
 
@@ -40,32 +39,121 @@ data "aws_cloudfront_cache_policy" "policy_cachingoptimized" {
 
 ### CATEGORY: IAM ###
 
+resource "aws_acm_certificate" "Certificate" {
+  domain_name                       = "cog-auth.cloudman.pro"
+  key_algorithm                     = "RSA_2048"
+  validation_method                 = "DNS"
+  lifecycle {
+    create_before_destroy           = true
+    prevent_destroy                 = false
+  }
+  options {
+    certificate_transparency_logging_preference = "ENABLED"
+  }
+  tags                              = {
+    "Name" = "Certificate"
+    "State" = "DNS"
+    "Struct8User" = "Struc8"
+  }
+}
+
+resource "aws_acm_certificate" "Certificate1" {
+  domain_name                       = "app.struct8.com"
+  key_algorithm                     = "RSA_2048"
+  subject_alternative_names         = ["v2.cloudman.pro"]
+  validation_method                 = "DNS"
+  lifecycle {
+    create_before_destroy           = true
+    prevent_destroy                 = false
+  }
+  options {
+    certificate_transparency_logging_preference = "ENABLED"
+  }
+  tags                              = {
+    "Name" = "Certificate1"
+    "State" = "DNS"
+    "Struct8User" = "Struc8"
+  }
+}
+
 resource "aws_acm_certificate" "CloudManV2" {
   domain_name                       = "v2.cloudman.pro"
   key_algorithm                     = "RSA_2048"
   validation_method                 = "DNS"
+  lifecycle {
+    create_before_destroy           = true
+    prevent_destroy                 = false
+  }
   options {
     certificate_transparency_logging_preference = "ENABLED"
   }
   tags                              = {
     "Name" = "CloudManV2"
     "State" = "DNS"
-    "CloudmanUser" = "GlobalUserName"
+    "Struct8User" = "Struc8"
   }
 }
 
-resource "aws_acm_certificate" "Cognito" {
-  domain_name                       = "auth.v2.cloudman.pro"
-  key_algorithm                     = "RSA_2048"
-  validation_method                 = "DNS"
-  options {
-    certificate_transparency_logging_preference = "ENABLED"
-  }
-  tags                              = {
-    "Name" = "Cognito"
-    "State" = "DNS"
-    "CloudmanUser" = "GlobalUserName"
-  }
+resource "aws_acm_certificate_validation" "Validation_Certificate" {
+  certificate_arn                   = aws_acm_certificate.Certificate.arn
+  validation_record_fqdns           = [for record in aws_route53_record.Route53_Record_Certificate : record.fqdn]
+}
+
+resource "aws_acm_certificate_validation" "Validation_Certificate1" {
+  certificate_arn                   = aws_acm_certificate.Certificate1.arn
+  validation_record_fqdns           = [for record in aws_route53_record.Route53_Record_Certificate1 : record.fqdn]
+}
+
+resource "aws_acm_certificate_validation" "Validation_CloudManV2" {
+  certificate_arn                   = aws_acm_certificate.CloudManV2.arn
+  validation_record_fqdns           = [for record in aws_route53_record.Route53_Record_CloudManV2 : record.fqdn]
+}
+
+
+
+
+### CATEGORY: NETWORK ###
+
+resource "aws_route53_record" "Route53_Record_Certificate" {
+  for_each                          = {for dvo in aws_acm_certificate.Certificate.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name,
+      record = dvo.resource_record_value,
+      type   = dvo.resource_record_type
+    }}
+  name                              = "${each.value.name}"
+  zone_id                           = data.aws_route53_zone.Cloudman.zone_id
+  allow_overwrite                   = true
+  records                           = ["${each.value.record}"]
+  ttl                               = 300
+  type                              = "${each.value.type}"
+}
+
+resource "aws_route53_record" "Route53_Record_Certificate1" {
+  for_each                          = {for dvo in aws_acm_certificate.Certificate1.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name,
+      record = dvo.resource_record_value,
+      type   = dvo.resource_record_type
+    }}
+  name                              = "${each.value.name}"
+  zone_id                           = data.aws_route53_zone.struct8.zone_id
+  allow_overwrite                   = true
+  records                           = ["${each.value.record}"]
+  ttl                               = 300
+  type                              = "${each.value.type}"
+}
+
+resource "aws_route53_record" "Route53_Record_CloudManV2" {
+  for_each                          = {for dvo in aws_acm_certificate.CloudManV2.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name,
+      record = dvo.resource_record_value,
+      type   = dvo.resource_record_type
+    }}
+  name                              = "${each.value.name}"
+  zone_id                           = data.aws_route53_zone.Cloudman.zone_id
+  allow_overwrite                   = true
+  records                           = ["${each.value.record}"]
+  ttl                               = 300
+  type                              = "${each.value.type}"
 }
 
 
