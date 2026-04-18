@@ -1,0 +1,39 @@
+{
+  "external_repositories": [
+    {
+      "repo_name": "CloudMan",
+      "org": "Struct8",
+      "branch": "main",
+      "target_dir": ".external_modules/CloudMan",
+      "folders": [
+        "CloudFrontTemplate/TerraformBackend.yml",
+        "CloudFrontTemplate/CrossAccountCloudMan.yaml"
+      ]
+    }
+  ],
+  "action": "apply",
+  "trigger_id": "1776552203543",
+  "backend_global_config": {
+    "provider": "aws",
+    "role_arn": "arn:aws:iam::952133486861:role/CloudMan-Gitops-Struct8-CloudManV2CICD",
+    "region": "us-east-1",
+    "bucket": "cloudan-v2-cicd"
+  },
+  "pipeline_stages": [
+    {
+      "stage_name": "Manual Trigger: CloudformationTemplate",
+      "parallel_execution": false,
+      "states": [
+        {
+          "path": "952133486861/CloudformationTemplate",
+          "provider": "aws",
+          "target_auth": {
+            "role_arn": "arn:aws:iam::952133486861:role/CloudMan-Gitops-Struct8-CloudManV2CICD",
+            "region": "us-east-1",
+            "secret_name": "AUTH_AWS_952133486861"
+          }
+        }
+      ]
+    }
+  ]
+}
