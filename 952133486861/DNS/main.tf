@@ -96,17 +96,20 @@ resource "aws_acm_certificate" "CloudManV2" {
 
 resource "aws_acm_certificate_validation" "Validation_Certificate" {
   certificate_arn                   = aws_acm_certificate.Certificate.arn
-  validation_record_fqdns           = [for record in aws_route53_record.Route53_Record_Certificate : record.fqdn]
+  validation_record_fqdns           = [for record in aws_route53_record.Route53_Record_Certificate_cog_auth_cloudman_pro : record.fqdn]
 }
 
 resource "aws_acm_certificate_validation" "Validation_Certificate1" {
   certificate_arn                   = aws_acm_certificate.Certificate1.arn
-  validation_record_fqdns           = [for record in aws_route53_record.Route53_Record_Certificate1 : record.fqdn]
+  validation_record_fqdns           = concat(
+    [for record in aws_route53_record.Route53_Record_Certificate1_app_struct8_com : record.fqdn],
+    [for record in aws_route53_record.Route53_Record_Certificate1_v2_cloudman_pro : record.fqdn],
+  )
 }
 
 resource "aws_acm_certificate_validation" "Validation_CloudManV2" {
   certificate_arn                   = aws_acm_certificate.CloudManV2.arn
-  validation_record_fqdns           = [for record in aws_route53_record.Route53_Record_CloudManV2 : record.fqdn]
+  validation_record_fqdns           = [for record in aws_route53_record.Route53_Record_CloudManV2_v2_cloudman_pro : record.fqdn]
 }
 
 
@@ -114,46 +117,56 @@ resource "aws_acm_certificate_validation" "Validation_CloudManV2" {
 
 ### CATEGORY: NETWORK ###
 
-resource "aws_route53_record" "Route53_Record_Certificate" {
-  for_each                          = {for dvo in aws_acm_certificate.Certificate.domain_validation_options : dvo.domain_name => {
-      name   = dvo.resource_record_name,
-      record = dvo.resource_record_value,
-      type   = dvo.resource_record_type
-    }}
-  name                              = "${each.value.name}"
-  zone_id                           = data.aws_route53_zone.Cloudman.zone_id
-  allow_overwrite                   = true
-  records                           = ["${each.value.record}"]
-  ttl                               = 300
-  type                              = "${each.value.type}"
-}
-
-resource "aws_route53_record" "Route53_Record_Certificate1" {
-  for_each                          = {for dvo in aws_acm_certificate.Certificate1.domain_validation_options : dvo.domain_name => {
-      name   = dvo.resource_record_name,
-      record = dvo.resource_record_value,
-      type   = dvo.resource_record_type
-    }}
-  name                              = "${each.value.name}"
+resource "aws_route53_record" "Route53_Record_Certificate1_app_struct8_com" {
+  for_each                          = {
+    for dvo in aws_acm_certificate.Certificate1.domain_validation_options : dvo.domain_name => dvo
+    if dvo.domain_name == "app.struct8.com"
+  }
+  name                              = "${each.value.resource_record_name}"
   zone_id                           = data.aws_route53_zone.struct8.zone_id
   allow_overwrite                   = true
-  records                           = ["${each.value.record}"]
+  records                           = ["${each.value.resource_record_value}"]
   ttl                               = 300
-  type                              = "${each.value.type}"
+  type                              = "${each.value.resource_record_type}"
 }
 
-resource "aws_route53_record" "Route53_Record_CloudManV2" {
-  for_each                          = {for dvo in aws_acm_certificate.CloudManV2.domain_validation_options : dvo.domain_name => {
-      name   = dvo.resource_record_name,
-      record = dvo.resource_record_value,
-      type   = dvo.resource_record_type
-    }}
-  name                              = "${each.value.name}"
+resource "aws_route53_record" "Route53_Record_Certificate1_v2_cloudman_pro" {
+  for_each                          = {
+    for dvo in aws_acm_certificate.Certificate1.domain_validation_options : dvo.domain_name => dvo
+    if dvo.domain_name == "v2.cloudman.pro"
+  }
+  name                              = "${each.value.resource_record_name}"
   zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   allow_overwrite                   = true
-  records                           = ["${each.value.record}"]
+  records                           = ["${each.value.resource_record_value}"]
   ttl                               = 300
-  type                              = "${each.value.type}"
+  type                              = "${each.value.resource_record_type}"
+}
+
+resource "aws_route53_record" "Route53_Record_Certificate_cog_auth_cloudman_pro" {
+  for_each                          = {
+    for dvo in aws_acm_certificate.Certificate.domain_validation_options : dvo.domain_name => dvo
+    if dvo.domain_name == "cog-auth.cloudman.pro"
+  }
+  name                              = "${each.value.resource_record_name}"
+  zone_id                           = data.aws_route53_zone.Cloudman.zone_id
+  allow_overwrite                   = true
+  records                           = ["${each.value.resource_record_value}"]
+  ttl                               = 300
+  type                              = "${each.value.resource_record_type}"
+}
+
+resource "aws_route53_record" "Route53_Record_CloudManV2_v2_cloudman_pro" {
+  for_each                          = {
+    for dvo in aws_acm_certificate.CloudManV2.domain_validation_options : dvo.domain_name => dvo
+    if dvo.domain_name == "v2.cloudman.pro"
+  }
+  name                              = "${each.value.resource_record_name}"
+  zone_id                           = data.aws_route53_zone.Cloudman.zone_id
+  allow_overwrite                   = true
+  records                           = ["${each.value.resource_record_value}"]
+  ttl                               = 300
+  type                              = "${each.value.resource_record_type}"
 }
 
 
