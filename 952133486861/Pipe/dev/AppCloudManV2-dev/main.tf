@@ -30,8 +30,8 @@ data "aws_region" "current" {}
 
 ### SYSTEM DATA SOURCES ###
 
-data "aws_route53_zone" "Cloudman" {
-  name                              = "cloudman.pro"
+data "aws_route53_zone" "struct8" {
+  name                              = "struct8.com"
 }
 
 
@@ -213,7 +213,7 @@ resource "aws_iam_role" "role_lambda_AgentV2-dev" {
   tags                              = {
     "Name" = "role_lambda_AgentV2-dev"
     "State" = "AppCloudManV2-dev"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
     "Stage" = "dev"
   }
 }
@@ -235,7 +235,7 @@ resource "aws_iam_role" "role_lambda_DBAccessV2-dev" {
   tags                              = {
     "Name" = "role_lambda_DBAccessV2-dev"
     "State" = "AppCloudManV2-dev"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
     "Stage" = "dev"
   }
 }
@@ -257,7 +257,7 @@ resource "aws_iam_role" "role_lambda_GithubGateKeeper-dev" {
   tags                              = {
     "Name" = "role_lambda_GithubGateKeeper-dev"
     "State" = "AppCloudManV2-dev"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
     "Stage" = "dev"
   }
 }
@@ -279,7 +279,7 @@ resource "aws_iam_role" "role_lambda_HCLAWSV2-dev" {
   tags                              = {
     "Name" = "role_lambda_HCLAWSV2-dev"
     "State" = "AppCloudManV2-dev"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
     "Stage" = "dev"
   }
 }
@@ -301,7 +301,7 @@ resource "aws_iam_role" "role_lambda_HCLCloudFlare-dev" {
   tags                              = {
     "Name" = "role_lambda_HCLCloudFlare-dev"
     "State" = "AppCloudManV2-dev"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
     "Stage" = "dev"
   }
 }
@@ -323,7 +323,7 @@ resource "aws_iam_role" "role_lambda_HCLGCore-dev" {
   tags                              = {
     "Name" = "role_lambda_HCLGCore-dev"
     "State" = "AppCloudManV2-dev"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
     "Stage" = "dev"
   }
 }
@@ -359,7 +359,7 @@ resource "aws_iam_role_policy_attachment" "lambda_function_HCLGCore-dev_st_AppCl
 }
 
 resource "aws_acm_certificate" "AppCloudManV2-dev" {
-  domain_name                       = "dev.v2.cloudman.pro"
+  domain_name                       = "dev.app.struct8.com"
   key_algorithm                     = "RSA_2048"
   validation_method                 = "DNS"
   options {
@@ -368,7 +368,7 @@ resource "aws_acm_certificate" "AppCloudManV2-dev" {
   tags                              = {
     "Name" = "AppCloudManV2-dev"
     "State" = "AppCloudManV2-dev"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
     "Stage" = "dev"
   }
 }
@@ -390,16 +390,16 @@ resource "aws_route53_record" "Route53_Record_AppCloudManV2-dev" {
       type   = dvo.resource_record_type
     }}
   name                              = "${each.value.name}"
-  zone_id                           = data.aws_route53_zone.Cloudman.zone_id
+  zone_id                           = data.aws_route53_zone.struct8.zone_id
   allow_overwrite                   = true
   records                           = ["${each.value.record}"]
   ttl                               = 300
   type                              = "${each.value.type}"
 }
 
-resource "aws_route53_record" "alias_a_aws_cloudfront_distribution_AppCloudManV2-dev_dev_v2_cloudman_pro" {
-  name                              = "dev.v2.cloudman.pro"
-  zone_id                           = data.aws_route53_zone.Cloudman.zone_id
+resource "aws_route53_record" "alias_a_aws_cloudfront_distribution_AppCloudManV2-dev_dev_app_struct8_com" {
+  name                              = "dev.app.struct8.com"
+  zone_id                           = data.aws_route53_zone.struct8.zone_id
   type                              = "A"
   alias {
     name                            = aws_cloudfront_distribution.AppCloudManV2-dev.domain_name
@@ -408,9 +408,9 @@ resource "aws_route53_record" "alias_a_aws_cloudfront_distribution_AppCloudManV2
   }
 }
 
-resource "aws_route53_record" "alias_aaaa_aws_cloudfront_distribution_AppCloudManV2-dev_dev_v2_cloudman_pro" {
-  name                              = "dev.v2.cloudman.pro"
-  zone_id                           = data.aws_route53_zone.Cloudman.zone_id
+resource "aws_route53_record" "alias_aaaa_aws_cloudfront_distribution_AppCloudManV2-dev_dev_app_struct8_com" {
+  name                              = "dev.app.struct8.com"
+  zone_id                           = data.aws_route53_zone.struct8.zone_id
   type                              = "AAAA"
   alias {
     name                            = aws_cloudfront_distribution.AppCloudManV2-dev.domain_name
@@ -500,7 +500,7 @@ locals {
       path             = "/GithubGateKeeper-dev"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:GithubGateKeeper-dev/invocations"
       type             = "aws_proxy"
-      methods          = ["post", "get"]
+      methods          = ["get", "post"]
       method_auth      = {}
       enable_mock      = false
       credentials      = null
@@ -631,7 +631,7 @@ resource "aws_api_gateway_rest_api" "APIAppCloudManV2-dev" {
   tags                              = {
     "Name" = "APIAppCloudManV2-dev"
     "State" = "AppCloudManV2-dev"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
     "Stage" = "dev"
   }
 }
@@ -647,13 +647,13 @@ resource "aws_api_gateway_stage" "st-dev" {
   tags                              = {
     "Name" = "st-dev"
     "State" = "AppCloudManV2-dev"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
     "Stage" = "dev"
   }
 }
 
 resource "aws_cloudfront_distribution" "AppCloudManV2-dev" {
-  aliases                           = ["dev.v2.cloudman.pro"]
+  aliases                           = ["dev.app.struct8.com"]
   default_root_object               = "index.html"
   enabled                           = true
   http_version                      = "http2and3"
@@ -718,7 +718,7 @@ resource "aws_cloudfront_distribution" "AppCloudManV2-dev" {
   tags                              = {
     "Name" = "AppCloudManV2-dev"
     "State" = "AppCloudManV2-dev"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
     "Stage" = "dev"
   }
   viewer_certificate {
@@ -749,7 +749,7 @@ resource "aws_s3_bucket" "app-cloudman-v2-dev" {
   tags                              = {
     "Name" = "app-cloudman-v2-dev"
     "State" = "AppCloudManV2-dev"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
     "Stage" = "dev"
   }
 }
@@ -848,7 +848,7 @@ resource "aws_lambda_function" "AgentV2-dev" {
   tags                              = {
     "Name" = "AgentV2-dev"
     "State" = "AppCloudManV2-dev"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
     "Stage" = "dev"
   }
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_AgentV2-dev_st_AppCloudManV2-dev_attach]
@@ -890,7 +890,7 @@ resource "aws_lambda_function" "DBAccessV2-dev" {
   tags                              = {
     "Name" = "DBAccessV2-dev"
     "State" = "AppCloudManV2-dev"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
     "Stage" = "dev"
   }
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_DBAccessV2-dev_st_AppCloudManV2-dev_attach]
@@ -937,7 +937,7 @@ resource "aws_lambda_function" "GithubGateKeeper-dev" {
   tags                              = {
     "Name" = "GithubGateKeeper-dev"
     "State" = "AppCloudManV2-dev"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
     "Stage" = "dev"
   }
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_GithubGateKeeper-dev_st_AppCloudManV2-dev_attach]
@@ -978,7 +978,7 @@ resource "aws_lambda_function" "HCLAWSV2-dev" {
   tags                              = {
     "Name" = "HCLAWSV2-dev"
     "State" = "AppCloudManV2-dev"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
     "Stage" = "dev"
   }
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_HCLAWSV2-dev_st_AppCloudManV2-dev_attach]
@@ -1014,7 +1014,7 @@ resource "aws_lambda_function" "HCLCloudFlare-dev" {
   tags                              = {
     "Name" = "HCLCloudFlare-dev"
     "State" = "AppCloudManV2-dev"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
     "Stage" = "dev"
   }
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_HCLCloudFlare-dev_st_AppCloudManV2-dev_attach]
@@ -1050,7 +1050,7 @@ resource "aws_lambda_function" "HCLGCore-dev" {
   tags                              = {
     "Name" = "HCLGCore-dev"
     "State" = "AppCloudManV2-dev"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
     "Stage" = "dev"
   }
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_HCLGCore-dev_st_AppCloudManV2-dev_attach]
@@ -1125,7 +1125,7 @@ resource "aws_cloudwatch_log_group" "AgentV2-dev" {
   tags                              = {
     "Name" = "AgentV2-dev"
     "State" = "AppCloudManV2-dev"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
     "Stage" = "dev"
   }
 }
@@ -1138,7 +1138,7 @@ resource "aws_cloudwatch_log_group" "AppCloudManV2-ST-dev" {
   tags                              = {
     "Name" = "AppCloudManV2-ST-dev"
     "State" = "AppCloudManV2-dev"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
     "Stage" = "dev"
   }
 }
@@ -1151,7 +1151,7 @@ resource "aws_cloudwatch_log_group" "DBAccessV2-dev" {
   tags                              = {
     "Name" = "DBAccessV2-dev"
     "State" = "AppCloudManV2-dev"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
     "Stage" = "dev"
   }
 }
@@ -1164,7 +1164,7 @@ resource "aws_cloudwatch_log_group" "GithubGateKeeper-dev" {
   tags                              = {
     "Name" = "GithubGateKeeper-dev"
     "State" = "AppCloudManV2-dev"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
     "Stage" = "dev"
   }
 }
@@ -1177,7 +1177,7 @@ resource "aws_cloudwatch_log_group" "HCLAWSV2-dev" {
   tags                              = {
     "Name" = "HCLAWSV2-dev"
     "State" = "AppCloudManV2-dev"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
     "Stage" = "dev"
   }
 }
@@ -1190,7 +1190,7 @@ resource "aws_cloudwatch_log_group" "HCLCloudFlare-dev" {
   tags                              = {
     "Name" = "HCLCloudFlare-dev"
     "State" = "AppCloudManV2-dev"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
     "Stage" = "dev"
   }
 }
@@ -1203,7 +1203,7 @@ resource "aws_cloudwatch_log_group" "HCLGCore-dev" {
   tags                              = {
     "Name" = "HCLGCore-dev"
     "State" = "AppCloudManV2-dev"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
     "Stage" = "dev"
   }
 }
