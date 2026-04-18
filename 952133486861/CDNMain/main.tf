@@ -136,7 +136,7 @@ resource "aws_iam_role" "role_lambda_CallBackRedirector" {
   tags                              = {
     "Name" = "role_lambda_CallBackRedirector"
     "State" = "CDNMain"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
   }
 }
 
@@ -157,7 +157,7 @@ resource "aws_iam_role" "role_lambda_GetStageV2" {
   tags                              = {
     "Name" = "role_lambda_GetStageV2"
     "State" = "CDNMain"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
   }
 }
 
@@ -178,7 +178,7 @@ resource "aws_iam_role" "role_lambda_RedirectorV2" {
   tags                              = {
     "Name" = "role_lambda_RedirectorV2"
     "State" = "CDNMain"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
   }
 }
 
@@ -262,7 +262,7 @@ locals {
       path             = "/GetStageV2"
       uri              = "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:GetStageV2/invocations"
       type             = "aws_proxy"
-      methods          = ["post", "options"]
+      methods          = ["options", "post"]
       method_auth      = {"options" = "APIAuthCloudManV2_CognitoAuth_CloudManV2", "post" = "APIAuthCloudManV2_CognitoAuth_CloudManV2"}
       enable_mock      = false
       credentials      = null
@@ -393,7 +393,7 @@ resource "aws_api_gateway_rest_api" "APIAuthCloudManV2" {
   tags                              = {
     "Name" = "APIAuthCloudManV2"
     "State" = "CDNMain"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
   }
 }
 
@@ -408,7 +408,7 @@ resource "aws_api_gateway_stage" "st" {
   tags                              = {
     "Name" = "st"
     "State" = "CDNMain"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
   }
 }
 
@@ -535,7 +535,7 @@ resource "aws_cloudfront_distribution" "AuthCloudManV2" {
   tags                              = {
     "Name" = "AuthCloudManV2"
     "State" = "CDNMain"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
   }
   viewer_certificate {
     acm_certificate_arn             = data.aws_acm_certificate.Certificate1.arn
@@ -566,7 +566,7 @@ resource "aws_s3_bucket" "auth-cloudman-v2-logs" {
   tags                              = {
     "Name" = "auth-cloudman-v2-logs"
     "State" = "CDNMain"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
   }
 }
 
@@ -577,7 +577,7 @@ resource "aws_s3_bucket" "s3-cloudmanv2-auth-bucket" {
   tags                              = {
     "Name" = "s3-cloudmanv2-auth-bucket"
     "State" = "CDNMain"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
   }
 }
 
@@ -744,7 +744,7 @@ resource "aws_lambda_function" "CallBackRedirector" {
   tags                              = {
     "Name" = "CallBackRedirector"
     "State" = "CDNMain"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
   }
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_CallBackRedirector_st_CDNMain_attach]
 }
@@ -785,7 +785,7 @@ resource "aws_lambda_function" "GetStageV2" {
   tags                              = {
     "Name" = "GetStageV2"
     "State" = "CDNMain"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
   }
   depends_on                        = [aws_iam_role_policy_attachment.lambda_function_GetStageV2_st_CDNMain_attach]
 }
@@ -816,7 +816,7 @@ resource "aws_lambda_function" "RedirectorV2" {
   tags                              = {
     "Name" = "RedirectorV2"
     "State" = "CDNMain"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
   }
   timeouts {
     delete                          = "20m"
@@ -845,7 +845,7 @@ resource "aws_cloudwatch_log_group" "APIAuthCloudManV2" {
   tags                              = {
     "Name" = "APIAuthCloudManV2"
     "State" = "CDNMain"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
   }
 }
 
@@ -857,7 +857,7 @@ resource "aws_cloudwatch_log_group" "CallBackRedirector" {
   tags                              = {
     "Name" = "CallBackRedirector"
     "State" = "CDNMain"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
   }
 }
 
@@ -869,7 +869,7 @@ resource "aws_cloudwatch_log_group" "GetStageV2" {
   tags                              = {
     "Name" = "GetStageV2"
     "State" = "CDNMain"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
   }
 }
 
@@ -881,7 +881,7 @@ resource "aws_cloudwatch_log_group" "RedirectorV2" {
   tags                              = {
     "Name" = "RedirectorV2"
     "State" = "CDNMain"
-    "CloudmanUser" = "Struc8"
+    "Struct8User" = "Struc8"
   }
 }
 
@@ -905,8 +905,8 @@ resource "aws_ssm_parameter" "PipelineCloudMan" {
   tags                              = {
     "Name" = "PipelineCloudMan"
     "State" = "CDNMain"
-    "CloudmanUser" = "Struc8"
-    "cloudman:managed" = "allow"
+    "Struct8User" = "Struc8"
+    "Struct8:Managed" = "allow"
   }
 }
 
