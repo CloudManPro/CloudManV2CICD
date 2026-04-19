@@ -9,7 +9,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "cloudan-v2-cicdx"
+    bucket         = "cloudan-v2-cicd"
     key            = "952133486861/CloudformationTemplate/main.tfstate"
     region         = "us-east-1"
     encrypt        = true
