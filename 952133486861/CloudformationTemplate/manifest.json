@@ -12,12 +12,12 @@
     }
   ],
   "action": "apply",
-  "trigger_id": "1776621539367",
+  "trigger_id": "1776622124237",
   "backend_global_config": {
     "provider": "aws",
     "role_arn": "arn:aws:iam::952133486861:role/Struct8-Gitops-Struct8-CloudManV2CICD",
     "region": "us-east-1",
-    "bucket": "cloudan-v2-cicd"
+    "bucket": "cloudan-v2-cicdx"
   },
   "pipeline_stages": [
     {
