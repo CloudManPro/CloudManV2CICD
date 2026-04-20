@@ -26,8 +26,8 @@ data "aws_region" "current" {}
 
 ### SYSTEM DATA SOURCES ###
 
-data "aws_route53_zone" "Cloudman" {
-  name                              = "cloudman.pro"
+data "aws_route53_zone" "struct8" {
+  name                              = "struct8.com"
 }
 
 
@@ -36,7 +36,7 @@ data "aws_route53_zone" "Cloudman" {
 ### EXTERNAL REFERENCES ###
 
 data "aws_acm_certificate" "Certificate" {
-  domain                            = "cog-auth.cloudman.pro"
+  domain                            = "cog-auth.struct8.com"
   most_recent                       = true
   statuses                          = ["ISSUED"]
 }
@@ -46,9 +46,9 @@ data "aws_acm_certificate" "Certificate" {
 
 ### CATEGORY: NETWORK ###
 
-resource "aws_route53_record" "alias_a_cog-auth_to_CloudManV2" {
-  name                              = "cog-auth.cloudman.pro"
-  zone_id                           = data.aws_route53_zone.Cloudman.zone_id
+resource "aws_route53_record" "alias_a_aws_cognito_user_pool_domain_CloudManV2_cog-auth_struct8_com" {
+  name                              = "cog-auth.struct8.com"
+  zone_id                           = data.aws_route53_zone.struct8.zone_id
   type                              = "A"
   alias {
     name                            = aws_cognito_user_pool_domain.CloudManV2.cloudfront_distribution
@@ -57,9 +57,9 @@ resource "aws_route53_record" "alias_a_cog-auth_to_CloudManV2" {
   }
 }
 
-resource "aws_route53_record" "alias_aaaa_cog-auth_to_CloudManV2" {
-  name                              = "cog-auth.cloudman.pro"
-  zone_id                           = data.aws_route53_zone.Cloudman.zone_id
+resource "aws_route53_record" "alias_aaaa_aws_cognito_user_pool_domain_CloudManV2_cog-auth_struct8_com" {
+  name                              = "cog-auth.struct8.com"
+  zone_id                           = data.aws_route53_zone.struct8.zone_id
   type                              = "AAAA"
   alias {
     name                            = aws_cognito_user_pool_domain.CloudManV2.cloudfront_distribution
@@ -128,7 +128,7 @@ resource "aws_cognito_user_pool" "CloudManV2" {
   tags                              = {
     "Name" = "CloudManV2"
     "State" = "Auth"
-    "CloudmanUser" = "GlobalUserName"
+    "Struct8User" = "Struc8"
   }
   username_configuration {
     case_sensitive                  = true
@@ -172,7 +172,8 @@ resource "aws_cognito_user_pool_client" "CloudManV2" {
 resource "aws_cognito_user_pool_domain" "CloudManV2" {
   user_pool_id                      = aws_cognito_user_pool.CloudManV2.id
   certificate_arn                   = data.aws_acm_certificate.Certificate.arn
-  domain                            = "cog-auth.cloudman.pro"
+  domain                            = "cog-auth.struct8.com"
+  depends_on                        = [aws_acm_certificate_validation.Validation_Certificate1]
 }
 
 
