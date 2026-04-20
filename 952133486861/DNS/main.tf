@@ -53,7 +53,7 @@ resource "aws_acm_certificate" "Certificate" {
   }
 }
 
-resource "aws_acm_certificate" "Certificate1" {
+resource "aws_acm_certificate" "app-struct8-com" {
   domain_name                       = "app.struct8.com"
   key_algorithm                     = "RSA_2048"
   validation_method                 = "DNS"
@@ -65,7 +65,7 @@ resource "aws_acm_certificate" "Certificate1" {
     certificate_transparency_logging_preference = "ENABLED"
   }
   tags                              = {
-    "Name" = "Certificate1"
+    "Name" = "app-struct8-com"
     "State" = "DNS"
     "Struct8User" = "Struc8"
   }
@@ -76,9 +76,9 @@ resource "aws_acm_certificate_validation" "Validation_Certificate" {
   validation_record_fqdns           = [for record in aws_route53_record.Route53_Record_Certificate_cog_auth_app_struct8_com : record.fqdn]
 }
 
-resource "aws_acm_certificate_validation" "Validation_Certificate1" {
-  certificate_arn                   = aws_acm_certificate.Certificate1.arn
-  validation_record_fqdns           = [for record in aws_route53_record.Route53_Record_Certificate1_app_struct8_com : record.fqdn]
+resource "aws_acm_certificate_validation" "Validation_app-struct8-com" {
+  certificate_arn                   = aws_acm_certificate.app-struct8-com.arn
+  validation_record_fqdns           = [for record in aws_route53_record.Route53_Record_app-struct8-com_app_struct8_com : record.fqdn]
 }
 
 
@@ -86,10 +86,10 @@ resource "aws_acm_certificate_validation" "Validation_Certificate1" {
 
 ### CATEGORY: NETWORK ###
 
-resource "aws_route53_record" "Route53_Record_Certificate1_app_struct8_com" {
+resource "aws_route53_record" "Route53_Record_Certificate_cog_auth_app_struct8_com" {
   for_each                          = {
-    for dvo in aws_acm_certificate.Certificate1.domain_validation_options : dvo.domain_name => dvo
-    if dvo.domain_name == "app.struct8.com"
+    for dvo in aws_acm_certificate.Certificate.domain_validation_options : dvo.domain_name => dvo
+    if dvo.domain_name == "cog-auth.app.struct8.com"
   }
   name                              = "${each.value.resource_record_name}"
   zone_id                           = data.aws_route53_zone.struct8.zone_id
@@ -99,10 +99,10 @@ resource "aws_route53_record" "Route53_Record_Certificate1_app_struct8_com" {
   type                              = "${each.value.resource_record_type}"
 }
 
-resource "aws_route53_record" "Route53_Record_Certificate_cog_auth_app_struct8_com" {
+resource "aws_route53_record" "Route53_Record_app-struct8-com_app_struct8_com" {
   for_each                          = {
-    for dvo in aws_acm_certificate.Certificate.domain_validation_options : dvo.domain_name => dvo
-    if dvo.domain_name == "cog-auth.app.struct8.com"
+    for dvo in aws_acm_certificate.app-struct8-com.domain_validation_options : dvo.domain_name => dvo
+    if dvo.domain_name == "app.struct8.com"
   }
   name                              = "${each.value.resource_record_name}"
   zone_id                           = data.aws_route53_zone.struct8.zone_id
