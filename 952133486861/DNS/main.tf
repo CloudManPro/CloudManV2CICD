@@ -26,10 +26,6 @@ data "aws_region" "current" {}
 
 ### SYSTEM DATA SOURCES ###
 
-data "aws_route53_zone" "Cloudman" {
-  name                              = "cloudman.pro"
-}
-
 data "aws_route53_zone" "struct8" {
   name                              = "struct8.com"
 }
@@ -75,24 +71,6 @@ resource "aws_acm_certificate" "Certificate1" {
   }
 }
 
-resource "aws_acm_certificate" "CloudManV2" {
-  domain_name                       = "v2.cloudman.pro"
-  key_algorithm                     = "RSA_2048"
-  validation_method                 = "DNS"
-  lifecycle {
-    create_before_destroy           = true
-    prevent_destroy                 = false
-  }
-  options {
-    certificate_transparency_logging_preference = "ENABLED"
-  }
-  tags                              = {
-    "Name" = "CloudManV2"
-    "State" = "DNS"
-    "Struct8User" = "Struc8"
-  }
-}
-
 resource "aws_acm_certificate_validation" "Validation_Certificate" {
   certificate_arn                   = aws_acm_certificate.Certificate.arn
   validation_record_fqdns           = [for record in aws_route53_record.Route53_Record_Certificate_cog_auth_app_struct8_com : record.fqdn]
@@ -101,11 +79,6 @@ resource "aws_acm_certificate_validation" "Validation_Certificate" {
 resource "aws_acm_certificate_validation" "Validation_Certificate1" {
   certificate_arn                   = aws_acm_certificate.Certificate1.arn
   validation_record_fqdns           = [for record in aws_route53_record.Route53_Record_Certificate1_app_struct8_com : record.fqdn]
-}
-
-resource "aws_acm_certificate_validation" "Validation_CloudManV2" {
-  certificate_arn                   = aws_acm_certificate.CloudManV2.arn
-  validation_record_fqdns           = [for record in aws_route53_record.Route53_Record_CloudManV2_v2_cloudman_pro : record.fqdn]
 }
 
 
@@ -133,19 +106,6 @@ resource "aws_route53_record" "Route53_Record_Certificate_cog_auth_app_struct8_c
   }
   name                              = "${each.value.resource_record_name}"
   zone_id                           = data.aws_route53_zone.struct8.zone_id
-  allow_overwrite                   = true
-  records                           = ["${each.value.resource_record_value}"]
-  ttl                               = 300
-  type                              = "${each.value.resource_record_type}"
-}
-
-resource "aws_route53_record" "Route53_Record_CloudManV2_v2_cloudman_pro" {
-  for_each                          = {
-    for dvo in aws_acm_certificate.CloudManV2.domain_validation_options : dvo.domain_name => dvo
-    if dvo.domain_name == "v2.cloudman.pro"
-  }
-  name                              = "${each.value.resource_record_name}"
-  zone_id                           = data.aws_route53_zone.Cloudman.zone_id
   allow_overwrite                   = true
   records                           = ["${each.value.resource_record_value}"]
   ttl                               = 300
