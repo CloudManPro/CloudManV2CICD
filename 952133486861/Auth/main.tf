@@ -36,7 +36,7 @@ data "aws_route53_zone" "struct8" {
 ### EXTERNAL REFERENCES ###
 
 data "aws_acm_certificate" "Certificate" {
-  domain                            = "cog-auth.struct8.com"
+  domain                            = "cog-auth.app.struct8.com"
   most_recent                       = true
   statuses                          = ["ISSUED"]
 }
@@ -46,8 +46,8 @@ data "aws_acm_certificate" "Certificate" {
 
 ### CATEGORY: NETWORK ###
 
-resource "aws_route53_record" "alias_a_aws_cognito_user_pool_domain_CloudManV2_cog-auth_struct8_com" {
-  name                              = "cog-auth.struct8.com"
+resource "aws_route53_record" "alias_a_aws_cognito_user_pool_domain_CloudManV2_cog-auth_app_struct8_com" {
+  name                              = "cog-auth.app.struct8.com"
   zone_id                           = data.aws_route53_zone.struct8.zone_id
   type                              = "A"
   alias {
@@ -57,8 +57,8 @@ resource "aws_route53_record" "alias_a_aws_cognito_user_pool_domain_CloudManV2_c
   }
 }
 
-resource "aws_route53_record" "alias_aaaa_aws_cognito_user_pool_domain_CloudManV2_cog-auth_struct8_com" {
-  name                              = "cog-auth.struct8.com"
+resource "aws_route53_record" "alias_aaaa_aws_cognito_user_pool_domain_CloudManV2_cog-auth_app_struct8_com" {
+  name                              = "cog-auth.app.struct8.com"
   zone_id                           = data.aws_route53_zone.struct8.zone_id
   type                              = "AAAA"
   alias {
@@ -148,13 +148,13 @@ resource "aws_cognito_user_pool_client" "CloudManV2" {
   allowed_oauth_flows_user_pool_client = true
   allowed_oauth_scopes              = ["openid", "email", "profile"]
   auth_session_validity             = 3
-  callback_urls                     = ["https://v2.cloudman.pro"]
+  callback_urls                     = ["https://app.struct8.com"]
   enable_propagate_additional_user_context_data = false
   enable_token_revocation           = true
   explicit_auth_flows               = ["ALLOW_CUSTOM_AUTH", "ALLOW_REFRESH_TOKEN_AUTH", "ALLOW_USER_SRP_AUTH"]
   generate_secret                   = false
   id_token_validity                 = 12
-  logout_urls                       = ["https://v2.cloudman.pro"]
+  logout_urls                       = ["https://app.struct8.com"]
   prevent_user_existence_errors     = "ENABLED"
   refresh_token_validity            = 12
   supported_identity_providers      = ["COGNITO"]
@@ -172,8 +172,7 @@ resource "aws_cognito_user_pool_client" "CloudManV2" {
 resource "aws_cognito_user_pool_domain" "CloudManV2" {
   user_pool_id                      = aws_cognito_user_pool.CloudManV2.id
   certificate_arn                   = data.aws_acm_certificate.Certificate.arn
-  domain                            = "cog-auth.struct8.com"
-  depends_on                        = [aws_acm_certificate_validation.Validation_Certificate1]
+  domain                            = "cog-auth.app.struct8.com"
 }
 
 
