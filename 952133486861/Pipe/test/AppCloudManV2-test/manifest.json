@@ -10,12 +10,13 @@
         "LambdaFiles/HCLAWSV2",
         "LambdaFiles/DBAccessV2",
         "LambdaFiles/AgentV2",
-        "LambdaFiles/HCLCloudFlare"
+        "LambdaFiles/HCLCloudFlare",
+        "LambdaFiles/HelmK8s"
       ]
     }
   ],
   "action": "destroy",
-  "trigger_id": "1776626291572",
+  "trigger_id": "1777558165248",
   "backend_global_config": {
     "provider": "aws",
     "role_arn": "arn:aws:iam::952133486861:role/Struct8-Gitops-Struct8-CloudManV2CICD",
