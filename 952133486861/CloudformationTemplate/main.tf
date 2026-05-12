@@ -48,7 +48,10 @@ data "aws_iam_policy_document" "aws_s3_bucket_policy_struct8-public-cloudformati
   statement {
     sid                             = "PublicReadGetObject"
     effect                          = "Allow"
-    principals                      = "*"
+    principals {
+      identifiers                   = ["*"]
+      type                          = "AWS"
+    }
     actions                         = ["s3:GetObject"]
     resources                       = ["${aws_s3_bucket.struct8-public-cloudformation-templates.arn}/*"]
   }
