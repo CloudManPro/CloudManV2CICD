@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.0"
+      version = ">= 5.0"
     }
   }
 
@@ -31,9 +31,9 @@ resource "aws_s3_bucket" "struct8-public-cloudformation-templates" {
   force_destroy                     = false
   object_lock_enabled               = false
   tags                              = {
-    "Name" = "struct8-public-cloudformation-templates"
-    "State" = "CloudformationTemplate"
-    "Struct8User" = "Struc8"
+    Name = "struct8-public-cloudformation-templates"
+    State = "CloudformationTemplate"
+    Struct8User = "Struc8"
   }
 }
 
@@ -42,6 +42,21 @@ resource "aws_s3_bucket_ownership_controls" "struct8-public-cloudformation-templ
   rule {
     object_ownership                = "BucketOwnerEnforced"
   }
+}
+
+data "aws_iam_policy_document" "aws_s3_bucket_policy_struct8-public-cloudformation-templates_st_CloudformationTemplate_doc" {
+  statement {
+    sid                             = "PublicReadGetObject"
+    effect                          = "Allow"
+    principals                      = "*"
+    actions                         = ["s3:GetObject"]
+    resources                       = ["${aws_s3_bucket.struct8-public-cloudformation-templates.arn}/*"]
+  }
+}
+
+resource "aws_s3_bucket_policy" "aws_s3_bucket_policy_struct8-public-cloudformation-templates_st_CloudformationTemplate" {
+  bucket                            = aws_s3_bucket.struct8-public-cloudformation-templates.id
+  policy                            = data.aws_iam_policy_document.aws_s3_bucket_policy_struct8-public-cloudformation-templates_st_CloudformationTemplate_doc.json
 }
 
 resource "aws_s3_bucket_public_access_block" "struct8-public-cloudformation-templates_block" {
@@ -75,9 +90,9 @@ resource "aws_s3_object" "CrossAccountStruct8" {
   etag                              = filemd5("${path.module}/.external_modules/CloudMan/CloudFrontTemplate/CrossAccountStruct8.yaml")
   key                               = "CrossAccountStruct8.yaml"
   tags                              = {
-    "Name" = "CrossAccountStruct8"
-    "State" = "CloudformationTemplate"
-    "Struct8User" = "Struc8"
+    Name = "CrossAccountStruct8"
+    State = "CloudformationTemplate"
+    Struct8User = "Struc8"
   }
 }
 
@@ -88,9 +103,9 @@ resource "aws_s3_object" "TerraformBackend" {
   etag                              = filemd5("${path.module}/.external_modules/CloudMan/CloudFrontTemplate/TerraformBackend.yml")
   key                               = "TerraformBackend.yml"
   tags                              = {
-    "Name" = "TerraformBackend"
-    "State" = "CloudformationTemplate"
-    "Struct8User" = "Struc8"
+    Name = "TerraformBackend"
+    State = "CloudformationTemplate"
+    Struct8User = "Struc8"
   }
 }
 
